@@ -1,7 +1,7 @@
-import { Vacio } from '@/components/ui'
+import { Chat } from '@/components/chat/chat'
 import type { PropsSeccion } from '../tipos'
 
-// Pendiente (HU-12)
-export async function SeccionChat(_: PropsSeccion) {
-  return <Vacio>En construcción.</Vacio>
+// HU-12: chat de WhatsApp con el lead; toda la conversación queda en su ficha
+export async function SeccionChat({ lead }: PropsSeccion) {
+  return <Chat personaId={lead.persona_id} leadId={lead.id} />
 }
