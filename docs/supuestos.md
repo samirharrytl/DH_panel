@@ -52,14 +52,15 @@ El diagrama de la especificación no venía en el documento. Se usa la propuesta
   novedades". Las novedades a leads en No responde y el marketing de postventa sí exigen
   consentimiento de marketing.
 - Fuera de la ventana de 24 horas solo se envían plantillas que tengan configurado su nombre aprobado
-  en Meta. En modo simulado se aplica la misma regla.
+  en Meta. En modo simulado se permiten plantillas sin ese nombre (si no, ninguna bienvenida se podría
+  probar en local), con un aviso en el chat; el texto libre fuera de la ventana se bloquea igual.
 
 ## Match y priorización
 
 - Filtros obligatorios: inmueble En cartera, precio dentro del presupuesto máximo (si está
   registrado), tipo buscado (si lo indicó) y que no lo haya rechazado antes.
 - Puntaje de 0 a 100: zona 30, precio dentro del rango 25, dormitorios 15, metraje 10,
-  imprescindibles 20. Suma 5 puntos si se parece (mismo distrito y tipo) a un inmueble que le
+  imprescindibles 20. Un criterio que el interesado no indicó suma sus puntos completos. Suma 5 puntos si se parece (mismo distrito y tipo) a un inmueble que le
   interesó y resta 5 si se parece a uno que rechazó.
 - Novedades: se avisa cuando un inmueble En cartera encaja con 50 puntos o más con un interesado
   activo que aún no lo recibió.
@@ -79,7 +80,10 @@ El diagrama de la especificación no venía en el documento. Se usa la propuesta
 ## Otros
 
 - Los precios se manejan en soles (S/), como en el sitio de DepaHost.
-- El contrato vence en la fecha de firma más el plazo en meses. Renovar registra un contrato nuevo.
+- El contrato vence en la fecha de firma más el plazo en meses. Renovar registra un contrato nuevo. La
+  comisión del contrato se registra como porcentaje; la comisión pagada al cierre, como monto en soles.
+- Un propietario que ya es Cliente no agenda nuevas citas en ese ciclo: si trae otro inmueble, se
+  vuelve a registrar y se abre un ciclo nuevo.
 - Precio frente a similares: precio por m² del inmueble contra el promedio de los inmuebles del mismo
   distrito y tipo en la base (En cartera o Vendido).
 - Probabilidad de firma (HU-35): el modelo no se calcula en la fase 1. El tablero muestra cuántos datos
