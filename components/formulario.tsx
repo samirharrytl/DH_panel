@@ -147,7 +147,7 @@ export function BotonAccion({
   className?: string
 }) {
   const [pendiente, iniciar] = useTransition()
-  const [error, setError] = useState<string | null>(null)
+  const [aviso, setAviso] = useState<{ ok: boolean; texto: string } | null>(null)
   const router = useRouter()
   return (
     <span className="inline-flex flex-col items-start gap-1">
@@ -158,17 +158,24 @@ export function BotonAccion({
         disabled={pendiente}
         onClick={() => {
           if (confirmar && !window.confirm(confirmar)) return
-          setError(null)
+          setAviso(null)
           iniciar(async () => {
             const r = await accion()
-            if (!r.ok) setError(r.error)
-            else router.refresh()
+            if (!r.ok) {
+              setAviso({ ok: false, texto: r.error })
+              return
+            }
+            if (r.mensaje) {
+              setAviso({ ok: true, texto: r.mensaje })
+              window.setTimeout(() => setAviso(null), 6000)
+            }
+            router.refresh()
           })
         }}
       >
         {pendiente ? 'Procesando…' : children}
       </Boton>
-      {error && <span className="max-w-xs text-xs text-red-700">{error}</span>}
+      {aviso && <span className={cx('max-w-xs text-xs', aviso.ok ? 'text-emerald-700' : 'text-red-700')}>{aviso.texto}</span>}
     </span>
   )
 }
