@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { exigirUsuario } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
-import { deError, exito, fallo, texto, type Resultado } from '@/lib/acciones'
+import { casilla, deError, entero, exito, fallo, numero, texto, type Resultado } from '@/lib/acciones'
 import { localAIso, fecha as fmtFecha, hora as fmtHora, diaLargo } from '@/lib/formato'
 import { describirInmueble, enviarMensaje, variablesLead } from '@/lib/mensajeria'
 
@@ -13,6 +13,60 @@ function refrescar(leadId?: string | null) {
   revalidatePath('/agenda')
   revalidatePath('/')
   if (leadId) revalidatePath(`/leads/${leadId}`)
+}
+
+// HU-14: la función SQL valida tipo, Baja, ciclo y dirección, y pasa el lead a "Cita agendada"
+export async function agendarCita(_: Resultado | null, f: FormData): Promise<Resultado> {
+  await exigirUsuario()
+  const leadId = texto(f, 'lead_id')
+  const inicio = texto(f, 'inicio')
+  if (!leadId || !inicio) return fallo('Indica la fecha y hora')
+  const supabase = await crearClienteServidor()
+  const { error } = await supabase.rpc('agendar_cita', {
+    p_lead_id: leadId,
+    p_inicio: localAIso(inicio),
+    p_direccion: texto(f, 'direccion'),
+    p_distrito: texto(f, 'distrito'),
+    p_duracion_min: entero(f, 'duracion_min') ?? 60,
+    p_acceso_llave: texto(f, 'acceso_llave'),
+    p_acceso_codigo: texto(f, 'acceso_codigo'),
+    p_acceso_dni: casilla(f, 'acceso_dni'),
+    p_acceso_otros: texto(f, 'acceso_otros'),
+    p_notas: texto(f, 'notas'),
+  })
+  if (error) return deError(error)
+  refrescar(leadId)
+  revalidatePath('/leads')
+  return exito('Cita agendada. Envía la confirmación por WhatsApp.')
+}
+
+// HU-15: crea o actualiza la ficha del inmueble en "En captación"; las fotos se suben en esa ficha
+export async function registrarResultadoCita(_: Resultado | null, f: FormData): Promise<Resultado> {
+  await exigirUsuario()
+  const citaId = texto(f, 'cita_id')
+  const precio = numero(f, 'precio')
+  if (!citaId) return fallo('Cita no indicada')
+  if (!precio || precio <= 0) return fallo('Registra el precio acordado')
+  const supabase = await crearClienteServidor()
+  const { data: inmuebleId, error } = await supabase.rpc('registrar_resultado_cita', {
+    p_cita_id: citaId,
+    p_resultado: texto(f, 'resultado'),
+    p_tipo: texto(f, 'tipo'),
+    p_direccion: texto(f, 'direccion'),
+    p_distrito: texto(f, 'distrito'),
+    p_precio: precio,
+    p_conservacion: texto(f, 'conservacion'),
+    p_metraje: numero(f, 'metraje'),
+    p_dormitorios: entero(f, 'dormitorios'),
+    p_banos: entero(f, 'banos'),
+    p_cocheras: entero(f, 'cocheras') ?? 0,
+    p_ascensor: casilla(f, 'ascensor'),
+    p_descripcion: texto(f, 'descripcion'),
+  })
+  if (error) return deError(error)
+  refrescar(texto(f, 'lead_id'))
+  revalidatePath('/inmuebles')
+  return exito('Resultado registrado: el inmueble quedó En captación', { inmuebleId })
 }
 
 export async function reprogramarCita(_: Resultado | null, f: FormData): Promise<Resultado> {
