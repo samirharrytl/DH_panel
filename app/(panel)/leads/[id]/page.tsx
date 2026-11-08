@@ -87,7 +87,7 @@ export default async function PaginaLead({ params, searchParams }: PageProps<'/l
       {tab === 'citas' && <SeccionCitas {...props} />}
       {tab === 'perfil' && <SeccionPerfil {...props} />}
       {tab === 'matches' && <SeccionMatches {...props} />}
-      {tab === 'visitas' && <SeccionVisitas {...props} />}
+      {tab === 'visitas' && <SeccionVisitas {...props} inmueble={typeof sp.inmueble === 'string' ? sp.inmueble : undefined} />}
       {tab === 'cierre' && <SeccionCierre {...props} />}
     </>
   )
