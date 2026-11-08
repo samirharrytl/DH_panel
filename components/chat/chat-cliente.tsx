@@ -67,14 +67,23 @@ export function ChatCliente({
   // Mensajes nuevos y cambios de estado de entrega en vivo
   useEffect(() => {
     const supabase = crearClienteNavegador()
+    const nombre = `chat:${personaId}`
+    const topico = `realtime:${nombre}`
+    // channel() reutiliza el canal si ya existe; si sigue suscrito .on() falla
+    // con "cannot add postgres_changes callbacks after subscribe()".
+    const previo = supabase.getChannels().find((c) => c.topic === topico)
+    if (previo) {
+      void supabase.removeChannel(previo)
+      ;(supabase as unknown as { realtime: { _remove: (c: typeof previo) => void } }).realtime?._remove?.(previo)
+    }
     const canal = supabase
-      .channel(`chat:${personaId}`)
+      .channel(nombre)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'mensajes', filter: `persona_id=eq.${personaId}` }, () =>
         router.refresh(),
       )
       .subscribe()
     return () => {
-      supabase.removeChannel(canal)
+      void supabase.removeChannel(canal)
     }
   }, [personaId, router])
 

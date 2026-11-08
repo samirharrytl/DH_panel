@@ -35,8 +35,18 @@ export function Campana({
 
   useEffect(() => {
     const supabase = crearClienteNavegador()
+    const nombre = `notificaciones:${usuarioId}`
+    const topico = `realtime:${nombre}`
+    // channel() reutiliza el canal si ya existe; si sigue suscrito (p. ej. React
+    // Strict Mode / remount) .on() falla con "cannot add postgres_changes
+    // callbacks after subscribe()". Se retira de la lista al instante y se crea uno nuevo.
+    const previo = supabase.getChannels().find((c) => c.topic === topico)
+    if (previo) {
+      void supabase.removeChannel(previo)
+      ;(supabase as unknown as { realtime: { _remove: (c: typeof previo) => void } }).realtime?._remove?.(previo)
+    }
     const canal = supabase
-      .channel(`notificaciones:${usuarioId}`)
+      .channel(nombre)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'notificaciones', filter: `usuario_id=eq.${usuarioId}` },
@@ -44,7 +54,7 @@ export function Campana({
       )
       .subscribe()
     return () => {
-      supabase.removeChannel(canal)
+      void supabase.removeChannel(canal)
     }
   }, [usuarioId, router])
 
