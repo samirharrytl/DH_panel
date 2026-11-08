@@ -4,8 +4,8 @@ import { revalidatePath } from 'next/cache'
 import { exigirUsuario } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { casilla, deError, entero, exito, fallo, numero, texto, type Resultado } from '@/lib/acciones'
-import { localAIso, fecha as fmtFecha, hora as fmtHora, diaLargo } from '@/lib/formato'
-import { describirInmueble, enviarMensaje, variablesLead } from '@/lib/mensajeria'
+import { localAIso } from '@/lib/formato'
+import { enviarAviso, type AvisoCita } from '@/lib/avisos-cita'
 
 // Acciones comunes a citas con propietarios y visitas de interesados (HU-14 y HU-26)
 
@@ -98,49 +98,11 @@ export async function cancelarCita(_: Resultado | null, f: FormData): Promise<Re
   return exito('Cita actualizada')
 }
 
-export type AvisoCita = 'confirmacion' | '24h' | 'dia'
-
 // Confirmación al agendar y recordatorios 24 horas antes y el mismo día, por WhatsApp
 export async function enviarAvisoCita(citaId: string, aviso: AvisoCita): Promise<Resultado> {
   await exigirUsuario()
-  const supabase = await crearClienteServidor()
-  const { data: cita } = await supabase
-    .from('citas')
-    .select('id, tipo, lead_id, inicio, direccion, distrito, estado, inmueble:inmuebles(codigo, tipo, distrito)')
-    .eq('id', citaId)
-    .maybeSingle()
-  if (!cita) return fallo('Cita no encontrada')
-  if (cita.estado !== 'programada') return fallo('La cita ya no está programada')
-  const plantilla =
-    aviso === 'confirmacion'
-      ? cita.tipo === 'visita'
-        ? 'visita_confirmacion'
-        : 'cita_confirmacion'
-      : aviso === '24h'
-        ? 'recordatorio_24h'
-        : 'recordatorio_mismo_dia'
-  const { personaId, ...base } = await variablesLead(cita.lead_id)
-  const inmueble = cita.inmueble as unknown as { codigo: string; tipo: string; distrito: string } | null
-  const envio = await enviarMensaje({
-    personaId,
-    leadId: cita.lead_id,
-    plantilla,
-    variables: {
-      ...base,
-      fecha: aviso === 'confirmacion' ? diaLargo(cita.inicio) : fmtFecha(cita.inicio),
-      hora: fmtHora(cita.inicio),
-      direccion: [cita.direccion, cita.distrito].filter(Boolean).join(', '),
-      inmueble: inmueble ? describirInmueble(inmueble) : base.inmueble,
-    },
-    metadata: { cita_id: cita.id, aviso },
-  })
-  if (!envio.ok) return fallo(envio.error)
-  const { error } = await supabase.rpc('registrar_aviso_cita', {
-    p_cita_id: citaId,
-    p_aviso: aviso,
-    p_mensaje_id: envio.mensajeId,
-  })
-  if (error) return deError(error)
-  refrescar(cita.lead_id)
-  return exito(envio.advertencia ?? 'Mensaje enviado')
+  const r = await enviarAviso(await crearClienteServidor(), citaId, aviso)
+  if (!r.ok) return fallo(r.error)
+  refrescar(r.leadId)
+  return exito(r.advertencia ?? 'Mensaje enviado')
 }

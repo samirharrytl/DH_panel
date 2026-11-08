@@ -54,6 +54,13 @@ La integración vive en `lib/whatsapp` y usa la API oficial de WhatsApp Cloud (M
   - Fuera de la ventana de 24 horas solo salen plantillas aprobadas: registra su nombre en
     **Configuración → Plantillas**. Sus parámetros `{{1}}`, `{{2}}`… siguen el orden de las variables del mensaje.
 
+## Recordatorios automáticos (cron externo)
+
+`/api/cron/recordatorios` envía por WhatsApp el recordatorio de 24 horas y el del mismo día de cada cita y visita
+programada, entre las 8:00 y las 21:00 de Lima. Llámalo cada 15 minutos desde un servicio externo (por ejemplo
+cron-job.org) con el encabezado `Authorization: Bearer <CRON_SECRET>`. Fuera de la ventana de 24 horas solo sale
+si la plantilla tiene su nombre aprobado en Meta (Configuración → Plantillas); si no, queda en `errores`.
+
 ## Comandos
 
 | Comando | Qué hace |
@@ -62,6 +69,7 @@ La integración vive en `lib/whatsapp` y usa la API oficial de WhatsApp Cloud (M
 | `npm run build` | Build de producción |
 | `npm run typecheck` | Revisión de tipos |
 | `npm run lint` | ESLint |
+| `npm run test:recordatorios` | Prueba qué recordatorio automático toca según la hora de Lima |
 | `npm run test:sql` | Aplica las migraciones en un Postgres embebido (PGlite) y recorre los criterios de aceptación de las reglas de negocio |
 | `npm run db:migrar` | Aplica las migraciones pendientes a `DATABASE_URL` |
 | `npm run crear-admin` | Crea o promueve un usuario administrador |

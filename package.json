@@ -9,6 +9,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test:sql": "node scripts/probar-sql.mjs",
+    "test:recordatorios": "node --no-warnings scripts/probar-recordatorios.mjs",
     "db:migrar": "node scripts/migrar.mjs",
     "crear-admin": "node scripts/crear-admin.mjs",
     "db:demo": "node scripts/datos-demo.mjs"

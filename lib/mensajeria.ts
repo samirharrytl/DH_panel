@@ -1,4 +1,5 @@
 import 'server-only'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { renderizar, variablesEnOrden, type Variables } from '@/lib/plantillas'
 import { CANALES, TIPOS_INMUEBLE, etiqueta } from '@/lib/catalogos'
@@ -23,8 +24,10 @@ export async function enviarMensaje(opciones: {
   botones?: Boton[]
   imagenUrl?: string
   metadata?: Record<string, unknown>
+  // Sin sesión de usuario (cron): cliente con la clave secreta
+  supabase?: SupabaseClient
 }): Promise<EnvioPanel> {
-  const supabase = await crearClienteServidor()
+  const supabase = opciones.supabase ?? (await crearClienteServidor())
   const { data: persona } = await supabase
     .from('personas')
     .select('telefono, no_contactar, ultimo_entrante_at')
@@ -106,8 +109,8 @@ export async function enviarMensaje(opciones: {
 }
 
 // Variables comunes de las plantillas para un lead
-export async function variablesLead(leadId: string): Promise<Variables & { personaId: string }> {
-  const supabase = await crearClienteServidor()
+export async function variablesLead(leadId: string, cliente?: SupabaseClient): Promise<Variables & { personaId: string }> {
+  const supabase = cliente ?? (await crearClienteServidor())
   const { data: l } = await supabase
     .from('leads')
     .select(

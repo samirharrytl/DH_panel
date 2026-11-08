@@ -113,6 +113,12 @@ async function main() {
     )
   })
 
+  prueba('Cron: la clave de servidor pasa las validaciones de acceso; el asesor no se vuelve admin', async () => {
+    assert.equal((await como(db, null, () => uno(db, 'select es_admin() a'))).a, true)
+    assert.equal((await como(db, ASESORA, () => uno(db, 'select es_admin() a'))).a, false)
+    assert.equal((await como(db, ADMIN, () => uno(db, 'select es_admin() a'))).a, true)
+  })
+
   prueba('HU-02: siempre queda un administrador activo', async () => {
     await esperarError(
       como(db, ADMIN, () => db.query(`update perfiles set activo = false where id = $1`, [ADMIN])),
