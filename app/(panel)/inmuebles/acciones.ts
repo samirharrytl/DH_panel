@@ -5,6 +5,7 @@ import { exigirUsuario } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { casilla, deError, entero, exito, fallo, lista, numero, siNo, texto, type Resultado } from '@/lib/acciones'
 import { CONSERVACION, TIPOS_INMUEBLE } from '@/lib/catalogos'
+import { describirInmueble, enviarMensaje, variablesLead } from '@/lib/mensajeria'
 
 function refrescar(inmuebleId: string | null, leadId?: string | null) {
   revalidatePath('/inmuebles')
@@ -221,4 +222,32 @@ export async function retirarInmueble(_: Resultado | null, f: FormData): Promise
   if (error) return deError(error)
   refrescar(inmuebleId, await leadDelInmueble(inmuebleId))
   return exito('Inmueble retirado de la base')
+}
+
+// HU-30: envía al propietario el resumen del periodo con la plantilla "insights" y lo guarda
+export async function enviarInsights(inmuebleId: string, desde: string, hasta: string, resumen: string): Promise<Resultado> {
+  await exigirUsuario()
+  const supabase = await crearClienteServidor()
+  const leadId = await leadDelInmueble(inmuebleId)
+  if (!leadId) return fallo('El inmueble no tiene propietario registrado')
+  const { personaId, ...variables } = await variablesLead(leadId)
+  const { data: i } = await supabase.from('inmuebles').select('codigo, tipo, distrito').eq('id', inmuebleId).single()
+  const envio = await enviarMensaje({
+    personaId,
+    leadId,
+    plantilla: 'insights',
+    variables: { ...variables, inmueble: i ? describirInmueble(i) : variables.inmueble, resumen },
+    metadata: { inmueble_id: inmuebleId, desde, hasta },
+  })
+  if (!envio.ok) return fallo(envio.error)
+  const { error } = await supabase.rpc('guardar_insights', {
+    p_inmueble_id: inmuebleId,
+    p_desde: desde,
+    p_hasta: hasta,
+    p_texto: envio.cuerpo,
+    p_mensaje_id: envio.mensajeId,
+  })
+  if (error) return deError(error)
+  refrescar(inmuebleId, leadId)
+  return exito(envio.advertencia ?? 'Resumen enviado al propietario')
 }

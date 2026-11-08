@@ -92,3 +92,38 @@ export function enlaceWhatsApp(numero: string, codigoInmueble: string, codigoPub
 export function textoParaRed(texto: string | null, enlace: string | null) {
   return [texto?.trim(), enlace].filter(Boolean).join('\n')
 }
+
+// HU-30: resumen de insights para el propietario a partir de insights_inmueble()
+export type DatosInsights = {
+  vistas: number
+  interacciones: number
+  publicaciones: number
+  leads_generados: number
+  veces_match: number
+  pct_me_interesa: number | null
+  visitas_agendadas: number
+  visitas_realizadas: number
+  opiniones: { interes: string; le_gusto: string | null; no_le_gusto: string | null }[]
+  precio_m2: number | null
+  precio_m2_zona: number | null
+  similares: number
+  diferencia_zona_pct: number | null
+}
+
+export function textoInsights(d: DatosInsights) {
+  const zona =
+    d.diferencia_zona_pct === null
+      ? 'Aún no hay inmuebles similares en la zona para comparar el precio.'
+      : `Precio por m²: ${soles(d.precio_m2)} frente a ${soles(d.precio_m2_zona)} de ${plural(d.similares, 'inmueble similar', 'inmuebles similares')} en la zona (${d.diferencia_zona_pct > 0 ? '+' : ''}${d.diferencia_zona_pct} %).`
+  const comentarios = d.opiniones
+    .flatMap((o) => [o.le_gusto && `👍 ${o.le_gusto}`, o.no_le_gusto && `👎 ${o.no_le_gusto}`])
+    .filter(Boolean)
+  return [
+    `• Publicaciones: ${d.publicaciones} (${num(d.vistas)} vistas, ${num(d.interacciones)} interacciones en total)`,
+    `• Personas interesadas que nos escribieron: ${d.leads_generados}`,
+    `• Enviado a compradores: ${plural(d.veces_match, 'vez', 'veces')}${d.pct_me_interesa !== null ? `, ${d.pct_me_interesa} % respondió «Me interesa»` : ''}`,
+    `• Visitas: ${d.visitas_agendadas} agendadas, ${d.visitas_realizadas} realizadas`,
+    ...(comentarios.length ? [`• Lo que dijeron: ${comentarios.join(' · ')}`] : []),
+    `• ${zona}`,
+  ].join('\n')
+}
