@@ -14,13 +14,15 @@ export async function enviarMatches(_: Resultado | null, f: FormData): Promise<R
   await exigirUsuario()
   const leadId = texto(f, 'lead_id')
   const ids = [...new Set(lista(f, 'inmueble'))]
+  // HU-24: la novedad de un inmueble nuevo usa el mismo envío con su plantilla y su tope de frecuencia
+  const tipo = texto(f, 'tipo') === 'novedad' ? 'novedad' : 'match'
   if (!leadId) return fallo('Lead no válido')
   if (!ids.length) return fallo('Elige al menos un inmueble')
   const supabase = await crearClienteServidor()
 
   const { data: errorValidacion, error } = await supabase.rpc('validar_envio_match', {
     p_lead_id: leadId,
-    p_tipo: 'match',
+    p_tipo: tipo,
     p_cantidad: ids.length,
   })
   if (error) return deError(error)
@@ -41,7 +43,7 @@ export async function enviarMatches(_: Resultado | null, f: FormData): Promise<R
   const envio = await enviarMensaje({
     personaId,
     leadId,
-    plantilla: 'match',
+    plantilla: tipo === 'novedad' ? 'novedades' : 'match',
     variables: { ...variables, opciones },
     metadata: { inmuebles: ids },
   })
@@ -50,13 +52,14 @@ export async function enviarMatches(_: Resultado | null, f: FormData): Promise<R
   const { data: envioId, error: errorRegistro } = await supabase.rpc('registrar_envio_match', {
     p_lead_id: leadId,
     p_inmuebles: ids,
-    p_tipo: 'match',
+    p_tipo: tipo,
     p_mensaje_id: envio.mensajeId,
   })
   if (errorRegistro) return fallo(`El mensaje se envió, pero no se pudo registrar el envío: ${mensajeError(errorRegistro)}`)
 
   const botones = await enviarBotonesOpciones({ envioId: String(envioId), personaId, leadId, inmuebles })
   revalidatePath(`/leads/${leadId}`)
+  revalidatePath(`/inmuebles/${ids[0]}`)
 
   const partes = [envio.advertencia ?? `${ids.length === 1 ? 'Opción enviada' : `${ids.length} opciones enviadas`}.`]
   if (!botones) partes.push('Ventana de 24 horas cerrada: registra sus respuestas a mano.')
