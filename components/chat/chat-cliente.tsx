@@ -14,7 +14,7 @@ export type MensajeChat = {
   direccion: 'entrante' | 'saliente'
   tipo: string
   cuerpo: string | null
-  origen: 'whatsapp' | 'panel' | 'manual' | 'simulado'
+  origen: 'whatsapp' | 'panel' | 'manual' | 'simulado' | 'celular' | 'importado'
   estado: string
   error: string | null
   metadata: { advertencia?: string; botones?: { id: string; titulo: string }[]; simulado?: boolean }
@@ -125,6 +125,8 @@ export function ChatCliente({
               {m.metadata?.advertencia && <p className="mt-1 text-[11px] text-amber-800">{m.metadata.advertencia}</p>}
               <p className="mt-0.5 text-right text-[11px] text-suave">
                 {m.origen === 'manual' && 'Registrado a mano · '}
+                {m.origen === 'celular' && 'Desde el celular · '}
+                {m.origen === 'importado' && 'Historial del celular · '}
                 {m.direccion === 'saliente' && m.autor?.nombre && `${m.autor.nombre} · `}
                 {hora(m.created_at)}{' '}
                 <span className={m.estado === 'leido' ? 'text-sky-600' : ''}>{ICONO_ESTADO[m.estado] ?? ''}</span>

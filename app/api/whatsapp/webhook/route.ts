@@ -2,8 +2,9 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { crearClienteAdmin } from '@/lib/supabase/admin'
 import { leerWebhook, verificarFirma } from '@/lib/whatsapp'
 
-// Webhook de WhatsApp Cloud API. Meta lo llama con cada mensaje entrante y cada cambio de estado de
-// entrega; todo se guarda en el historial de la persona.
+// Webhook de WhatsApp Cloud API. Meta lo llama con cada mensaje entrante, cada cambio de estado de
+// entrega (con su cobro) y, en coexistencia, con lo enviado desde la app del celular (smb_message_echoes)
+// y el historial de la app (history); todo se guarda en el historial de la persona.
 
 // Verificación al suscribir el webhook en Meta
 export function GET(request: NextRequest) {
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
     return new NextResponse('JSON no válido', { status: 400 })
   }
 
-  const { mensajes, estados } = leerWebhook(payload)
+  const { mensajes, app, estados } = leerWebhook(payload)
   const supabase = crearClienteAdmin()
   const errores: string[] = []
 
@@ -44,8 +45,29 @@ export async function POST(request: NextRequest) {
     })
     if (error) errores.push(`${m.waId}: ${error.message}`)
   }
+  // Coexistencia: lo enviado desde la app del celular y el historial importado
+  for (const m of app) {
+    const { error } = await supabase.rpc('registrar_mensaje_app', {
+      p_telefono: m.telefono,
+      p_nombre: m.nombre,
+      p_direccion: m.direccion,
+      p_cuerpo: m.cuerpo,
+      p_wa_id: m.waId,
+      p_tipo: m.tipo,
+      p_fecha: m.fecha,
+      p_origen: m.origen,
+      p_estado: m.estado,
+    })
+    if (error) errores.push(`${m.waId}: ${error.message}`)
+  }
   for (const s of estados) {
-    const { error } = await supabase.rpc('actualizar_estado_whatsapp', { p_wa_id: s.waId, p_estado: s.estado, p_error: s.error })
+    const { error } = await supabase.rpc('actualizar_estado_whatsapp', {
+      p_wa_id: s.waId,
+      p_estado: s.estado,
+      p_error: s.error,
+      p_cobro_categoria: s.cobroCategoria,
+      p_cobro_tipo: s.cobroTipo,
+    })
     if (error) errores.push(`${s.waId}: ${error.message}`)
   }
 

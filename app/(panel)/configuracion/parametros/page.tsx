@@ -50,6 +50,9 @@ function Control({ p }: { p: Parametro }) {
   if (p.tipo === 'entero') {
     return <Entrada type="number" min={0} step={1} name="valor" defaultValue={String(p.valor)} className="sm:w-32" />
   }
+  if (p.tipo === 'decimal') {
+    return <Entrada type="number" min={0} step="any" name="valor" defaultValue={String(p.valor)} className="sm:w-32" />
+  }
   return <Entrada name="valor" defaultValue={String(p.valor ?? '')} className="sm:w-96" />
 }
 

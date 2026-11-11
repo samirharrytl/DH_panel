@@ -259,4 +259,64 @@ export function registrar({ db, prueba, como, registrar, esperarError, uno, ADMI
     const ds = await q(ADMIN, `select firmo, urgencia from v_dataset_propietarios where lead_id = $1`, [propietario])
     assert.equal(ds.rows[0].firmo, true)
   })
+
+  // ---------- Coexistencia y costos de WhatsApp ----------
+  prueba('Coexistencia: lo enviado desde el celular y el historial quedan en el chat sin alertas', async () => {
+    const app = (tel, dir, wa, origen = 'celular', fecha = 'now()') =>
+      val(null, `select registrar_mensaje_app('${tel}', null, '${dir}', 'hola', '${wa}', 'texto', ${fecha}, '${origen}')`)
+    await val(null, `select registrar_entrante_whatsapp('51955000111', 'Rosa', 'Hola', 'wamid.co1')`)
+    const r = await app('51955000111', 'saliente', 'wamid.co2')
+    assert.ok(r.mensaje_id)
+    assert.equal((await app('51955000111', 'saliente', 'wamid.co2')).duplicado, true)
+    const m = await uno(db, `select origen, estado from mensajes where wa_id = 'wamid.co2'`)
+    assert.deepEqual([m.origen, m.estado], ['celular', 'enviado'])
+    const sinLeer = await uno(db, `select count(*)::int n from mensajes where wa_id = 'wamid.co1' and leido_at is null`)
+    assert.equal(sinLeer.n, 0, 'responder desde el celular marca lo anterior como leído')
+    await esperarError(q(ADMIN, `select registrar_mensaje_app('51955000111', null, 'entrante', 'x', 'wamid.co3', 'texto', now(), 'celular')`), /permission denied/)
+
+    const avisos = async () => (await uno(db, `select count(*)::int n from notificaciones`)).n
+    const antes = await avisos()
+    await app('51955000222', 'entrante', 'wamid.co4', 'importado', `now() - interval '40 days'`)
+    const h = await uno(db, `select m.leido_at is not null leido, p.ultimo_entrante_at < now() - interval '30 days' vieja
+      from mensajes m join personas p on p.id = m.persona_id where wa_id = 'wamid.co4'`)
+    assert.deepEqual([h.leido, h.vieja], [true, true], 'el historial llega leído y no abre la ventana de 24 h')
+    assert.equal(await avisos(), antes, 'el historial no genera alertas')
+
+    await db.query(`update personas set no_contactar = true where telefono = '51955000222'`)
+    await app('51955000222', 'saliente', 'wamid.co5')
+    const baja = await uno(db, `select count(*)::int n from notificaciones where usuario_id = $1 and titulo = 'Mensaje a una persona en Baja'`, [ADMIN])
+    assert.equal(baja.n, 1, 'se guarda y se avisa al admin si desde el celular se escribe a alguien en Baja')
+    await esperarError(
+      q(ADMIN, `select registrar_mensaje((select id from personas where telefono = '51955000222'), 'saliente', 'x', 'panel')`),
+      /Baja/,
+    )
+  })
+
+  prueba('Costos de WhatsApp: cobro informado por Meta, estimado y cupo gratis del chat', async () => {
+    const costos = async () => {
+      const c = await val(ADMIN, `select costos_whatsapp(hoy_lima(), hoy_lima())`)
+      const cat = (k) => c.categorias.find((x) => x.categoria === k) ?? { enviados: 0, cobrables: 0, costo: 0 }
+      return { c, marketing: cat('marketing'), utility: cat('utility'), servicio: cat('servicio') }
+    }
+    await esperarError(q(ASESORA, `select costos_whatsapp(hoy_lima(), hoy_lima())`), /administrador/)
+    const a = await costos()
+    const persona = (await uno(db, `select id from personas where telefono = '51955000111'`)).id
+    await q(ADMIN, `select registrar_mensaje($1, 'saliente', 'x', 'panel', null, 'enviado', 'plantilla', 'novedades', 'wamid.cs1')`, [persona])
+    await q(ADMIN, `select registrar_mensaje($1, 'saliente', 'x', 'panel', null, 'enviado', 'plantilla', 'cita_confirmacion', 'wamid.cs2')`, [persona])
+    await val(null, `select actualizar_estado_whatsapp('wamid.cs1', 'leido')`)
+    await val(null, `select actualizar_estado_whatsapp('wamid.cs1', 'entregado', null, 'marketing', 'regular')`)
+    const m = await uno(db, `select estado, cobro_categoria, cobro_tipo from mensajes where wa_id = 'wamid.cs1'`)
+    assert.deepEqual([m.estado, m.cobro_categoria, m.cobro_tipo], ['leido', 'marketing', 'regular'], 'el cobro se guarda aunque el estado no retroceda')
+    const b = await costos()
+    assert.equal(b.marketing.cobrables - a.marketing.cobrables, 1)
+    assert.equal(b.utility.cobrables - a.utility.cobrables, 1, 'la confirmación de cita se estima como utility')
+    assert.equal(b.c.estimados - a.c.estimados, 1)
+    assert.equal(b.servicio.cobrables, 0, 'el chat dentro del cupo gratis no se cobra')
+    assert.ok(b.c.desde_celular >= 2)
+    await q(ADMIN, `update parametros set valor = '0' where clave = 'whatsapp_servicio_gratis_mes'`)
+    const sinCupo = await costos()
+    assert.equal(sinCupo.servicio.cobrables, sinCupo.servicio.enviados, 'sin cupo, todo el chat se cobra')
+    await q(ADMIN, `update parametros set valor = '1000' where clave = 'whatsapp_servicio_gratis_mes'`)
+    await esperarError(q(ADMIN, `update parametros set valor = '-1' where clave = 'whatsapp_tarifa_marketing'`), /mayor o igual a 0/)
+  })
 }

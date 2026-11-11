@@ -12,6 +12,11 @@ function interpretar(tipo: string, crudo: string): unknown {
       if (!Number.isInteger(n) || n < 0) throw new Error('Ingresa un número entero mayor o igual a 0')
       return n
     }
+    case 'decimal': {
+      const n = Number(crudo.replace(',', '.'))
+      if (!crudo.trim() || !Number.isFinite(n) || n < 0) throw new Error('Ingresa un número mayor o igual a 0, por ejemplo 0.0703')
+      return n
+    }
     case 'lista_enteros': {
       const dias = crudo
         .split(/[,\s]+/)

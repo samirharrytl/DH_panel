@@ -99,39 +99,104 @@ export function verificarFirma(cuerpo: string, firma: string | null) {
   return esperada.length === recibida.length && timingSafeEqual(esperada, recibida)
 }
 
+export type TipoMensaje = 'texto' | 'interactivo' | 'imagen' | 'documento' | 'audio' | 'otro'
 export type MensajeEntrante = {
   waId: string
   telefono: string
   nombre: string | null
-  tipo: 'texto' | 'interactivo' | 'imagen' | 'documento' | 'audio' | 'otro'
+  tipo: TipoMensaje
   cuerpo: string
   fecha: string
   boton: string | null
 }
-export type EstadoEntrega = { waId: string; estado: 'enviado' | 'entregado' | 'leido' | 'fallido'; error: string | null }
+// Mensaje de la app del celular (coexistencia): eco de un envío del asesor o historial importado
+export type MensajeApp = {
+  waId: string
+  telefono: string
+  nombre: string | null
+  direccion: 'entrante' | 'saliente'
+  tipo: TipoMensaje
+  cuerpo: string
+  fecha: string
+  origen: 'celular' | 'importado'
+  estado: string | null
+}
+export type EstadoEntrega = {
+  waId: string
+  estado: 'enviado' | 'entregado' | 'leido' | 'fallido'
+  error: string | null
+  cobroCategoria: string | null
+  cobroTipo: string | null
+}
 
-const ESTADOS: Record<string, EstadoEntrega['estado']> = { sent: 'enviado', delivered: 'entregado', read: 'leido', failed: 'fallido' }
+const ESTADOS: Record<string, EstadoEntrega['estado']> = {
+  sent: 'enviado',
+  pending: 'enviado',
+  delivered: 'entregado',
+  read: 'leido',
+  played: 'leido',
+  failed: 'fallido',
+  error: 'fallido',
+}
+
+type MensajeWebhook = {
+  id: string
+  from: string
+  to?: string
+  timestamp: string
+  type: string
+  text?: { body: string }
+  interactive?: { button_reply?: { id: string; title: string }; list_reply?: { id: string; title: string } }
+  button?: { payload: string; text: string }
+  image?: { caption?: string }
+  document?: { filename?: string; caption?: string }
+  history_context?: { status?: string }
+}
 
 type CambioWebhook = {
+  field?: string
   value?: {
     contacts?: { wa_id: string; profile?: { name?: string } }[]
-    messages?: {
+    messages?: MensajeWebhook[]
+    message_echoes?: MensajeWebhook[]
+    history?: { threads?: { id: string; messages?: MensajeWebhook[] }[]; errors?: { code?: number; message?: string }[] }[]
+    statuses?: {
       id: string
-      from: string
-      timestamp: string
-      type: string
-      text?: { body: string }
-      interactive?: { button_reply?: { id: string; title: string }; list_reply?: { id: string; title: string } }
-      button?: { payload: string; text: string }
-      image?: { caption?: string }
-      document?: { filename?: string; caption?: string }
+      status: string
+      errors?: { title?: string; message?: string }[]
+      pricing?: { category?: string; type?: string }
     }[]
-    statuses?: { id: string; status: string; errors?: { title?: string; message?: string }[] }[]
   }
+}
+
+function contenido(m: MensajeWebhook) {
+  const respuesta = m.interactive?.button_reply ?? m.interactive?.list_reply
+  const cuerpo =
+    m.text?.body ??
+    respuesta?.title ??
+    m.button?.text ??
+    m.image?.caption ??
+    m.document?.caption ??
+    m.document?.filename ??
+    `[${m.type}]`
+  const tipo: TipoMensaje =
+    m.type === 'text'
+      ? 'texto'
+      : m.type === 'interactive' || m.type === 'button'
+        ? 'interactivo'
+        : m.type === 'image'
+          ? 'imagen'
+          : m.type === 'document'
+            ? 'documento'
+            : m.type === 'audio'
+              ? 'audio'
+              : 'otro'
+  return { cuerpo, tipo, boton: respuesta?.id ?? m.button?.payload ?? null, fecha: new Date(Number(m.timestamp) * 1000).toISOString() }
 }
 
 export function leerWebhook(payload: { entry?: { changes?: CambioWebhook[] }[] }) {
   const mensajes: MensajeEntrante[] = []
+  const app: MensajeApp[] = []
   const estados: EstadoEntrega[] = []
   for (const entrada of payload.entry ?? []) {
     for (const cambio of entrada.changes ?? []) {
@@ -139,43 +204,47 @@ export function leerWebhook(payload: { entry?: { changes?: CambioWebhook[] }[] }
       if (!v) continue
       const nombres = new Map(v.contacts?.map((c) => [c.wa_id, c.profile?.name ?? null]))
       for (const m of v.messages ?? []) {
-        const respuesta = m.interactive?.button_reply ?? m.interactive?.list_reply
-        const boton = respuesta?.id ?? m.button?.payload ?? null
-        const cuerpo =
-          m.text?.body ??
-          respuesta?.title ??
-          m.button?.text ??
-          m.image?.caption ??
-          m.document?.caption ??
-          m.document?.filename ??
-          `[${m.type}]`
-        const tipo: MensajeEntrante['tipo'] =
-          m.type === 'text'
-            ? 'texto'
-            : m.type === 'interactive' || m.type === 'button'
-              ? 'interactivo'
-              : m.type === 'image'
-                ? 'imagen'
-                : m.type === 'document'
-                  ? 'documento'
-                  : m.type === 'audio'
-                    ? 'audio'
-                    : 'otro'
-        mensajes.push({
-          waId: m.id,
-          telefono: m.from,
-          nombre: nombres.get(m.from) ?? null,
-          tipo,
-          cuerpo,
-          fecha: new Date(Number(m.timestamp) * 1000).toISOString(),
-          boton,
-        })
+        const { boton, ...resto } = contenido(m)
+        mensajes.push({ waId: m.id, telefono: m.from, nombre: nombres.get(m.from) ?? null, boton, ...resto })
+      }
+      // Enviados por el asesor desde la app del celular
+      for (const m of v.message_echoes ?? []) {
+        if (!m.to) continue
+        const { cuerpo, tipo, fecha } = contenido(m)
+        app.push({ waId: m.id, telefono: m.to, nombre: nombres.get(m.to) ?? null, direccion: 'saliente', tipo, cuerpo, fecha, origen: 'celular', estado: null })
+      }
+      // Historial de la app (una sola vez, al conectar el número): cada hilo es un cliente
+      for (const h of v.history ?? []) {
+        if (h.errors?.length) console.warn('Historial de WhatsApp no compartido', h.errors)
+        for (const hilo of h.threads ?? []) {
+          for (const m of hilo.messages ?? []) {
+            const { cuerpo, tipo, fecha } = contenido(m)
+            app.push({
+              waId: m.id,
+              telefono: hilo.id,
+              nombre: null,
+              direccion: m.from === hilo.id ? 'entrante' : 'saliente',
+              tipo,
+              cuerpo,
+              fecha,
+              origen: 'importado',
+              estado: ESTADOS[m.history_context?.status ?? ''] ?? null,
+            })
+          }
+        }
       }
       for (const s of v.statuses ?? []) {
         const estado = ESTADOS[s.status]
-        if (estado) estados.push({ waId: s.id, estado, error: s.errors?.[0]?.message ?? s.errors?.[0]?.title ?? null })
+        if (estado)
+          estados.push({
+            waId: s.id,
+            estado,
+            error: s.errors?.[0]?.message ?? s.errors?.[0]?.title ?? null,
+            cobroCategoria: s.pricing?.category ?? null,
+            cobroTipo: s.pricing?.type ?? null,
+          })
       }
     }
   }
-  return { mensajes, estados }
+  return { mensajes, app, estados }
 }

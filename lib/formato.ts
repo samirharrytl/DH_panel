@@ -6,6 +6,7 @@ const fFechaCorta = new Intl.DateTimeFormat('es-PE', { timeZone: ZONA, day: 'num
 const fDia = new Intl.DateTimeFormat('es-PE', { timeZone: ZONA, weekday: 'long', day: 'numeric', month: 'long' })
 const fHora = new Intl.DateTimeFormat('es-PE', { timeZone: ZONA, hour: '2-digit', minute: '2-digit', hour12: false })
 const fSoles = new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN', maximumFractionDigits: 0 })
+const fDolares = new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })
 const fNumero = new Intl.NumberFormat('es-PE', { maximumFractionDigits: 1 })
 
 type Fecha = string | Date | null | undefined
@@ -22,6 +23,8 @@ export const diaLargo = (d: Fecha) => {
 }
 export const soles = (n: number | string | null | undefined) =>
   n === null || n === undefined || n === '' ? '—' : fSoles.format(Number(n)).replace('S/', 'S/ ').replace('  ', ' ')
+export const dolares = (n: number | string | null | undefined) =>
+  n === null || n === undefined || n === '' ? '—' : fDolares.format(Number(n))
 export const num = (n: number | string | null | undefined) => (n === null || n === undefined ? '—' : fNumero.format(Number(n)))
 
 export function telefono(t: string | null | undefined) {

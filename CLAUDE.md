@@ -21,7 +21,12 @@ Si una regla de negocio no está en estos documentos, pregunta antes de inventar
 
 ## WhatsApp
 
-- API oficial de WhatsApp Cloud (Meta), conexión directa, con número dedicado: ese número no se usa en la app del celular y todo el chat pasa por el panel.
+- API oficial de WhatsApp Cloud (Meta) en **coexistencia**: el mismo número funciona en la app WhatsApp Business del celular y en la Cloud API (panel). Lo enviado desde la app es gratis; lo enviado por la API se cobra según la tarifa de Meta.
+  - Lo que el asesor envía desde la app llega por el webhook `smb_message_echoes` y se guarda con origen `celular`. El historial de la app (hasta 6 meses) llega una sola vez por el webhook `history` y se guarda con origen `importado`.
+  - Al conectar el número hay 24 horas para pedir la sincronización del historial (`POST /<PHONE_NUMBER_ID>/smb_app_data` con `sync_type: history`), y solo se puede hacer una vez.
+  - La conexión en coexistencia se hace con Embedded Signup, que exige ser Tech Provider o pasar por un Solution Partner (BSP): por definir.
+  - Lo enviado desde el celular no pasa por las reglas del panel (Baja, consentimiento, plantillas): el panel lo guarda igual y avisa al administrador si se escribió a alguien en Baja.
+- Los costos de WhatsApp se ven en el Tablero. Las tarifas por mensaje son parámetros; el cobro real de cada mensaje lo informa Meta en el webhook de estados (`pricing`).
 - El número (nuevo o el actual) está por definir antes de producción.
 - Aún no hay credenciales de producción. Desarrolla contra el número de prueba de Meta y aísla la integración en un módulo propio (`lib/whatsapp`) con un modo simulado para trabajar en local sin credenciales.
 - Mensajes entrantes por webhook; cada mensaje entrante y saliente se guarda en el historial del lead.

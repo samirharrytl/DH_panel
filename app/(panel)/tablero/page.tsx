@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { exigirAdmin } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { EMBUDO, ESTADOS_LEAD, SALIDAS, type EstadoLead, type TipoLead } from '@/lib/catalogos'
-import { fecha, hoyLima, num, soles } from '@/lib/formato'
+import { dolares, fecha, hoyLima, num, soles } from '@/lib/formato'
 import { Aviso, EncabezadoPagina, Entrada, Tarjeta, claseBoton, cx } from '@/components/ui'
 
 export const metadata: Metadata = { title: 'Tablero' }
@@ -32,6 +32,24 @@ type Tablero = {
     visitas_realizadas: number
   }
 }
+
+type Costos = {
+  tarifas: Record<CategoriaCosto, number>
+  gratis_mes: number
+  categorias: { categoria: CategoriaCosto; enviados: number; cobrables: number; costo: number }[]
+  meses: { mes: string; enviados: number; cobrables: number; costo: number }[]
+  estimados: number
+  desde_celular: number
+  entrantes: number
+  chat_mes_actual: number
+}
+type CategoriaCosto = 'marketing' | 'utility' | 'servicio'
+const CATEGORIAS_COSTO: Record<CategoriaCosto, { titulo: string; detalle: string }> = {
+  marketing: { titulo: 'Plantillas de marketing', detalle: 'Bienvenida, refuerzos, novedades, matches y testimonio fuera de las 24 h' },
+  utility: { titulo: 'Plantillas utility', detalle: 'Confirmaciones, recordatorios, opinión e insights' },
+  servicio: { titulo: 'Chat dentro de las 24 h', detalle: 'Gratis hasta el cupo del mes' },
+}
+const nombreMes = (mes: string) => fecha(`${mes}-01`).slice(3)
 
 const PERIODOS = { '30': 'Últimos 30 días', '90': 'Últimos 90 días', anio: 'Este año' } as const
 const TITULO_TIPO: Record<TipoLead, string> = { propietario: 'Propietarios', interesado: 'Interesados' }
@@ -95,8 +113,9 @@ export default async function PaginaTablero({ searchParams }: PageProps<'/tabler
   }
 
   const supabase = await crearClienteServidor()
-  const [{ data, error }, { count: propietarios }, { count: conCalificacion }, { count: firmas }] = await Promise.all([
+  const [{ data, error }, { data: costosData, error: errorCostos }, { count: propietarios }, { count: conCalificacion }, { count: firmas }] = await Promise.all([
     supabase.rpc('tablero', { p_desde: desde, p_hasta: hasta }),
+    supabase.rpc('costos_whatsapp', { p_desde: desde, p_hasta: hasta }),
     supabase.from('v_dataset_propietarios').select('lead_id', { count: 'exact', head: true }),
     supabase
       .from('v_dataset_propietarios')
@@ -105,6 +124,8 @@ export default async function PaginaTablero({ searchParams }: PageProps<'/tabler
     supabase.from('v_dataset_propietarios').select('lead_id', { count: 'exact', head: true }).eq('firmo', true),
   ])
   const t = data as Tablero | null
+  const c = costosData as Costos | null
+  const costoTotal = c?.categorias.reduce((s, x) => s + Number(x.costo), 0) ?? 0
 
   return (
     <>
@@ -264,6 +285,76 @@ export default async function PaginaTablero({ searchParams }: PageProps<'/tabler
           </section>
         </div>
       )}
+
+      <section className="mt-6">
+        <h2 className="mb-2 text-base font-semibold text-tinta">Costos de WhatsApp</h2>
+        {errorCostos && <Aviso tipo="error">No se pudieron cargar los costos: {errorCostos.message}</Aviso>}
+        {c && (
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              <Cifra etiqueta="Costo en el periodo" valor={dolares(costoTotal)} detalle="Enviados desde el panel" />
+              <Cifra
+                etiqueta="Chat gratis este mes"
+                valor={`${num(Math.min(c.chat_mes_actual, c.gratis_mes))} / ${num(c.gratis_mes)}`}
+                detalle={c.chat_mes_actual > c.gratis_mes ? `${num(c.chat_mes_actual - c.gratis_mes)} sobre el cupo` : 'Mensajes usados del cupo'}
+              />
+              <Cifra etiqueta="Enviados desde el celular" valor={num(c.desde_celular)} detalle="Gratis" />
+              <Cifra etiqueta="Mensajes de clientes" valor={num(c.entrantes)} detalle="Gratis" />
+            </div>
+            <div className="grid gap-4 lg:grid-cols-2">
+              <Tarjeta titulo="Por tipo de mensaje">
+                <ul className="divide-y divide-borde-suave">
+                  {(Object.keys(CATEGORIAS_COSTO) as CategoriaCosto[]).map((k) => {
+                    const fila = c.categorias.find((x) => x.categoria === k)
+                    return (
+                      <li key={k} className="flex items-start justify-between gap-3 py-2 first:pt-0 last:pb-0 text-sm">
+                        <div>
+                          <p className="text-tinta">{CATEGORIAS_COSTO[k].titulo}</p>
+                          <p className="text-xs text-suave">
+                            {CATEGORIAS_COSTO[k].detalle} · {dolares(c.tarifas[k])} c/u
+                          </p>
+                        </div>
+                        <div className="text-right tabular-nums">
+                          <p className="font-medium text-tinta">{dolares(fila?.costo ?? 0)}</p>
+                          <p className="text-xs text-suave">
+                            {num(fila?.cobrables ?? 0)} cobrados de {num(fila?.enviados ?? 0)}
+                          </p>
+                        </div>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </Tarjeta>
+              <Tarjeta titulo="Por mes">
+                {c.meses.length === 0 ? (
+                  <p className="text-sm text-suave">No se enviaron mensajes desde el panel en el periodo.</p>
+                ) : (
+                  <ul className="divide-y divide-borde-suave">
+                    {c.meses.map((m) => (
+                      <li key={m.mes} className="flex justify-between py-2 first:pt-0 last:pb-0 text-sm tabular-nums">
+                        <span className="text-tinta">{nombreMes(m.mes)}</span>
+                        <span className="text-suave">
+                          {num(m.cobrables)} cobrados de {num(m.enviados)} ·{' '}
+                          <span className="font-medium text-tinta">{dolares(m.costo)}</span>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Tarjeta>
+            </div>
+            <p className="text-xs text-suave">
+              Solo cuesta lo que sale del panel por la API de WhatsApp: lo enviado desde la app del celular y lo que escriben
+              los clientes es gratis. Cuando Meta informa el cobro de un mensaje se usa ese dato
+              {c.estimados > 0 && <> ({num(c.estimados)} mensajes aún son estimados)</>}. Las tarifas se cambian en{' '}
+              <Link href="/configuracion/parametros" className="underline">
+                Configuración → Parámetros
+              </Link>
+              .
+            </p>
+          </div>
+        )}
+      </section>
 
       <Tarjeta titulo="Probabilidad de firma" className="mt-6">
         <p className="text-sm text-texto">
