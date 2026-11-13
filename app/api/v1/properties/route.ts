@@ -51,7 +51,8 @@ export async function GET(request: NextRequest) {
   const url = new Map((firmadas ?? []).flatMap((s) => (s.path && s.signedUrl ? [[s.path, s.signedUrl]] : [])))
 
   const items = filas.map((f) => {
-    const nombre = `${TIPOS_INMUEBLE[f.tipo] ?? 'Inmueble'} en ${f.distrito}`
+    const tipo = TIPOS_INMUEBLE[f.tipo] ?? 'Inmueble'
+    const nombre = `${tipo} en ${f.distrito}`
     const min = n(f.rentabilidad_min)
     return {
       id: f.id,
@@ -59,8 +60,8 @@ export async function GET(request: NextRequest) {
       district: { id: f.distrito_slug, name: f.distrito, slug: f.distrito_slug },
       origin: 'owner',
       developer: null,
-      // Solo la zona: el sitio nunca muestra la dirección exacta
-      address: f.distrito,
+      // El sitio nunca muestra la dirección exacta: donde iría la calle va el tipo («Departamento, Miraflores»)
+      address: tipo,
       badge: null,
       description: f.descripcion,
       location: null,
