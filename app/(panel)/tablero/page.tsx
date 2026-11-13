@@ -5,7 +5,7 @@ import { exigirAdmin } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { EMBUDO, ESTADOS_LEAD, SALIDAS, type EstadoLead, type TipoLead } from '@/lib/catalogos'
 import { dolares, fecha, hoyLima, num, soles } from '@/lib/formato'
-import { Aviso, EncabezadoPagina, Entrada, Tarjeta, claseBoton, cx } from '@/components/ui'
+import { Aviso, EncabezadoPagina, Entrada, Tarjeta, claseBoton, cx } from '@/components/legado'
 
 export const metadata: Metadata = { title: 'Tablero' }
 

@@ -4,7 +4,7 @@ import { exigirUsuario } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { ESTADOS_LEAD, TIPOS_LEAD, type EstadoLead, type TipoLead } from '@/lib/catalogos'
 import { relativo, telefono } from '@/lib/formato'
-import { Aviso, EncabezadoPagina, EnlaceBoton, Insignia, Vacio, cx } from '@/components/ui'
+import { Aviso, EncabezadoPagina, EnlaceBoton, Insignia, Vacio, cx } from '@/components/legado'
 import { Chat } from '@/components/chat/chat'
 
 export const metadata: Metadata = { title: 'Chats' }

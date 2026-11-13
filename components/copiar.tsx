@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, type MouseEvent } from 'react'
-import { Boton } from '@/components/ui'
+import { Boton } from '@/components/legado'
 
 type Variante = 'primario' | 'secundario' | 'fantasma' | 'peligro' | 'whatsapp'
 

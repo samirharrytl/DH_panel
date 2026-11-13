@@ -1,5 +1,5 @@
 import { isoALocal, hoyLima, ahoraMs } from '@/lib/formato'
-import { AreaTexto, Campo, Entrada, Seleccion } from '@/components/ui'
+import { AreaTexto, Campo, Entrada, Seleccion } from '@/components/legado'
 import { BotonAccion, BotonEnviar, Dialogo, Formulario } from '@/components/formulario'
 import { cancelarCita, enviarAvisoCita, reprogramarCita } from '@/app/(panel)/agenda/acciones'
 

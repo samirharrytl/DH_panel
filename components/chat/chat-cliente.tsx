@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { crearClienteNavegador } from '@/lib/supabase/navegador'
 import { renderizar, type Variables } from '@/lib/plantillas'
 import { fechaHora, hora } from '@/lib/formato'
-import { AreaTexto, Aviso, Entrada, Seleccion, cx } from '@/components/ui'
+import { AreaTexto, Aviso, Entrada, Seleccion, cx } from '@/components/legado'
 import { BotonEnviar, Formulario } from '@/components/formulario'
 import { enviarDesdeChat, marcarLeidos, registrarManual, simularEntrante } from '@/app/(panel)/chats/acciones'
 

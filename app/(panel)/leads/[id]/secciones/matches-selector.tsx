@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { TIPOS_INMUEBLE, etiqueta } from '@/lib/catalogos'
 import { fecha, num, soles } from '@/lib/formato'
-import { Insignia, cx } from '@/components/ui'
+import { Insignia, cx } from '@/components/legado'
 import { BotonEnviar, Formulario, type Resultado } from '@/components/formulario'
 import { Desglose, colorPuntaje, textoRespuesta, type DetalleMatch } from './matches-formato'
 

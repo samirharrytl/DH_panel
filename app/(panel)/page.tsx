@@ -3,7 +3,7 @@ import { exigirUsuario } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { TIPOS_INMUEBLE, etiqueta } from '@/lib/catalogos'
 import { ahoraMs, fecha, hora, hoyLima } from '@/lib/formato'
-import { EncabezadoPagina, Tarjeta, Vacio } from '@/components/ui'
+import { EncabezadoPagina, Tarjeta, Vacio } from '@/components/legado'
 import { InsigniaVencimiento } from './inmuebles/compartido'
 
 const diaSiguiente = (dia: string, n = 1) => new Date(Date.parse(`${dia}T12:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10)

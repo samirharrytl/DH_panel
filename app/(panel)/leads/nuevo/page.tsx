@@ -3,7 +3,7 @@ import { exigirUsuario } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { CANALES, TIPOS_INMUEBLE, etiqueta } from '@/lib/catalogos'
 import { soles } from '@/lib/formato'
-import { AreaTexto, Campo, Casilla, EncabezadoPagina, Entrada, Seleccion, Tarjeta } from '@/components/ui'
+import { AreaTexto, Campo, Casilla, EncabezadoPagina, Entrada, Seleccion, Tarjeta } from '@/components/legado'
 import { BotonEnviar, Formulario } from '@/components/formulario'
 import { registrarLead } from '../acciones'
 

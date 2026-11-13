@@ -4,7 +4,7 @@ import { exigirUsuario } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { ESTADOS_CITA } from '@/lib/catalogos'
 import { diaLargo, hora, hoyLima } from '@/lib/formato'
-import { EncabezadoPagina, Entrada, Insignia, Seleccion, Vacio, claseBoton } from '@/components/ui'
+import { EncabezadoPagina, Entrada, Insignia, Seleccion, Vacio, claseBoton } from '@/components/legado'
 import { AccionesCita, type CitaBasica } from '@/components/acciones-cita'
 import { DatosAcceso, enlaceMapa } from '../inmuebles/compartido'
 

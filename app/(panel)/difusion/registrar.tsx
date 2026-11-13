@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { AreaTexto, Aviso, Campo, Casilla, Entrada } from '@/components/ui'
+import { AreaTexto, Aviso, Campo, Casilla, Entrada } from '@/components/legado'
 import { BotonEnviar, Dialogo, Formulario } from '@/components/formulario'
 import { registrarPublicacion } from './acciones'
 

@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { CANALES, ESTADOS_LEAD, RESPUESTAS_MATCH, NIVELES, etiqueta, type EstadoLead } from '@/lib/catalogos'
 import { fechaHora } from '@/lib/formato'
-import { Insignia, Tarjeta, Vacio } from '@/components/ui'
+import { Insignia, Tarjeta, Vacio } from '@/components/legado'
 import type { PropsSeccion } from '../tipos'
 
 // Etiquetas de la bitácora de eventos

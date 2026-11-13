@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { renderizar, VARIABLES } from '@/lib/plantillas'
-import { AreaTexto, Campo, Entrada } from '@/components/ui'
+import { AreaTexto, Campo, Entrada } from '@/components/legado'
 import { BotonEnviar, Formulario, type Resultado } from '@/components/formulario'
 
 const EJEMPLO = {

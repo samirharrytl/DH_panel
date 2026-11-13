@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { ESTADOS_LEAD, type EstadoLead } from '@/lib/catalogos'
-import { Insignia, Tarjeta, Vacio } from '@/components/ui'
+import { Insignia, Tarjeta, Vacio } from '@/components/legado'
 import { BotonEnviar, Formulario } from '@/components/formulario'
 import { enviarMatches } from '../../../leads/[id]/secciones/matches-acciones'
 import { colorPuntaje } from '../../../leads/[id]/secciones/matches-formato'

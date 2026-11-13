@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { cx } from '@/components/ui'
+import { cx } from '@/components/legado'
 
 type Pestana = { href: string; texto: string; contador?: number }
 

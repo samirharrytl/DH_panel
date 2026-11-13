@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, type ReactNode } from 'react'
-import { cx } from '@/components/ui'
+import { cx } from '@/components/legado'
 
 export type ItemNav = { href: string; texto: string; icono: string; contador?: number }
 

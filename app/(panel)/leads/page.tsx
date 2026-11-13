@@ -4,7 +4,7 @@ import { exigirUsuario } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { CANALES, ESTADOS_LEAD, TIPOS_LEAD, colorEstado, etiqueta, type EstadoLead } from '@/lib/catalogos'
 import { ahoraMs, fechaCorta, hora, hoyLima, telefono } from '@/lib/formato'
-import { EncabezadoPagina, EnlaceBoton, Entrada, Insignia, Seleccion, Vacio, claseBoton, cx } from '@/components/ui'
+import { EncabezadoPagina, EnlaceBoton, Entrada, Insignia, Seleccion, Vacio, claseBoton, cx } from '@/components/legado'
 
 export const metadata: Metadata = { title: 'Leads' }
 

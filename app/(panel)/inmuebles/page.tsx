@@ -5,7 +5,7 @@ import { exigirUsuario } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { ESTADOS_INMUEBLE, TIPOS_INMUEBLE, colorEstadoInmueble, etiqueta } from '@/lib/catalogos'
 import { hoyLima, soles } from '@/lib/formato'
-import { EncabezadoPagina, Entrada, Insignia, Seleccion, Vacio, claseBoton, cx } from '@/components/ui'
+import { EncabezadoPagina, Entrada, Insignia, Seleccion, Vacio, claseBoton, cx } from '@/components/legado'
 import { ID_DISTRITOS, InsigniaVencimiento, ListaDistritos, caracteristicasTexto } from './compartido'
 import type { InmuebleVista } from './tipos'
 

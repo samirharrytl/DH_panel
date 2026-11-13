@@ -3,7 +3,7 @@
 import { createContext, useActionState, useContext, useEffect, useRef, useState, useTransition, type ReactNode } from 'react'
 import { useFormStatus } from 'react-dom'
 import { useRouter } from 'next/navigation'
-import { Aviso, Boton, claseBoton, cx } from '@/components/ui'
+import { Aviso, Boton, claseBoton, cx } from '@/components/legado'
 
 import type { Resultado } from '@/lib/resultado'
 export type { Resultado }

@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { ESTADOS_LEAD, MEDIOS_CONTACTO, TIPOS_LEAD, etiqueta } from '@/lib/catalogos'
 import { ahoraMs, fecha, fechaCorta, fechaHora, hoyLima, isoALocal, relativo } from '@/lib/formato'
-import { AreaTexto, Aviso, Campo, Casilla, Dato, Entrada, Insignia, Seleccion, Tarjeta, Vacio, cx } from '@/components/ui'
+import { AreaTexto, Aviso, Campo, Casilla, Dato, Entrada, Insignia, Seleccion, Tarjeta, Vacio, cx } from '@/components/legado'
 import { BotonAccion, BotonEnviar, Dialogo, Formulario } from '@/components/formulario'
 import {
   actualizarConsentimiento,

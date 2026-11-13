@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { fecha, fechaHora, num } from '@/lib/formato'
-import { Campo, Entrada, Insignia, claseBoton } from '@/components/ui'
+import { Campo, Entrada, Insignia, claseBoton } from '@/components/legado'
 import { BotonEnviar, Dialogo, Formulario } from '@/components/formulario'
 import { Copiar } from '@/components/copiar'
 import { guardarMetricas } from './acciones'

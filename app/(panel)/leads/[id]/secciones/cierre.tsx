@@ -11,7 +11,7 @@ import {
   type Nivel,
 } from '@/lib/catalogos'
 import { fecha, fechaHora, hoyLima, soles } from '@/lib/formato'
-import { AreaTexto, Aviso, Campo, Dato, Entrada, Insignia, Seleccion, Tarjeta, Vacio } from '@/components/ui'
+import { AreaTexto, Aviso, Campo, Dato, Entrada, Insignia, Seleccion, Tarjeta, Vacio } from '@/components/legado'
 import { BotonEnviar, Dialogo, Formulario } from '@/components/formulario'
 import { iniciarCompraventa, marcarCompraventaCaida, registrarCierre } from './cierre-acciones'
 import { Postventa } from './cierre-postventa'

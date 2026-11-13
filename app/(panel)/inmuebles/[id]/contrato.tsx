@@ -1,7 +1,7 @@
 'use client'
 
 import { crearClienteNavegador } from '@/lib/supabase/navegador'
-import { AreaTexto, Campo, Entrada } from '@/components/ui'
+import { AreaTexto, Campo, Entrada } from '@/components/legado'
 import { BotonEnviar, Formulario, type Resultado } from '@/components/formulario'
 import { SelectorArchivos, subirArchivos, useArchivos } from '@/components/subir-archivos'
 import { registrarContrato, renovarContrato } from '../acciones'

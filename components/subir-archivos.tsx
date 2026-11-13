@@ -4,7 +4,7 @@ import Image from 'next/image'
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { crearClienteNavegador } from '@/lib/supabase/navegador'
-import { Boton, cx } from '@/components/ui'
+import { Boton, cx } from '@/components/legado'
 import type { Resultado } from '@/lib/resultado'
 
 // Buckets privados de Storage. Las políticas solo dejan subir a quien puede editar el inmueble, y la

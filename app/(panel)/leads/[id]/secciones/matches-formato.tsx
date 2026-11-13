@@ -1,6 +1,6 @@
 import { RESPUESTAS_MATCH, TIPOS_INMUEBLE, etiqueta, type RespuestaMatch } from '@/lib/catalogos'
 import { num, soles } from '@/lib/formato'
-import { cx } from '@/components/ui'
+import { cx } from '@/components/legado'
 
 // Formatos del match compartidos por la ficha del lead (servidor y cliente) y la ficha del inmueble
 

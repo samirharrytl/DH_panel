@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { variablesEnOrden } from '@/lib/plantillas'
-import { Insignia, Tarjeta } from '@/components/ui'
+import { Insignia, Tarjeta } from '@/components/legado'
 import { BotonAccion } from '@/components/formulario'
 import { guardarPlantilla, restablecerPlantilla } from './acciones'
 import { EditorPlantilla } from './editor'

@@ -1,9 +1,80 @@
 @import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
 
-/* Identidad de DepaHost (mismos tokens que depahostperu.com) */
+/* Identidad «Verde cierre»: azul marino de DepaHost (depahostperu.com) con un verde de avanzar */
+:root {
+  --background: #f3f7f6;
+  --foreground: #17233a;
+  --card: #ffffff;
+  --card-foreground: #17233a;
+  --popover: #ffffff;
+  --popover-foreground: #17233a;
+  --primary: #012147;
+  --primary-foreground: #ffffff;
+  --secondary: #e1e7f0;
+  --secondary-foreground: #012147;
+  --muted: #eef3f1;
+  --muted-foreground: #5a6678;
+  /* Resaltado neutro de menús y elementos al pasar el mouse; el verde va aparte en --exito */
+  --accent: #e9f0ee;
+  --accent-foreground: #012147;
+  --destructive: #c62828;
+  --border: #dfe8e5;
+  --input: #c9d6d2;
+  --ring: #012147;
+  --radius: 0.625rem;
+  /* Botones verdes: blanco sobre #0b7a55 da 5.3:1. #13a46f solo para detalles (3.2:1 con blanco) */
+  --exito: #0b7a55;
+  --exito-foreground: #ffffff;
+  --exito-vivo: #13a46f;
+  --exito-suave: #dcf5ea;
+  --exito-texto: #0b6b4a;
+}
+
+@theme inline {
+  --font-sans: var(--font-rubik), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  --font-titulo: var(--font-outfit), var(--font-rubik), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-titulo);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-exito: var(--exito);
+  --color-exito-foreground: var(--exito-foreground);
+  --color-exito-vivo: var(--exito-vivo);
+  --color-exito-suave: var(--exito-suave);
+  --color-exito-texto: var(--exito-texto);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: 1rem;
+}
+
 @theme {
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  /* WhatsApp: solo para acciones de WhatsApp */
+  --color-wa-500: #25d366;
+  --color-wa-700: #094835;
+  --color-wa-800: #063626;
 
+  /* shortcut: tokens del diseño anterior, solo mientras quedan páginas en components/legado.tsx; se borran en la última tarea del rediseño */
   --color-marino-50: #f0f3f8;
   --color-marino-100: #e1e7f0;
   --color-marino-200: #c3cfe1;
@@ -13,11 +84,6 @@
   --color-marino-850: #00152f;
   --color-marino-900: #031a39;
   --color-marino-950: #000f22;
-
-  --color-wa-500: #25d366;
-  --color-wa-700: #094835;
-  --color-wa-800: #063626;
-
   --color-tinta: #0a1128;
   --color-texto: #2b2b2b;
   --color-suave: #5c5c5c;
@@ -25,25 +91,41 @@
   --color-borde: #dbdbdb;
   --color-borde-suave: #e4e4e4;
   --color-fondo: #f6f7f9;
-
   --shadow-tarjeta: 0 1px 2px rgb(3 26 57 / 0.06);
   --shadow-flotante: 0 12px 32px rgb(3 26 57 / 0.16);
 }
 
-html {
-  -webkit-text-size-adjust: 100%;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+    @apply font-sans;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-titulo;
+  }
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
 }
 
-body {
-  background: var(--color-fondo);
-  color: var(--color-texto);
-}
-
-:focus-visible {
-  outline: 2px solid var(--color-marino-800);
-  outline-offset: 2px;
-}
-
-dialog::backdrop {
-  background: rgb(3 26 57 / 0.45);
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

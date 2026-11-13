@@ -1,6 +1,6 @@
 import { DISTRITOS_LIMA } from '@/lib/catalogos'
 import { num } from '@/lib/formato'
-import { Insignia } from '@/components/ui'
+import { Insignia } from '@/components/legado'
 import type { Acceso } from './tipos'
 
 // Piezas sin estado que comparten la base de propiedades, la ficha del lead y la agenda

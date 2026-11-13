@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { crearClienteNavegador } from '@/lib/supabase/navegador'
 import { relativo } from '@/lib/formato'
-import { cx } from '@/components/ui'
+import { cx } from '@/components/legado'
 
 export type Notificacion = {
   id: number

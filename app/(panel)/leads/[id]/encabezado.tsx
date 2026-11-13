@@ -11,7 +11,7 @@ import {
   etiqueta,
 } from '@/lib/catalogos'
 import { fecha, telefono } from '@/lib/formato'
-import { AreaTexto, Campo, Insignia, Seleccion } from '@/components/ui'
+import { AreaTexto, Campo, Insignia, Seleccion } from '@/components/legado'
 import { BotonEnviar, Dialogo, Formulario } from '@/components/formulario'
 import { asignarLead, cambiarEstado, darBaja, reactivarLead } from '../acciones'
 import type { PropsSeccion } from './tipos'

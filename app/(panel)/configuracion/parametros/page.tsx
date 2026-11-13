@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { NIVELES } from '@/lib/catalogos'
 import { fechaHora } from '@/lib/formato'
-import { AreaTexto, Entrada, Seleccion, Tarjeta } from '@/components/ui'
+import { AreaTexto, Entrada, Seleccion, Tarjeta } from '@/components/legado'
 import { BotonAccion, BotonEnviar, Formulario } from '@/components/formulario'
 import { guardarParametro, restablecerParametro } from './acciones'
 

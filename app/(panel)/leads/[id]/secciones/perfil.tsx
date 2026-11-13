@@ -1,7 +1,7 @@
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { ESTADOS_DERIVACION, FORMAS_PAGO, IMPRESCINDIBLES, NIVELES, ORDEN_NIVEL, TIPOS_INMUEBLE, type Nivel } from '@/lib/catalogos'
 import { fecha, fechaHora, hoyLima, soles } from '@/lib/formato'
-import { AreaTexto, Aviso, Campo, Casilla, Dato, Entrada, Insignia, Seleccion, Tarjeta, Vacio } from '@/components/ui'
+import { AreaTexto, Aviso, Campo, Casilla, Dato, Entrada, Insignia, Seleccion, Tarjeta, Vacio } from '@/components/legado'
 import { BotonEnviar, Dialogo, Formulario } from '@/components/formulario'
 import { ID_DISTRITOS, ListaDistritos } from '../../../inmuebles/compartido'
 import { actualizarDerivacion, crearDerivacion, guardarBusqueda, guardarCapacidad } from './perfil-acciones'

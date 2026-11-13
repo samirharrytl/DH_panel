@@ -1,7 +1,7 @@
 import { obtenerUsuario } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { fecha, fechaHora, hoyLima, soles } from '@/lib/formato'
-import { Aviso, Tarjeta, Vacio } from '@/components/ui'
+import { Aviso, Tarjeta, Vacio } from '@/components/legado'
 import { BotonAccion } from '@/components/formulario'
 import { parametrosDifusion } from '../../../difusion/datos'
 import { ListaPublicaciones } from '../../../difusion/publicaciones'

@@ -5,7 +5,7 @@ import { exigirUsuario } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { INTENCIONES, TIPOS_LEAD, etiqueta, type TipoLead } from '@/lib/catalogos'
 import { ahoraMs, fecha, fechaCorta, telefono } from '@/lib/formato'
-import { EncabezadoPagina, Insignia, Tarjeta, Vacio, cx } from '@/components/ui'
+import { EncabezadoPagina, Insignia, Tarjeta, Vacio, cx } from '@/components/legado'
 import { BotonAccion } from '@/components/formulario'
 import { enviarNovedadesGenerales } from '../leads/acciones'
 

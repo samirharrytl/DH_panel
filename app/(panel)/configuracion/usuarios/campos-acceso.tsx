@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Campo, Entrada } from '@/components/ui'
+import { Campo, Entrada } from '@/components/legado'
 
 export function CamposAcceso() {
   const [modo, setModo] = useState<'contrasena' | 'invitacion'>('contrasena')

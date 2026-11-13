@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { Campo, Entrada } from '@/components/ui'
+import { Campo, Entrada } from '@/components/legado'
 import { BotonEnviar, Formulario } from '@/components/formulario'
 import { pedirRecuperacion } from '../acciones'
 

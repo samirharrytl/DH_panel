@@ -1,7 +1,7 @@
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { TIPOS_INMUEBLE, URGENCIAS } from '@/lib/catalogos'
 import { fechaHora } from '@/lib/formato'
-import { AreaTexto, Aviso, Campo, Entrada, Seleccion, SiNo, Tarjeta } from '@/components/ui'
+import { AreaTexto, Aviso, Campo, Entrada, Seleccion, SiNo, Tarjeta } from '@/components/legado'
 import { BotonEnviar, Formulario } from '@/components/formulario'
 import { ID_DISTRITOS, ListaDistritos } from '../../../inmuebles/compartido'
 import { guardarCalificacion } from './calificacion-acciones'

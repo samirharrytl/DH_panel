@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { Outfit, Rubik } from 'next/font/google'
 import './globals.css'
 
-const inter = Inter({ variable: '--font-inter', subsets: ['latin'] })
+const outfit = Outfit({ variable: '--font-outfit', subsets: ['latin'] })
+const rubik = Rubik({ variable: '--font-rubik', subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: { default: 'Panel DepaHost', template: '%s · Panel DepaHost' },
@@ -14,7 +15,7 @@ export const viewport: Viewport = { themeColor: '#012147', width: 'device-width'
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
-    <html lang="es-PE" className={`${inter.variable} h-full antialiased`}>
+    <html lang="es-PE" className={`${outfit.variable} ${rubik.variable} h-full antialiased`}>
       <body className="min-h-full font-sans">{children}</body>
     </html>
   )
