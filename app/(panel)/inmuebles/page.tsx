@@ -58,14 +58,21 @@ export default async function PaginaInmuebles({ searchParams }: PageProps<'/inmu
         descripcion="Base de propiedades. Los En cartera con autorización para publicar se muestran en el sitio web."
         acciones={
           <div className="flex flex-wrap items-start gap-2">
-            <BotonAccion accion={actualizarWeb}>Actualizar web</BotonAccion>
-            <NuevoInmueble hoy={hoy} />
+            <span data-guia="inm-web" className="inline-flex">
+              <BotonAccion accion={actualizarWeb}>Actualizar web</BotonAccion>
+            </span>
+            <span data-guia="inm-nuevo" className="inline-flex">
+              <NuevoInmueble hoy={hoy} />
+            </span>
           </div>
         }
       />
       <ListaDistritos />
 
-      <form className="mb-4 grid grid-cols-2 gap-2 rounded-2xl border border-border bg-card p-3 sm:grid-cols-3 lg:grid-cols-6">
+      <form
+        data-guia="inm-filtros"
+        className="mb-4 grid grid-cols-2 gap-2 rounded-2xl border border-border bg-card p-3 sm:grid-cols-3 lg:grid-cols-6"
+      >
         <Seleccion name="estado" defaultValue={f.estado} aria-label="Estado">
           <option value="activos">En captación y en cartera</option>
           <option value="todos">Todos los estados</option>
@@ -101,7 +108,7 @@ export default async function PaginaInmuebles({ searchParams }: PageProps<'/inmu
       {error && <Vacio>No se pudieron cargar los inmuebles: {error.message}</Vacio>}
       {!error && inmuebles.length === 0 && <Vacio>No hay inmuebles con estos filtros.</Vacio>}
 
-      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <ul data-guia="inm-lista" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {inmuebles.map((i) => (
           <li key={i.id}>
             <Link href={`/inmuebles/${i.id}`} className="block overflow-hidden rounded-2xl border border-border bg-card hover:border-primary">

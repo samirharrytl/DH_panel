@@ -107,13 +107,13 @@ export default async function PaginaDifusion() {
         {errorSugerencias && <Aviso tipo="error">No se pudo calcular la sugerencia: {errorSugerencias.message}</Aviso>}
 
         {!errorSugerencias && !destacada && (
-          <Tarjeta titulo="Sugerido para hoy">
+          <Tarjeta guia="dif-sugerido" titulo="Sugerido para hoy">
             <Vacio>No hay inmuebles en cartera con autorización del propietario para publicar.</Vacio>
           </Tarjeta>
         )}
 
         {destacada && (
-          <Tarjeta
+          <Tarjeta guia="dif-sugerido"
             titulo={todoPublicadoHoy ? 'Todo publicado hoy' : 'Sugerido para hoy'}
             acciones={<Badge variant={colorMotivo(destacada, hoy)}>{destacada.motivo}</Badge>}
           >
@@ -191,7 +191,7 @@ export default async function PaginaDifusion() {
           </Tarjeta>
         )}
 
-        <Tarjeta
+        <Tarjeta guia="dif-publicaciones"
           id="publicaciones"
           className="scroll-mt-20"
           titulo={`Publicaciones de los últimos ${DIAS_RECIENTES} días`}

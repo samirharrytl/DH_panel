@@ -2,6 +2,8 @@ import { exigirUsuario } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { Navegacion, type ItemNav } from '@/components/navegacion'
 import { Campana, type Notificacion } from '@/components/campana'
+import { Suspense } from 'react'
+import { Recorrido } from '@/components/guia/recorrido'
 import { VigilanteInactividad } from '@/components/vigilante-inactividad'
 import { LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -29,6 +31,7 @@ export default async function LayoutPanel({ children }: LayoutProps<'/'>) {
     { href: '/inmuebles', texto: 'Inmuebles', icono: 'inmuebles' },
     { href: '/difusion', texto: 'Difusión', icono: 'difusion' },
     { href: '/marketing', texto: 'Marketing', icono: 'marketing' },
+    { href: '/guias', texto: 'Guías', icono: 'guias' },
     ...(usuario.esAdmin
       ? ([
           { href: '/tablero', texto: 'Tablero', icono: 'tablero' },
@@ -69,6 +72,10 @@ export default async function LayoutPanel({ children }: LayoutProps<'/'>) {
       />
       <VigilanteInactividad minutos={Number(param?.valor ?? 30)} />
       <main className="mx-auto max-w-6xl px-4 py-6 lg:px-10 lg:py-10">{children}</main>
+      {/* Guía interactiva en curso (se inicia desde /guias) */}
+      <Suspense>
+        <Recorrido />
+      </Suspense>
     </div>
   )
 }

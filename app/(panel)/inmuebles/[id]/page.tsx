@@ -90,7 +90,7 @@ export default async function PaginaInmueble({ params }: PageProps<'/inmuebles/[
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <div className="space-y-4">
-          <Tarjeta titulo={`Fotos (${fotos?.length ?? 0})`}>
+          <Tarjeta guia="inm-fotos" titulo={`Fotos (${fotos?.length ?? 0})`}>
             {fotos?.length ? (
               <ul className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {fotos.map((f, n) => (
@@ -122,7 +122,7 @@ export default async function PaginaInmueble({ params }: PageProps<'/inmuebles/[
             {puedeEditar && activo && <SubirFotos inmuebleId={i.id} registrar={registrarFotos} />}
           </Tarjeta>
 
-          <Tarjeta
+          <Tarjeta guia="inm-datos"
             titulo="Datos del inmueble"
             acciones={
               puedeEditar &&
@@ -246,7 +246,7 @@ export default async function PaginaInmueble({ params }: PageProps<'/inmuebles/[
         </div>
 
         <div className="space-y-4">
-          <Tarjeta
+          <Tarjeta guia="inm-contrato"
             titulo="Contrato"
             acciones={
               puedeEditar &&
@@ -312,7 +312,7 @@ export default async function PaginaInmueble({ params }: PageProps<'/inmuebles/[
             )}
           </Tarjeta>
 
-          <Tarjeta
+          <Tarjeta guia="inm-acceso"
             titulo="Acceso"
             acciones={
               puedeEditar &&
@@ -340,7 +340,7 @@ export default async function PaginaInmueble({ params }: PageProps<'/inmuebles/[
             <p className="mt-2 text-xs text-muted-foreground">Las visitas toman estos datos al agendarse.</p>
           </Tarjeta>
 
-          <Tarjeta titulo="Interés acumulado">
+          <Tarjeta guia="inm-interes" titulo="Interés acumulado">
             <dl className="grid grid-cols-2 gap-3">
               <Dato etiqueta="Leads generados">{i.leads_interesados}</Dato>
               <Dato etiqueta="Veces enviado como match">{i.veces_match}</Dato>

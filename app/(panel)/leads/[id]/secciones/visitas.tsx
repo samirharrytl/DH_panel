@@ -52,7 +52,7 @@ export async function SeccionVisitas({ lead, inmueble }: PropsSeccion & { inmueb
 
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-      <Tarjeta titulo="Visitas">
+      <Tarjeta guia="lead-visitas" titulo="Visitas">
         {visitas.length ? (
           <ul className="space-y-4">
             {visitas.map((c) => (
@@ -140,7 +140,7 @@ export async function SeccionVisitas({ lead, inmueble }: PropsSeccion & { inmueb
         )}
       </Tarjeta>
 
-      <Tarjeta titulo="Agendar visita">
+      <Tarjeta guia="lead-agendar-visita" titulo="Agendar visita">
         {!puede ? (
           <Vacio>El lead no está activo.</Vacio>
         ) : !alcanza ? (

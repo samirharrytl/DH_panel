@@ -24,6 +24,7 @@ export function Pestanas({ items, param, porDefecto }: { items: Pestana[]; param
               key={p.href}
               href={p.href}
               scroll={false}
+              data-guia={param ? `tab-${new URL(p.href, 'http://x').searchParams.get(param)}` : undefined}
               aria-current={activa ? 'page' : undefined}
               className={cn(
                 'inline-flex min-h-10 items-center gap-1.5 rounded-lg px-3.5 text-sm font-medium whitespace-nowrap transition-colors',

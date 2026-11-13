@@ -204,7 +204,7 @@ export default async function PaginaMarketing({ searchParams }: PageProps<'/mark
         })}
       </ul>
 
-      <Tarjeta titulo={`Leads sin respuesta con novedades pendientes (${pendientes.length})`} className="mt-6" id="no-responde">
+      <Tarjeta guia="mk-pendientes" titulo={`Leads sin respuesta con novedades pendientes (${pendientes.length})`} className="mt-6" id="no-responde">
         <p className="mb-3 text-sm text-muted-foreground">
           Leads en &quot;No responde&quot; que aceptaron marketing. Reciben novedades cada {String(param?.valor ?? 30)} días.
         </p>

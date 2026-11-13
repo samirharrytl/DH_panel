@@ -55,7 +55,7 @@ export async function SeccionCitas({ lead }: PropsSeccion) {
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
       <ListaDistritos />
-      <Tarjeta
+      <Tarjeta guia="lead-citas"
         titulo="Citas con el propietario"
         acciones={
           puedeAgendar && (
@@ -192,7 +192,7 @@ export async function SeccionCitas({ lead }: PropsSeccion) {
         )}
       </Tarjeta>
 
-      <Tarjeta titulo="Inmueble">
+      <Tarjeta guia="lead-inmueble" titulo="Inmueble">
         {inmueble ? (
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">

@@ -68,7 +68,7 @@ export async function SeccionPerfil({ lead }: PropsSeccion) {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <ListaDistritos />
-      <Tarjeta titulo="Perfil de búsqueda">
+      <Tarjeta guia="lead-perfil" titulo="Perfil de búsqueda">
         <Formulario accion={guardarBusqueda}>
           <input type="hidden" name="lead_id" value={lead.id} />
           <fieldset disabled={!editable} className="space-y-4">
@@ -127,7 +127,7 @@ export async function SeccionPerfil({ lead }: PropsSeccion) {
       </Tarjeta>
 
       <div className="space-y-4">
-        <Tarjeta titulo="Capacidad financiera" acciones={<Badge variant={nivel === 'no_validada' ? 'gris' : 'verde'}>{NIVELES[nivel]}</Badge>}>
+        <Tarjeta guia="lead-capacidad" titulo="Capacidad financiera" acciones={<Badge variant={nivel === 'no_validada' ? 'gris' : 'verde'}>{NIVELES[nivel]}</Badge>}>
           <ul className="mb-4 space-y-1 text-sm">
             <li>
               <Habilita si={alcanza(nivel, exigeVisita)}>Agendar visita (exige {NIVELES[exigeVisita]})</Habilita>

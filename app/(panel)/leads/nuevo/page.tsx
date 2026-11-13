@@ -27,7 +27,7 @@ export default async function PaginaNuevoLead({ searchParams }: PageProps<'/lead
         descripcion="Si el teléfono ya existe, el lead se une a ese registro y verás su historial."
         volver={{ href: '/leads', texto: 'Leads' }}
       />
-      <Tarjeta className="max-w-2xl">
+      <Tarjeta guia="lead-form" className="max-w-2xl">
         <Formulario accion={registrarLead}>
           <div className="grid gap-4 sm:grid-cols-2">
             <Campo etiqueta="Teléfono (WhatsApp)" ayuda="Celular peruano de 9 dígitos o con código de país.">

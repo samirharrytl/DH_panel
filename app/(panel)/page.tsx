@@ -96,7 +96,7 @@ export default async function PaginaHoy() {
       </section>
 
       <div className="grid gap-4 lg:grid-cols-5">
-        <Tarjeta
+        <Tarjeta guia="hoy-atiende"
           titulo="Atiende primero"
           className="lg:col-span-3"
           acciones={
@@ -150,7 +150,7 @@ export default async function PaginaHoy() {
         </Tarjeta>
 
         <div className="space-y-4 lg:col-span-2">
-          <Tarjeta
+          <Tarjeta guia="hoy-citas"
             titulo="Citas y visitas de hoy"
             acciones={
               <Link href="/agenda" className="text-sm text-muted-foreground hover:text-primary">
@@ -206,7 +206,7 @@ export default async function PaginaHoy() {
           </Tarjeta>
         </div>
 
-        <Tarjeta titulo="Contratos por vencer" className="lg:col-span-5">
+        <Tarjeta guia="hoy-contratos" titulo="Contratos por vencer" className="lg:col-span-5">
           {porVencer?.length ? (
             <ul className="-my-2 divide-y divide-border text-sm">
               {porVencer.map((i) => (
