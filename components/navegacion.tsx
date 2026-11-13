@@ -3,37 +3,80 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, type ReactNode } from 'react'
-import { cx } from '@/components/legado'
+import {
+  CalendarDays,
+  ChartColumn,
+  House,
+  Mail,
+  Megaphone,
+  Menu,
+  MessageCircle,
+  Settings,
+  Sun,
+  Users,
+  type LucideIcon,
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 
-export type ItemNav = { href: string; texto: string; icono: string; contador?: number }
+// El layout es un componente del servidor: pasa el nombre del ícono, no el componente
+const ICONOS = {
+  hoy: Sun,
+  leads: Users,
+  chats: MessageCircle,
+  agenda: CalendarDays,
+  inmuebles: House,
+  difusion: Megaphone,
+  marketing: Mail,
+  tablero: ChartColumn,
+  configuracion: Settings,
+} satisfies Record<string, LucideIcon>
+
+export type ItemNav = { href: string; texto: string; icono: keyof typeof ICONOS; contador?: number }
 
 function activo(ruta: string, href: string) {
   return href === '/' ? ruta === '/' : ruta === href || ruta.startsWith(`${href}/`)
 }
 
+function Logo() {
+  return (
+    <Link href="/" className="flex items-center gap-1.5 font-titulo text-lg font-bold text-primary">
+      DepaHost
+      <span aria-hidden className="size-2 rounded-full bg-exito-vivo" />
+    </Link>
+  )
+}
+
 function Enlaces({ items, ruta, alNavegar }: { items: ItemNav[]; ruta: string; alNavegar?: () => void }) {
   return (
-    <ul className="space-y-0.5">
-      {items.map((i) => (
-        <li key={i.href}>
-          <Link
-            href={i.href}
-            onClick={alNavegar}
-            className={cx(
-              'flex items-center gap-3 rounded-lg px-3 py-2 text-sm',
-              activo(ruta, i.href) ? 'bg-white/15 font-medium text-white' : 'text-marino-100 hover:bg-white/10',
-            )}
-          >
-            <span aria-hidden className="w-5 text-center">
-              {i.icono}
-            </span>
-            <span className="flex-1">{i.texto}</span>
-            {!!i.contador && (
-              <span className="rounded-full bg-amber-400 px-1.5 text-xs font-semibold text-marino-950">{i.contador}</span>
-            )}
-          </Link>
-        </li>
-      ))}
+    <ul className="space-y-1">
+      {items.map((i) => {
+        const Icono = ICONOS[i.icono]
+        const esActivo = activo(ruta, i.href)
+        return (
+          <li key={i.href}>
+            <Link
+              href={i.href}
+              onClick={alNavegar}
+              aria-current={esActivo ? 'page' : undefined}
+              className={cn(
+                'flex min-h-11 items-center gap-3 rounded-[10px] px-3 text-sm transition-colors lg:min-h-10',
+                esActivo ? 'bg-primary font-medium text-primary-foreground' : 'text-muted-foreground hover:bg-accent hover:text-primary',
+              )}
+            >
+              <Icono aria-hidden className="size-[18px] shrink-0" />
+              <span className="flex-1">{i.texto}</span>
+              {!!i.contador && (
+                <Badge variant="verde" aria-label={`${i.contador} sin leer`}>
+                  {i.contador}
+                </Badge>
+              )}
+            </Link>
+          </li>
+        )
+      })}
     </ul>
   )
 }
@@ -45,45 +88,38 @@ export function Navegacion({ items, pie, campana }: { items: ItemNav[]; pie: Rea
   return (
     <>
       {/* Escritorio */}
-      <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col bg-marino-900 px-3 py-4 lg:flex">
-        <div className="mb-6 flex items-center justify-between px-2">
-          <Link href="/" className="text-lg font-semibold text-white">
-            DepaHost
-          </Link>
+      <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col border-r border-border bg-card px-3 py-5 lg:flex">
+        <div className="mb-6 flex items-center justify-between pl-3">
+          <Logo />
           {campana}
         </div>
-        <nav className="flex-1 overflow-y-auto">
+        <nav aria-label="Principal" className="flex-1 overflow-y-auto">
           <Enlaces items={items} ruta={ruta} />
         </nav>
-        <div className="border-t border-white/10 pt-3">{pie}</div>
+        <div className="border-t border-border pt-4">{pie}</div>
       </aside>
 
       {/* Celular */}
-      <header className="sticky top-0 z-30 flex h-14 items-center justify-between bg-marino-900 px-4 lg:hidden">
-        <button
-          type="button"
-          onClick={() => setAbierto(true)}
-          className="rounded p-1 text-2xl leading-none text-white"
-          aria-label="Abrir menú"
-        >
-          ☰
-        </button>
-        <Link href="/" className="font-semibold text-white">
-          DepaHost
-        </Link>
-        {campana}
-      </header>
-      {abierto && (
-        <div className="fixed inset-0 z-40 lg:hidden">
-          <button type="button" className="absolute inset-0 bg-marino-950/50" aria-label="Cerrar menú" onClick={() => setAbierto(false)} />
-          <aside className="absolute inset-y-0 left-0 flex w-72 max-w-[85%] flex-col bg-marino-900 px-3 py-4">
-            <nav className="flex-1 overflow-y-auto">
+      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-card px-2 lg:hidden">
+        <Sheet open={abierto} onOpenChange={setAbierto}>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" aria-label="Abrir menú">
+              <Menu aria-hidden className="size-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-72 gap-0 bg-card px-3 py-5">
+            <SheetTitle className="mb-6 pl-3">
+              <Logo />
+            </SheetTitle>
+            <nav aria-label="Principal" className="flex-1 overflow-y-auto">
               <Enlaces items={items} ruta={ruta} alNavegar={() => setAbierto(false)} />
             </nav>
-            <div className="border-t border-white/10 pt-3">{pie}</div>
-          </aside>
-        </div>
-      )}
+            <div className="border-t border-border pt-4">{pie}</div>
+          </SheetContent>
+        </Sheet>
+        <Logo />
+        {campana}
+      </header>
     </>
   )
 }

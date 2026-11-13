@@ -3,6 +3,8 @@ import { crearClienteServidor } from '@/lib/supabase/server'
 import { Navegacion, type ItemNav } from '@/components/navegacion'
 import { Campana, type Notificacion } from '@/components/campana'
 import { VigilanteInactividad } from '@/components/vigilante-inactividad'
+import { LogOut } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { marcarNotificacionesLeidas } from './acciones-comunes'
 
 export default async function LayoutPanel({ children }: LayoutProps<'/'>) {
@@ -20,29 +22,34 @@ export default async function LayoutPanel({ children }: LayoutProps<'/'>) {
   ])
 
   const items: ItemNav[] = [
-    { href: '/', texto: 'Hoy', icono: '☀' },
-    { href: '/leads', texto: 'Leads', icono: '👥' },
-    { href: '/chats', texto: 'Chats', icono: '💬', contador: chatsSinLeer ?? 0 },
-    { href: '/agenda', texto: 'Agenda', icono: '📅' },
-    { href: '/inmuebles', texto: 'Inmuebles', icono: '🏠' },
-    { href: '/difusion', texto: 'Difusión', icono: '📣' },
-    { href: '/marketing', texto: 'Marketing', icono: '✉' },
+    { href: '/', texto: 'Hoy', icono: 'hoy' },
+    { href: '/leads', texto: 'Leads', icono: 'leads' },
+    { href: '/chats', texto: 'Chats', icono: 'chats', contador: chatsSinLeer ?? 0 },
+    { href: '/agenda', texto: 'Agenda', icono: 'agenda' },
+    { href: '/inmuebles', texto: 'Inmuebles', icono: 'inmuebles' },
+    { href: '/difusion', texto: 'Difusión', icono: 'difusion' },
+    { href: '/marketing', texto: 'Marketing', icono: 'marketing' },
     ...(usuario.esAdmin
-      ? [
-          { href: '/tablero', texto: 'Tablero', icono: '📊' },
-          { href: '/configuracion', texto: 'Configuración', icono: '⚙' },
-        ]
+      ? ([
+          { href: '/tablero', texto: 'Tablero', icono: 'tablero' },
+          { href: '/configuracion', texto: 'Configuración', icono: 'configuracion' },
+        ] satisfies ItemNav[])
       : []),
   ]
 
   const pie = (
-    <div className="px-2">
-      <p className="truncate text-sm font-medium text-white">{usuario.nombre}</p>
-      <p className="truncate text-xs text-marino-200">{usuario.esAdmin ? 'Administrador y asesor' : 'Asesor'}</p>
-      <form action="/auth/salir" method="post" className="mt-2">
-        <button type="submit" className="text-xs text-marino-100 hover:text-white hover:underline">
-          Cerrar sesión
-        </button>
+    <div className="flex items-center gap-3 px-3">
+      <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-full bg-secondary font-titulo text-sm font-semibold text-primary">
+        {usuario.nombre.trim().charAt(0).toUpperCase()}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium text-foreground">{usuario.nombre}</p>
+        <p className="truncate text-xs text-muted-foreground">{usuario.esAdmin ? 'Administrador y asesor' : 'Asesor'}</p>
+      </div>
+      <form action="/auth/salir" method="post">
+        <Button type="submit" variant="ghost" size="icon" aria-label="Cerrar sesión" title="Cerrar sesión">
+          <LogOut aria-hidden className="size-[18px] text-muted-foreground" />
+        </Button>
       </form>
     </div>
   )
@@ -61,7 +68,7 @@ export default async function LayoutPanel({ children }: LayoutProps<'/'>) {
         }
       />
       <VigilanteInactividad minutos={Number(param?.valor ?? 30)} />
-      <main className="mx-auto max-w-6xl px-4 py-5 lg:px-8 lg:py-8">{children}</main>
+      <main className="mx-auto max-w-6xl px-4 py-6 lg:px-10 lg:py-10">{children}</main>
     </div>
   )
 }
