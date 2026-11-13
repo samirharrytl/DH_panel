@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { Aviso } from '@/components/campos'
 import { Button } from '@/components/ui/button'
+import { PistaGuia } from '@/components/guia/pista'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 
 import type { Resultado } from '@/lib/resultado'
@@ -116,6 +117,7 @@ export function Dialogo({
           <DialogTitle className="font-titulo text-lg text-primary">{titulo}</DialogTitle>
         </DialogHeader>
         <div className="p-5">
+          <PistaGuia titulo={titulo} />
           <ContextoDialogo.Provider value={contexto}>{children}</ContextoDialogo.Provider>
         </div>
       </DialogContent>

@@ -126,7 +126,7 @@ export async function SeccionMatches({ lead }: PropsSeccion) {
           </Tarjeta>
         )}
 
-        <Tarjeta
+        <Tarjeta guia="lead-matches"
           titulo="Inmuebles que hacen match"
           acciones={<span className="text-xs text-muted-foreground">{sugerencias.length} en cartera, por ajuste</span>}
         >
@@ -181,7 +181,7 @@ export async function SeccionMatches({ lead }: PropsSeccion) {
       </div>
 
       <div className="space-y-4">
-        <Tarjeta titulo="Envíos y respuestas">
+        <Tarjeta guia="lead-envios" titulo="Envíos y respuestas">
           {envios.length ? (
             <ol className="space-y-4">
               {envios.map((e) => (

@@ -67,7 +67,7 @@ export default async function PaginaLeads({ searchParams }: PageProps<'/leads'>)
         titulo="Leads"
         descripcion={usuario.esAdmin ? 'Todos los leads, ordenados por próxima acción.' : 'Tus leads, ordenados por próxima acción.'}
         acciones={
-          <Button asChild>
+          <Button asChild data-guia="leads-registrar">
             <Link href="/leads/nuevo">
               <Plus aria-hidden />
               Registrar lead
@@ -76,7 +76,10 @@ export default async function PaginaLeads({ searchParams }: PageProps<'/leads'>)
         }
       />
 
-      <form className="mb-4 grid grid-cols-2 gap-2 rounded-2xl border border-border bg-card p-3 sm:grid-cols-3 lg:grid-cols-7">
+      <form
+        data-guia="leads-filtros"
+        className="mb-4 grid grid-cols-2 gap-2 rounded-2xl border border-border bg-card p-3 sm:grid-cols-3 lg:grid-cols-7"
+      >
         <Input name="q" defaultValue={f.q} placeholder="Nombre o teléfono" className="col-span-2 sm:col-span-3 lg:col-span-2" />
         <Seleccion name="estado" defaultValue={f.estado} aria-label="Estado">
           <option value="activos">Activos</option>
@@ -138,7 +141,7 @@ export default async function PaginaLeads({ searchParams }: PageProps<'/leads'>)
       {error && <Vacio>No se pudieron cargar los leads: {error.message}</Vacio>}
       {leads?.length === 0 && <Vacio>No hay leads con estos filtros.</Vacio>}
 
-      <ul className="space-y-2">
+      <ul data-guia="leads-lista" className="space-y-2">
         {leads?.map((l) => {
           const t = l.proxima_accion_at ? new Date(l.proxima_accion_at).getTime() : null
           const vencida = t !== null && t < ahora

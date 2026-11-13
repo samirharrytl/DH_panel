@@ -64,7 +64,7 @@ export async function SeccionCalificacion({ lead }: PropsSeccion) {
 
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-      <Tarjeta titulo="Calificación del propietario">
+      <Tarjeta guia="lead-calificacion" titulo="Calificación del propietario">
         <ListaDistritos />
         <Formulario accion={guardarCalificacion}>
           <input type="hidden" name="lead_id" value={lead.id} />

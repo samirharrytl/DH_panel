@@ -63,6 +63,7 @@ function Enlaces({ items, ruta, alNavegar }: { items: ItemNav[]; ruta: string; a
               href={i.href}
               onClick={alNavegar}
               aria-current={esActivo ? 'page' : undefined}
+              data-guia={`nav-${i.icono}`}
               className={cn(
                 'flex min-h-11 items-center gap-3 rounded-[10px] px-3 text-sm transition-colors lg:min-h-10',
                 esActivo ? 'bg-primary font-medium text-primary-foreground' : 'text-muted-foreground hover:bg-accent hover:text-primary',

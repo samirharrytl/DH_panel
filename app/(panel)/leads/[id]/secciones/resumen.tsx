@@ -97,7 +97,7 @@ export async function SeccionResumen({ lead }: PropsSeccion) {
           </Tarjeta>
         )}
 
-        <Tarjeta titulo="Seguimiento">
+        <Tarjeta guia="lead-seguimiento" titulo="Seguimiento">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-accent px-3 py-2">
             <div>
               <p className="text-xs text-muted-foreground">Próxima acción</p>
@@ -200,7 +200,7 @@ export async function SeccionResumen({ lead }: PropsSeccion) {
           </div>
         </Tarjeta>
 
-        <Tarjeta titulo="Notas">
+        <Tarjeta guia="lead-notas" titulo="Notas">
           {lead.vigente && (
             <Formulario accion={agregarNota} reiniciar className="mb-4 space-y-2">
               <input type="hidden" name="lead_id" value={lead.id} />
@@ -226,7 +226,7 @@ export async function SeccionResumen({ lead }: PropsSeccion) {
       </div>
 
       <div className="space-y-4">
-        <Tarjeta
+        <Tarjeta guia="lead-contacto"
           titulo="Contacto"
           acciones={
             lead.vigente && (

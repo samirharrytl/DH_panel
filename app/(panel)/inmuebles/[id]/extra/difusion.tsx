@@ -49,7 +49,7 @@ export async function DifusionInmueble({ inmuebleId, puedeEditar }: PropsExtraIn
 
   return (
     <>
-      <Tarjeta
+      <Tarjeta guia="inm-publicaciones"
         titulo={`Publicaciones (${publicaciones.length})`}
         acciones={
           i.estado === 'en_cartera' &&
@@ -73,7 +73,7 @@ export async function DifusionInmueble({ inmuebleId, puedeEditar }: PropsExtraIn
       </Tarjeta>
 
       {resumen && i.estado === 'en_cartera' && (
-        <Tarjeta
+        <Tarjeta guia="inm-insights"
           titulo="Insights para el propietario"
           acciones={
             <BotonAccion accion={enviarInsights.bind(null, inmuebleId, desde, hoy, resumen)} variante="whatsapp">

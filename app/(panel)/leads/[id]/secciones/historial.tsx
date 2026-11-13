@@ -102,7 +102,7 @@ export async function SeccionHistorial({ lead }: PropsSeccion) {
           ))}
         </p>
       )}
-      <Tarjeta titulo="Historial">
+      <Tarjeta guia="lead-historial" titulo="Historial">
         {items.length === 0 ? (
           <Vacio>Sin movimientos.</Vacio>
         ) : (

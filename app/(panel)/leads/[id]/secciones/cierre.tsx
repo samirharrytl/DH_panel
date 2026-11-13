@@ -112,6 +112,7 @@ export async function SeccionCierre({ lead }: PropsSeccion) {
 
       {puedeIniciar && (
         <Tarjeta
+          guia="lead-compraventa"
           titulo="Iniciar compraventa"
           acciones={
             enCartera.length > 0 && (
@@ -218,7 +219,7 @@ function CompraventaEnCurso({
   const i = cv.inmueble
   const hoy = hoyLima()
   return (
-    <Tarjeta titulo="Compraventa en curso" acciones={<Badge variant="azul">En curso</Badge>} className="border-sky-300">
+    <Tarjeta guia="lead-compraventa" titulo="Compraventa en curso" acciones={<Badge variant="azul">En curso</Badge>} className="border-sky-300">
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Dato etiqueta="Inmueble">
           {i ? (

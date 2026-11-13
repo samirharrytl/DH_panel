@@ -21,7 +21,7 @@ export async function NovedadesInmueble({ inmuebleId }: PropsExtraInmueble) {
   const interesados = (data ?? []) as Interesado[]
 
   return (
-    <Tarjeta titulo={`Interesados a los que les encaja (${interesados.length})`}>
+    <Tarjeta guia="inm-encajan" titulo={`Interesados a los que les encaja (${interesados.length})`}>
       {interesados.length ? (
         <ul className="space-y-2">
           {interesados.map((x) => (

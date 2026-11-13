@@ -42,7 +42,7 @@ export async function Postventa({ lead, resenaUrl }: Pick<PropsSeccion, 'lead'> 
 
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-      <Tarjeta titulo="Testimonio y reseña">
+      <Tarjeta guia="lead-testimonio" titulo="Testimonio y reseña">
         {p.no_contactar && (
           <Aviso tipo="alerta" className="mb-3">
             Esta persona está en Baja: no se le envían mensajes. Puedes registrar lo que haya dado por otro medio.
@@ -134,7 +134,7 @@ export async function Postventa({ lead, resenaUrl }: Pick<PropsSeccion, 'lead'> 
         )}
       </Tarjeta>
 
-      <Tarjeta
+      <Tarjeta guia="lead-intencion"
         titulo="Intención y marketing"
         acciones={
           <Dialogo titulo="Intención del cliente" boton="Editar">

@@ -47,15 +47,18 @@ export function Tarjeta({
   children,
   className,
   id,
+  guia,
 }: {
   titulo?: ReactNode
   acciones?: ReactNode
   children: ReactNode
   className?: string
   id?: string
+  // Nombre con el que las guías interactivas señalan esta tarjeta
+  guia?: string
 }) {
   return (
-    <Card id={id} className={cn('gap-0 py-0', className)}>
+    <Card id={id} data-guia={guia} className={cn('gap-0 py-0', className)}>
       {(titulo || acciones) && (
         <CardHeader className="border-b border-border px-5 pt-4 pb-3">
           {titulo && <CardTitle className="self-center">{titulo}</CardTitle>}
