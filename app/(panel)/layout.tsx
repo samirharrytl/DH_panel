@@ -29,6 +29,7 @@ export default async function LayoutPanel({ children }: LayoutProps<'/'>) {
     { href: '/inmuebles', texto: 'Inmuebles', icono: 'inmuebles' },
     { href: '/difusion', texto: 'Difusión', icono: 'difusion' },
     { href: '/marketing', texto: 'Marketing', icono: 'marketing' },
+    { href: '/guias', texto: 'Guías', icono: 'guias' },
     ...(usuario.esAdmin
       ? ([
           { href: '/tablero', texto: 'Tablero', icono: 'tablero' },

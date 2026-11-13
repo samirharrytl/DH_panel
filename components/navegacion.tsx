@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, type ReactNode } from 'react'
 import {
+  BookOpen,
   CalendarDays,
   ChartColumn,
   House,
@@ -30,6 +31,7 @@ const ICONOS = {
   inmuebles: House,
   difusion: Megaphone,
   marketing: Mail,
+  guias: BookOpen,
   tablero: ChartColumn,
   configuracion: Settings,
 } satisfies Record<string, LucideIcon>
