@@ -2,7 +2,9 @@ import type { Metadata } from 'next'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { NIVELES } from '@/lib/catalogos'
 import { fechaHora } from '@/lib/formato'
-import { AreaTexto, Entrada, Seleccion, Tarjeta } from '@/components/legado'
+import { Seleccion, Tarjeta } from '@/components/campos'
+import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
 import { BotonAccion, BotonEnviar, Formulario } from '@/components/formulario'
 import { guardarParametro, restablecerParametro } from './acciones'
 
@@ -42,18 +44,18 @@ function Control({ p }: { p: Parametro }) {
     )
   }
   if (p.tipo === 'lista_texto') {
-    return <AreaTexto name="valor" defaultValue={(p.valor as string[]).join('\n')} rows={4} className="sm:w-72" />
+    return <Textarea name="valor" defaultValue={(p.valor as string[]).join('\n')} rows={4} className="sm:w-72" />
   }
   if (p.tipo === 'lista_enteros') {
-    return <Entrada name="valor" defaultValue={(p.valor as number[]).join(', ')} className="sm:w-56" placeholder="1, 3, 4" />
+    return <Input name="valor" defaultValue={(p.valor as number[]).join(', ')} className="sm:w-56" placeholder="1, 3, 4" />
   }
   if (p.tipo === 'entero') {
-    return <Entrada type="number" min={0} step={1} name="valor" defaultValue={String(p.valor)} className="sm:w-32" />
+    return <Input type="number" min={0} step={1} name="valor" defaultValue={String(p.valor)} className="sm:w-32" />
   }
   if (p.tipo === 'decimal') {
-    return <Entrada type="number" min={0} step="any" name="valor" defaultValue={String(p.valor)} className="sm:w-32" />
+    return <Input type="number" min={0} step="any" name="valor" defaultValue={String(p.valor)} className="sm:w-32" />
   }
-  return <Entrada name="valor" defaultValue={String(p.valor ?? '')} className="sm:w-96" />
+  return <Input name="valor" defaultValue={String(p.valor ?? '')} className="sm:w-96" />
 }
 
 export default async function PaginaParametros() {
@@ -68,13 +70,13 @@ export default async function PaginaParametros() {
 
   return (
     <div className="space-y-5">
-      <p className="text-sm text-suave">
+      <p className="text-sm text-muted-foreground">
         Los cambios aplican de inmediato. Por ejemplo, los días de refuerzo nuevos se usan para las bienvenidas que se
         envíen desde ahora; las cadencias ya creadas se mantienen.
       </p>
       {grupos.map((g) => (
         <Tarjeta key={g} titulo={g}>
-          <ul className="divide-y divide-borde-suave">
+          <ul className="divide-y divide-border">
             {parametros
               .filter((p) => p.grupo === g)
               .map((p) => {
@@ -82,9 +84,9 @@ export default async function PaginaParametros() {
                 return (
                   <li key={p.clave} className="py-4 first:pt-0 last:pb-0">
                     <div className="mb-2">
-                      <p className="font-medium text-tinta">{p.nombre}</p>
-                      <p className="text-sm text-suave">{p.descripcion}</p>
-                      <p className="mt-1 text-xs text-suave">
+                      <p className="font-medium text-foreground">{p.nombre}</p>
+                      <p className="text-sm text-muted-foreground">{p.descripcion}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
                         Valor por defecto: <strong>{mostrar(p, p.valor_defecto)}</strong>
                         {cambiado && p.updated_by && (
                           <> · Cambiado por {nombres.get(p.updated_by) ?? '—'} el {fechaHora(p.updated_at)}</>

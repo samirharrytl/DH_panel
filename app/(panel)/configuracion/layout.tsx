@@ -12,7 +12,7 @@ export default async function LayoutConfiguracion({ children }: LayoutProps<'/co
   await exigirAdmin()
   return (
     <>
-      <h1 className="mb-3 text-2xl font-semibold text-tinta">Configuración</h1>
+      <h1 className="mb-3 text-2xl font-semibold text-foreground">Configuración</h1>
       <Suspense>
         <Pestanas items={SECCIONES} />
       </Suspense>

@@ -2,10 +2,13 @@ import type { Metadata } from 'next'
 import { exigirAdmin } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { fecha } from '@/lib/formato'
-import { Aviso, Campo, Entrada, Insignia, Seleccion, Tabla, claseTd, claseTh } from '@/components/legado'
+import { Aviso, Campo, Seleccion, Tabla } from '@/components/campos'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
 import { BotonAccion, BotonEnviar, Dialogo, Formulario } from '@/components/formulario'
 import { cambiarActivo, crearUsuario, editarUsuario } from './acciones'
 import { CamposAcceso } from './campos-acceso'
+import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
 export const metadata: Metadata = { title: 'Usuarios' }
 
@@ -22,16 +25,16 @@ export default async function PaginaUsuarios() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-suave">
+        <p className="text-sm text-muted-foreground">
           Cada persona tiene su propio acceso. El asesor ve solo los leads que se le asignan; el administrador ve todo.
         </p>
         <Dialogo titulo="Nuevo usuario" boton="+ Nuevo usuario" variante="default" tamano="default">
           <Formulario accion={crearUsuario}>
             <Campo etiqueta="Nombre">
-              <Entrada name="nombre" required />
+              <Input name="nombre" required />
             </Campo>
             <Campo etiqueta="Correo">
-              <Entrada type="email" name="email" required />
+              <Input type="email" name="email" required />
             </Campo>
             <Campo etiqueta="Rol">
               <Seleccion name="rol" defaultValue="asesor">
@@ -46,39 +49,39 @@ export default async function PaginaUsuarios() {
       </div>
 
       <Tabla>
-        <thead>
-          <tr>
-            <th className={claseTh}>Nombre</th>
-            <th className={claseTh}>Rol</th>
-            <th className={claseTh}>Leads vigentes</th>
-            <th className={claseTh}>Estado</th>
-            <th className={claseTh}>Desde</th>
-            <th className={claseTh} />
-          </tr>
-        </thead>
-        <tbody>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Nombre</TableHead>
+            <TableHead>Rol</TableHead>
+            <TableHead>Leads vigentes</TableHead>
+            <TableHead>Estado</TableHead>
+            <TableHead>Desde</TableHead>
+            <TableHead />
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {usuarios?.map((u) => (
-            <tr key={u.id} className={u.activo ? '' : 'text-tenue'}>
-              <td className={claseTd}>
-                <p className="font-medium text-tinta">{u.nombre}</p>
-                <p className="text-xs text-suave">{u.email}</p>
-              </td>
-              <td className={claseTd}>{u.rol === 'administrador' ? 'Administrador' : 'Asesor'}</td>
-              <td className={claseTd}>{porAsesor.get(u.id) ?? 0}</td>
-              <td className={claseTd}>
-                <Insignia color={u.activo ? 'verde' : 'gris'}>{u.activo ? 'Activo' : 'Desactivado'}</Insignia>
-              </td>
-              <td className={claseTd}>{fecha(u.created_at)}</td>
-              <td className={`${claseTd} text-right`}>
+            <TableRow key={u.id} className={u.activo ? '' : 'text-muted-foreground'}>
+              <TableCell>
+                <p className="font-medium text-foreground">{u.nombre}</p>
+                <p className="text-xs text-muted-foreground">{u.email}</p>
+              </TableCell>
+              <TableCell>{u.rol === 'administrador' ? 'Administrador' : 'Asesor'}</TableCell>
+              <TableCell>{porAsesor.get(u.id) ?? 0}</TableCell>
+              <TableCell>
+                <Badge variant={u.activo ? 'verde' : 'gris'}>{u.activo ? 'Activo' : 'Desactivado'}</Badge>
+              </TableCell>
+              <TableCell>{fecha(u.created_at)}</TableCell>
+              <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
                   <Dialogo titulo={`Editar a ${u.nombre}`} boton="Editar">
                     <Formulario accion={editarUsuario}>
                       <input type="hidden" name="id" value={u.id} />
                       <Campo etiqueta="Nombre">
-                        <Entrada name="nombre" defaultValue={u.nombre} required />
+                        <Input name="nombre" defaultValue={u.nombre} required />
                       </Campo>
                       <Campo etiqueta="Teléfono">
-                        <Entrada name="telefono" defaultValue={u.telefono ?? ''} />
+                        <Input name="telefono" defaultValue={u.telefono ?? ''} />
                       </Campo>
                       <Campo etiqueta="Rol">
                         <Seleccion name="rol" defaultValue={u.rol}>
@@ -103,10 +106,10 @@ export default async function PaginaUsuarios() {
                     </BotonAccion>
                   )}
                 </div>
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
+        </TableBody>
       </Tabla>
       <Aviso>
         Los leads de un asesor desactivado siguen a su nombre: reasígnalos desde la bandeja de leads filtrando por ese

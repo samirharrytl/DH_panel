@@ -5,7 +5,10 @@ import { exigirAdmin } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { EMBUDO, ESTADOS_LEAD, SALIDAS, type EstadoLead, type TipoLead } from '@/lib/catalogos'
 import { dolares, fecha, hoyLima, num, soles } from '@/lib/formato'
-import { Aviso, EncabezadoPagina, Entrada, Tarjeta, claseBoton, cx } from '@/components/legado'
+import { Aviso, EncabezadoPagina, Tarjeta } from '@/components/campos'
+import { Input } from '@/components/ui/input'
+import { buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 export const metadata: Metadata = { title: 'Tablero' }
 
@@ -62,14 +65,14 @@ const porcentaje = (a: number, b: number) => (b > 0 ? Math.round((1000 * a) / b)
 function Cifra({ etiqueta, valor, detalle, href }: { etiqueta: string; valor: ReactNode; detalle?: ReactNode; href?: string }) {
   const contenido = (
     <>
-      <p className="text-xs text-suave">{etiqueta}</p>
-      <p className="mt-1 text-2xl font-semibold text-tinta tabular-nums">{valor}</p>
-      {detalle && <p className="mt-0.5 text-xs text-suave">{detalle}</p>}
+      <p className="text-xs text-muted-foreground">{etiqueta}</p>
+      <p className="mt-1 font-titulo text-3xl font-semibold text-primary tabular-nums">{valor}</p>
+      {detalle && <p className="mt-0.5 text-xs text-muted-foreground">{detalle}</p>}
     </>
   )
-  const clase = 'block rounded-xl border border-borde bg-white p-3 shadow-tarjeta'
+  const clase = 'block rounded-2xl border border-border bg-card p-4'
   return href ? (
-    <Link href={href} className={cx(clase, 'hover:border-marino-200')}>
+    <Link href={href} className={cn(clase, 'hover:border-primary')}>
       {contenido}
     </Link>
   ) : (
@@ -77,10 +80,10 @@ function Cifra({ etiqueta, valor, detalle, href }: { etiqueta: string; valor: Re
   )
 }
 
-function Barra({ pct, clase = 'bg-marino-700' }: { pct: number; clase?: string }) {
+function Barra({ pct, clase = 'bg-primary' }: { pct: number; clase?: string }) {
   return (
-    <div className="h-2 overflow-hidden rounded-full bg-marino-100">
-      <div className={cx('h-full rounded-full', clase)} style={{ width: `${Math.max(0, Math.min(100, pct))}%` }} />
+    <div className="h-2 overflow-hidden rounded-full bg-secondary">
+      <div className={cn('h-full rounded-full', clase)} style={{ width: `${Math.max(0, Math.min(100, pct))}%` }} />
     </div>
   )
 }
@@ -131,27 +134,27 @@ export default async function PaginaTablero({ searchParams }: PageProps<'/tabler
     <>
       <EncabezadoPagina titulo="Tablero" descripcion="Estado del negocio y métricas del piloto de match." />
 
-      <div className="mb-5 flex flex-wrap items-end gap-2 rounded-xl border border-borde bg-white p-3">
+      <div className="mb-6 flex flex-wrap items-end gap-2 rounded-2xl border border-border bg-card p-3">
         {(Object.entries(PERIODOS) as [keyof typeof PERIODOS, string][]).map(([k, v]) => (
-          <Link key={k} href={`/tablero?periodo=${k}`} className={claseBoton(periodo === k ? 'primario' : 'secundario', 'sm')}>
+          <Link key={k} href={`/tablero?periodo=${k}`} className={buttonVariants({ variant: periodo === k ? 'default' : 'outline', size: 'sm' })}>
             {v}
           </Link>
         ))}
         <form className="flex flex-wrap items-end gap-2" action="/tablero">
           <input type="hidden" name="periodo" value="personalizado" />
-          <label className="text-xs text-suave">
+          <label className="text-xs text-muted-foreground">
             Desde
-            <Entrada type="date" name="desde" defaultValue={desde} max={hoy} className="h-8 w-40" required />
+            <Input type="date" name="desde" defaultValue={desde} max={hoy} className="h-8 w-40" required />
           </label>
-          <label className="text-xs text-suave">
+          <label className="text-xs text-muted-foreground">
             Hasta
-            <Entrada type="date" name="hasta" defaultValue={hasta} className="h-8 w-40" required />
+            <Input type="date" name="hasta" defaultValue={hasta} className="h-8 w-40" required />
           </label>
-          <button type="submit" className={claseBoton(periodo === 'personalizado' ? 'primario' : 'secundario', 'sm')}>
+          <button type="submit" className={buttonVariants({ variant: periodo === 'personalizado' ? 'default' : 'outline', size: 'sm' })}>
             Aplicar
           </button>
         </form>
-        <p className="w-full text-xs text-suave">
+        <p className="w-full text-xs text-muted-foreground">
           Periodo: del {fecha(desde)} al {fecha(hasta)}. Los leads por etapa y sin respuesta muestran la situación de hoy.
         </p>
       </div>
@@ -166,7 +169,7 @@ export default async function PaginaTablero({ searchParams }: PageProps<'/tabler
       {t && (
         <div className="space-y-6">
           <section>
-            <h2 className="mb-2 text-base font-semibold text-tinta">Negocio en el periodo</h2>
+            <h2 className="mb-2 text-base font-semibold text-foreground">Negocio en el periodo</h2>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
               <Cifra etiqueta="Leads nuevos" valor={num(t.negocio.leads_nuevos)} />
               <Cifra etiqueta="Contratos firmados" valor={num(t.negocio.contratos_firmados)} detalle="Sin contar renovaciones" />
@@ -178,7 +181,7 @@ export default async function PaginaTablero({ searchParams }: PageProps<'/tabler
           </section>
 
           <section>
-            <h2 className="mb-2 text-base font-semibold text-tinta">Leads sin respuesta</h2>
+            <h2 className="mb-2 text-base font-semibold text-foreground">Leads sin respuesta</h2>
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
               <Cifra etiqueta="Sin bienvenida" valor={num(t.sin_respuesta.sin_bienvenida)} href="/leads?estado=nuevo" />
               <Cifra
@@ -199,18 +202,18 @@ export default async function PaginaTablero({ searchParams }: PageProps<'/tabler
               const total = filas.reduce((s, x) => s + Number(x.total), 0)
               const maximo = Math.max(1, ...filas.map((x) => Number(x.total)))
               return (
-                <Tarjeta key={tipo} titulo={`Leads por etapa · ${TITULO_TIPO[tipo]}`} acciones={<span className="text-sm text-suave">{num(total)} vigentes</span>}>
+                <Tarjeta key={tipo} titulo={`Leads por etapa (${TITULO_TIPO[tipo].toLowerCase()})`} acciones={<span className="text-sm text-muted-foreground">{num(total)} vigentes</span>}>
                   <ul className="space-y-2">
                     {estados.map((estado) => {
                       const n = Number(filas.find((x) => x.estado === estado)?.total ?? 0)
                       return (
                         <li key={estado}>
-                          <Link href={`/leads?estado=${estado}&tipo=${tipo}`} className="block rounded hover:bg-marino-50">
+                          <Link href={`/leads?estado=${estado}&tipo=${tipo}`} className="block rounded hover:bg-accent">
                             <div className="flex items-center justify-between text-sm">
-                              <span className={cx(SALIDAS.includes(estado) ? 'text-suave' : 'text-tinta')}>{ESTADOS_LEAD[estado]}</span>
-                              <span className="font-medium text-tinta tabular-nums">{num(n)}</span>
+                              <span className={cn(SALIDAS.includes(estado) ? 'text-muted-foreground' : 'text-foreground')}>{ESTADOS_LEAD[estado]}</span>
+                              <span className="font-medium text-foreground tabular-nums">{num(n)}</span>
                             </div>
-                            <Barra pct={(100 * n) / maximo} clase={SALIDAS.includes(estado) ? 'bg-gray-400' : 'bg-marino-700'} />
+                            <Barra pct={(100 * n) / maximo} clase={SALIDAS.includes(estado) ? 'bg-gray-400' : 'bg-primary'} />
                           </Link>
                         </li>
                       )
@@ -228,11 +231,11 @@ export default async function PaginaTablero({ searchParams }: PageProps<'/tabler
               return (
                 <Tarjeta
                   key={tipo}
-                  titulo={`Conversiones · ${TITULO_TIPO[tipo]}`}
-                  acciones={<span className="text-sm text-suave">{num(total)} registrados en el periodo</span>}
+                  titulo={`Conversiones (${TITULO_TIPO[tipo].toLowerCase()})`}
+                  acciones={<span className="text-sm text-muted-foreground">{num(total)} registrados en el periodo</span>}
                 >
                   {total === 0 ? (
-                    <p className="text-sm text-suave">No hay leads registrados en el periodo.</p>
+                    <p className="text-sm text-muted-foreground">No hay leads registrados en el periodo.</p>
                   ) : (
                     <ul className="space-y-3">
                       {etapas.map((e, i) => {
@@ -242,26 +245,26 @@ export default async function PaginaTablero({ searchParams }: PageProps<'/tabler
                         return (
                           <li key={e.estado}>
                             <div className="flex flex-wrap items-baseline justify-between gap-x-2 text-sm">
-                              <span className="text-tinta">{ESTADOS_LEAD[e.estado]}</span>
-                              <span className="text-xs text-suave tabular-nums">
-                                <span className="text-sm font-medium text-tinta">{num(alcanzaron)}</span> · {num(delTotal)} % del total
-                                {i > 0 && ` · ${anterior === null ? '—' : `${num(anterior)} %`} de la anterior`}
+                              <span className="text-foreground">{ESTADOS_LEAD[e.estado]}</span>
+                              <span className="text-right text-xs text-muted-foreground tabular-nums">
+                                <span className="text-sm font-medium text-foreground">{num(alcanzaron)}</span>, {num(delTotal)} % del total
+                                {i > 0 && <span className="block">{anterior === null ? '—' : `${num(anterior)} %`} de la anterior</span>}
                               </span>
                             </div>
-                            <Barra pct={delTotal} clase={e.estado === 'cliente' ? 'bg-emerald-600' : 'bg-marino-700'} />
+                            <Barra pct={delTotal} clase={e.estado === 'cliente' ? 'bg-exito-vivo' : 'bg-primary'} />
                           </li>
                         )
                       })}
                     </ul>
                   )}
-                  <p className="mt-3 text-xs text-suave">Cada etapa cuenta a quienes la alcanzaron alguna vez, aunque luego salieran.</p>
+                  <p className="mt-3 text-xs text-muted-foreground">Cada etapa cuenta a quienes la alcanzaron alguna vez, aunque luego salieran.</p>
                 </Tarjeta>
               )
             })}
           </div>
 
           <section>
-            <h2 className="mb-2 text-base font-semibold text-tinta">Piloto de match</h2>
+            <h2 className="mb-2 text-base font-semibold text-foreground">Piloto de match</h2>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
               <Cifra etiqueta="Envíos" valor={num(t.piloto_match.envios)} detalle="Matches y novedades" />
               <Cifra
@@ -287,7 +290,7 @@ export default async function PaginaTablero({ searchParams }: PageProps<'/tabler
       )}
 
       <section className="mt-6">
-        <h2 className="mb-2 text-base font-semibold text-tinta">Costos de WhatsApp</h2>
+        <h2 className="mb-2 text-base font-semibold text-foreground">Costos de WhatsApp</h2>
         {errorCostos && <Aviso tipo="error">No se pudieron cargar los costos: {errorCostos.message}</Aviso>}
         {c && (
           <div className="space-y-3">
@@ -303,20 +306,21 @@ export default async function PaginaTablero({ searchParams }: PageProps<'/tabler
             </div>
             <div className="grid gap-4 lg:grid-cols-2">
               <Tarjeta titulo="Por tipo de mensaje">
-                <ul className="divide-y divide-borde-suave">
+                <ul className="divide-y divide-border">
                   {(Object.keys(CATEGORIAS_COSTO) as CategoriaCosto[]).map((k) => {
                     const fila = c.categorias.find((x) => x.categoria === k)
                     return (
                       <li key={k} className="flex items-start justify-between gap-3 py-2 first:pt-0 last:pb-0 text-sm">
                         <div>
-                          <p className="text-tinta">{CATEGORIAS_COSTO[k].titulo}</p>
-                          <p className="text-xs text-suave">
-                            {CATEGORIAS_COSTO[k].detalle} · {dolares(c.tarifas[k])} c/u
+                          <p className="text-foreground">{CATEGORIAS_COSTO[k].titulo}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {CATEGORIAS_COSTO[k].detalle}
+                            <span className="block">{dolares(c.tarifas[k])} por mensaje</span>
                           </p>
                         </div>
                         <div className="text-right tabular-nums">
-                          <p className="font-medium text-tinta">{dolares(fila?.costo ?? 0)}</p>
-                          <p className="text-xs text-suave">
+                          <p className="font-medium text-foreground">{dolares(fila?.costo ?? 0)}</p>
+                          <p className="text-xs text-muted-foreground">
                             {num(fila?.cobrables ?? 0)} cobrados de {num(fila?.enviados ?? 0)}
                           </p>
                         </div>
@@ -327,15 +331,15 @@ export default async function PaginaTablero({ searchParams }: PageProps<'/tabler
               </Tarjeta>
               <Tarjeta titulo="Por mes">
                 {c.meses.length === 0 ? (
-                  <p className="text-sm text-suave">No se enviaron mensajes desde el panel en el periodo.</p>
+                  <p className="text-sm text-muted-foreground">No se enviaron mensajes desde el panel en el periodo.</p>
                 ) : (
-                  <ul className="divide-y divide-borde-suave">
+                  <ul className="divide-y divide-border">
                     {c.meses.map((m) => (
                       <li key={m.mes} className="flex justify-between py-2 first:pt-0 last:pb-0 text-sm tabular-nums">
-                        <span className="text-tinta">{nombreMes(m.mes)}</span>
-                        <span className="text-suave">
-                          {num(m.cobrables)} cobrados de {num(m.enviados)} ·{' '}
-                          <span className="font-medium text-tinta">{dolares(m.costo)}</span>
+                        <span className="text-foreground">{nombreMes(m.mes)}</span>
+                        <span className="text-muted-foreground">
+                          {num(m.cobrables)} cobrados de {num(m.enviados)}
+                          <span className="ml-3 font-medium text-foreground">{dolares(m.costo)}</span>
                         </span>
                       </li>
                     ))}
@@ -343,7 +347,7 @@ export default async function PaginaTablero({ searchParams }: PageProps<'/tabler
                 )}
               </Tarjeta>
             </div>
-            <p className="text-xs text-suave">
+            <p className="text-xs text-muted-foreground">
               Solo cuesta lo que sale del panel por la API de WhatsApp: lo enviado desde la app del celular y lo que escriben
               los clientes es gratis. Cuando Meta informa el cobro de un mensaje se usa ese dato
               {c.estimados > 0 && <> ({num(c.estimados)} mensajes aún son estimados)</>}. Las tarifas se cambian en{' '}
@@ -357,7 +361,7 @@ export default async function PaginaTablero({ searchParams }: PageProps<'/tabler
       </section>
 
       <Tarjeta titulo="Probabilidad de firma" className="mt-6">
-        <p className="text-sm text-texto">
+        <p className="text-sm text-foreground">
           El modelo que estima qué propietarios tienen más probabilidad de firmar se activa cuando haya historial suficiente;
           su cálculo queda fuera de la fase 1. Mientras tanto, el panel guarda los datos que necesitará: calificación, precio
           frente a la zona, respuesta a los mensajes, citas y firmas.
@@ -367,7 +371,7 @@ export default async function PaginaTablero({ searchParams }: PageProps<'/tabler
           <Cifra etiqueta="Con calificación" valor={num(conCalificacion ?? 0)} />
           <Cifra etiqueta="Firmas" valor={num(firmas ?? 0)} />
         </dl>
-        <a href="/api/export/dataset" className={cx(claseBoton('secundario', 'sm'), 'mt-3')}>
+        <a href="/api/export/dataset" className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'mt-3')}>
           Descargar dataset (CSV)
         </a>
       </Tarjeta>

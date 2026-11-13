@@ -2,7 +2,9 @@
 
 import { useRef, useState } from 'react'
 import { renderizar, VARIABLES } from '@/lib/plantillas'
-import { AreaTexto, Campo, Entrada } from '@/components/legado'
+import { Campo } from '@/components/campos'
+import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
 import { BotonEnviar, Formulario, type Resultado } from '@/components/formulario'
 
 const EJEMPLO = {
@@ -54,7 +56,7 @@ export function EditorPlantilla({
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="space-y-2">
           <Campo etiqueta="Mensaje" ayuda="Lo que va entre llaves { } solo aparece si sus variables tienen valor.">
-            <AreaTexto ref={ref} name="cuerpo" value={texto} onChange={(e) => setTexto(e.target.value)} rows={7} />
+            <Textarea ref={ref} name="cuerpo" value={texto} onChange={(e) => setTexto(e.target.value)} rows={7} />
           </Campo>
           <div className="flex flex-wrap gap-1">
             {Object.entries(VARIABLES).map(([k, d]) => (
@@ -63,7 +65,7 @@ export function EditorPlantilla({
                 type="button"
                 title={d}
                 onClick={() => insertar(k)}
-                className="rounded border border-borde bg-white px-1.5 py-0.5 font-mono text-xs text-marino-800 hover:bg-marino-50"
+                className="rounded border border-border bg-white px-1.5 py-0.5 font-mono text-xs text-primary hover:bg-accent"
               >
                 [{k}]
               </button>
@@ -71,8 +73,8 @@ export function EditorPlantilla({
           </div>
         </div>
         <div>
-          <p className="mb-1 text-sm font-medium text-tinta">Vista previa</p>
-          <div className="rounded-lg bg-[#e7f6e9] p-3 text-sm whitespace-pre-wrap text-tinta">{renderizar(texto, EJEMPLO)}</div>
+          <p className="mb-1 text-sm font-medium text-foreground">Vista previa</p>
+          <div className="rounded-lg bg-[#e7f6e9] p-3 text-sm whitespace-pre-wrap text-foreground">{renderizar(texto, EJEMPLO)}</div>
         </div>
       </div>
       <div className="grid gap-3 sm:grid-cols-[1fr_8rem]">
@@ -80,10 +82,10 @@ export function EditorPlantilla({
           etiqueta="Nombre de la plantilla aprobada en Meta"
           ayuda="Necesario para escribir fuera de la ventana de 24 horas. Sus parámetros {{1}}, {{2}}… deben seguir el orden de las variables del mensaje."
         >
-          <Entrada name="meta_nombre" defaultValue={metaNombre ?? ''} placeholder="ej. refuerzo_dia_1" />
+          <Input name="meta_nombre" defaultValue={metaNombre ?? ''} placeholder="ej. refuerzo_dia_1" />
         </Campo>
         <Campo etiqueta="Idioma">
-          <Entrada name="meta_idioma" defaultValue={metaIdioma} />
+          <Input name="meta_idioma" defaultValue={metaIdioma} />
         </Campo>
       </div>
       <BotonEnviar>Guardar plantilla</BotonEnviar>

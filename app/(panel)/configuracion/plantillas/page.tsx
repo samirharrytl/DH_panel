@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { variablesEnOrden } from '@/lib/plantillas'
-import { Insignia, Tarjeta } from '@/components/legado'
+import { Tarjeta } from '@/components/campos'
+import { Badge } from '@/components/ui/badge'
 import { BotonAccion } from '@/components/formulario'
 import { guardarPlantilla, restablecerPlantilla } from './acciones'
 import { EditorPlantilla } from './editor'
@@ -27,7 +28,7 @@ export default async function PaginaPlantillas() {
 
   return (
     <div className="space-y-5">
-      <p className="text-sm text-suave">
+      <p className="text-sm text-muted-foreground">
         Mensajes personalizados con el nombre y neutros en género. Las variables entre corchetes se reemplazan al enviar.
       </p>
       {Object.entries(CATEGORIAS).map(([cat, titulo]) => {
@@ -35,7 +36,7 @@ export default async function PaginaPlantillas() {
         if (!lista.length) return null
         return (
           <section key={cat} className="space-y-3">
-            <h2 className="text-lg font-semibold text-tinta">{titulo}</h2>
+            <h2 className="text-lg font-semibold text-foreground">{titulo}</h2>
             {lista.map((p) => (
               <Tarjeta
                 key={p.clave}
@@ -43,9 +44,9 @@ export default async function PaginaPlantillas() {
                   <span className="flex flex-wrap items-center gap-2">
                     {p.nombre}
                     {p.meta_nombre ? (
-                      <Insignia color="verde">Meta: {p.meta_nombre}</Insignia>
+                      <Badge variant="verde">Meta: {p.meta_nombre}</Badge>
                     ) : (
-                      <Insignia color="gris">Sin plantilla de Meta</Insignia>
+                      <Badge variant="gris">Sin plantilla de Meta</Badge>
                     )}
                   </span>
                 }
@@ -61,7 +62,7 @@ export default async function PaginaPlantillas() {
                   )
                 }
               >
-                {p.descripcion && <p className="mb-3 text-sm text-suave">{p.descripcion}</p>}
+                {p.descripcion && <p className="mb-3 text-sm text-muted-foreground">{p.descripcion}</p>}
                 <EditorPlantilla
                   clave={p.clave}
                   cuerpo={p.cuerpo}
@@ -70,7 +71,7 @@ export default async function PaginaPlantillas() {
                   accion={guardarPlantilla}
                 />
                 {p.meta_nombre && (
-                  <p className="mt-2 text-xs text-suave">
+                  <p className="mt-2 text-xs text-muted-foreground">
                     Parámetros para Meta:{' '}
                     {variablesEnOrden(p.cuerpo)
                       .map((v, i) => `{{${i + 1}}} = [${v}]`)
