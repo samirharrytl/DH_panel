@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { cx } from '@/components/legado'
+import { cn } from '@/lib/utils'
+import { Badge } from '@/components/ui/badge'
 
 type Pestana = { href: string; texto: string; contador?: number }
 
@@ -12,27 +13,29 @@ export function Pestanas({ items, param, porDefecto }: { items: Pestana[]; param
   const busqueda = useSearchParams()
   const actual = param ? (busqueda.get(param) ?? porDefecto) : null
   return (
-    <nav className="mb-5 flex gap-1 overflow-x-auto border-b border-borde">
-      {items.map((p) => {
-        const activa = param
-          ? new URL(p.href, 'http://x').searchParams.get(param) === actual
-          : ruta === p.href || ruta.startsWith(`${p.href}/`)
-        return (
-          <Link
-            key={p.href}
-            href={p.href}
-            scroll={false}
-            aria-current={activa ? 'page' : undefined}
-            className={cx(
-              '-mb-px border-b-2 px-3 py-2 text-sm font-medium whitespace-nowrap',
-              activa ? 'border-marino-800 text-marino-800' : 'border-transparent text-suave hover:text-marino-800',
-            )}
-          >
-            {p.texto}
-            {!!p.contador && <span className="ml-1 rounded-full bg-amber-100 px-1.5 text-xs text-amber-800">{p.contador}</span>}
-          </Link>
-        )
-      })}
+    <nav aria-label="Secciones" className="mb-6 overflow-x-auto">
+      <div className="inline-flex min-w-max gap-1 rounded-xl bg-muted p-1">
+        {items.map((p) => {
+          const activa = param
+            ? new URL(p.href, 'http://x').searchParams.get(param) === actual
+            : ruta === p.href || ruta.startsWith(`${p.href}/`)
+          return (
+            <Link
+              key={p.href}
+              href={p.href}
+              scroll={false}
+              aria-current={activa ? 'page' : undefined}
+              className={cn(
+                'inline-flex min-h-10 items-center gap-1.5 rounded-lg px-3.5 text-sm font-medium whitespace-nowrap transition-colors',
+                activa ? 'bg-card text-primary shadow-sm' : 'text-muted-foreground hover:text-primary',
+              )}
+            >
+              {p.texto}
+              {!!p.contador && <Badge variant="ambar">{p.contador}</Badge>}
+            </Link>
+          )
+        })}
+      </div>
     </nav>
   )
 }

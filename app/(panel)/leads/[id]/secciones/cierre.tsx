@@ -112,7 +112,7 @@ export async function SeccionCierre({ lead }: PropsSeccion) {
           titulo="Iniciar compraventa"
           acciones={
             enCartera.length > 0 && (
-              <Dialogo titulo="Iniciar compraventa" boton="Iniciar compraventa" variante="primario">
+              <Dialogo titulo="Iniciar compraventa" boton="Iniciar compraventa" variante="default">
                 <Formulario accion={iniciarCompraventa}>
                   <input type="hidden" name="lead_id" value={lead.id} />
                   <Aviso tipo={alcanza ? 'info' : 'alerta'}>
@@ -242,7 +242,7 @@ function CompraventaEnCurso({
         Sin separación: cuando se firme la compraventa con el acompañamiento del asesor, registra el cierre.
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
-        <Dialogo titulo="Registrar cierre" boton="Registrar cierre" variante="primario">
+        <Dialogo titulo="Registrar cierre" boton="Registrar cierre" variante="exito">
           <Formulario accion={registrarCierre}>
             <input type="hidden" name="compraventa_id" value={cv.id} />
             <input type="hidden" name="lead_id" value={leadId} />

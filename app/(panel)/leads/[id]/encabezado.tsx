@@ -56,7 +56,7 @@ export async function Encabezado({ lead, usuario }: PropsSeccion) {
         {lead.vigente && (
           <div className="flex flex-wrap gap-2">
             {editable && lead.estado !== 'baja' && (
-              <Dialogo titulo="Cambiar estado" boton="Cambiar estado" variante="primario">
+              <Dialogo titulo="Cambiar estado" boton="Cambiar estado" variante="default">
                 <Formulario accion={cambiarEstado}>
                   <input type="hidden" name="lead_id" value={lead.id} />
                   <Campo

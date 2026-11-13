@@ -1,22 +1,22 @@
 'use client'
 
 import { useEffect, useRef, useState, type MouseEvent } from 'react'
-import { Boton } from '@/components/legado'
-
-type Variante = 'primario' | 'secundario' | 'fantasma' | 'peligro' | 'whatsapp'
+import { Check, Copy } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import type { Variante } from '@/components/formulario'
 
 // Copia un texto al portapapeles y confirma con "Copiado" (enlaces y textos de publicaciones, HU-29)
 export function Copiar({
   texto,
   etiqueta = 'Copiar',
-  variante = 'secundario',
+  variante = 'outline',
   tamano = 'sm',
   className,
 }: {
   texto: string
   etiqueta?: string
   variante?: Variante
-  tamano?: 'sm' | 'md'
+  tamano?: 'sm' | 'default'
   className?: string
 }) {
   const [estado, setEstado] = useState<'listo' | 'copiado' | 'error'>('listo')
@@ -38,9 +38,19 @@ export function Copiar({
   }
 
   return (
-    <Boton variante={variante} tamano={tamano} className={className} onClick={copiar} aria-live="polite">
-      {estado === 'copiado' ? '✓ Copiado' : estado === 'error' ? 'No se pudo copiar' : etiqueta}
-    </Boton>
+    <Button variant={variante} size={tamano} className={className} onClick={copiar} aria-live="polite">
+      {estado === 'copiado' ? (
+        <>
+          <Check aria-hidden /> Copiado
+        </>
+      ) : estado === 'error' ? (
+        'No se pudo copiar'
+      ) : (
+        <>
+          <Copy aria-hidden /> {etiqueta}
+        </>
+      )}
+    </Button>
   )
 }
 

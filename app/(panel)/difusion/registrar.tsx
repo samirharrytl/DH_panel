@@ -14,7 +14,7 @@ export function RegistrarPublicacion({
   hoy,
   destino,
   esAdmin,
-  variante = 'secundario',
+  variante = 'outline',
   tamano = 'sm',
 }: {
   inmueble: { id: string; codigo: string; descripcion: string }
@@ -23,8 +23,8 @@ export function RegistrarPublicacion({
   hoy: string
   destino?: string
   esAdmin: boolean
-  variante?: 'primario' | 'secundario'
-  tamano?: 'sm' | 'md'
+  variante?: 'default' | 'outline'
+  tamano?: 'sm' | 'default'
 }) {
   return (
     <Dialogo titulo={`Registrar publicación · ${inmueble.codigo}`} boton="Registrar publicación" variante={variante} tamano={tamano}>

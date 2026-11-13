@@ -83,7 +83,7 @@ function ItemPublicacion({ p, numero, hoy, mostrarInmueble }: { p: Publicacion; 
         ) : (
           <span className="text-xs text-tenue">Sin enlace a la publicación</span>
         )}
-        <Dialogo titulo={`Publicación ${p.codigo} · ${p.red}`} boton="Editar enlace y métricas" variante="fantasma">
+        <Dialogo titulo={`Publicación ${p.codigo} · ${p.red}`} boton="Editar enlace y métricas" variante="ghost">
           <Formulario accion={guardarMetricas}>
             <input type="hidden" name="id" value={p.id} />
             <Campo etiqueta="Enlace a la publicación">
@@ -111,7 +111,7 @@ function ItemPublicacion({ p, numero, hoy, mostrarInmueble }: { p: Publicacion; 
           <summary className="cursor-pointer text-sm font-medium text-marino-700">Texto para publicar</summary>
           <div className="mt-2 space-y-2">
             <p className="rounded-lg bg-fondo p-3 text-sm break-words whitespace-pre-wrap text-tinta">{paraRed}</p>
-            <Copiar texto={paraRed} etiqueta="Copiar texto con enlace" variante="primario" />
+            <Copiar texto={paraRed} etiqueta="Copiar texto con enlace" variante="default" />
           </div>
         </details>
       )}

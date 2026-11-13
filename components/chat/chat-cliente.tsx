@@ -1,11 +1,15 @@
 'use client'
 
+import { Check, CheckCheck, CircleAlert, type LucideIcon } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { crearClienteNavegador } from '@/lib/supabase/navegador'
 import { renderizar, type Variables } from '@/lib/plantillas'
 import { fechaHora, hora } from '@/lib/formato'
-import { AreaTexto, Aviso, Entrada, Seleccion, cx } from '@/components/legado'
+import { Aviso, Seleccion } from '@/components/campos'
+import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
 import { BotonEnviar, Formulario } from '@/components/formulario'
 import { enviarDesdeChat, marcarLeidos, registrarManual, simularEntrante } from '@/app/(panel)/chats/acciones'
 
@@ -25,7 +29,12 @@ export type MensajeChat = {
 
 type Plantilla = { clave: string; nombre: string; cuerpo: string; meta_nombre: string | null; categoria: string }
 
-const ICONO_ESTADO: Record<string, string> = { enviado: '✓', entregado: '✓✓', leido: '✓✓', fallido: '⚠', registrado: '' }
+const ICONO_ESTADO: Record<string, { Icono: LucideIcon; texto: string }> = {
+  enviado: { Icono: Check, texto: 'Enviado' },
+  entregado: { Icono: CheckCheck, texto: 'Entregado' },
+  leido: { Icono: CheckCheck, texto: 'Leído' },
+  fallido: { Icono: CircleAlert, texto: 'Falló' },
+}
 
 export function ChatCliente({
   personaId,
@@ -91,9 +100,9 @@ export function ChatCliente({
   const modoEfectivo = modo === 'texto' && !ventanaAbierta ? 'plantilla' : modo
 
   return (
-    <div className="flex flex-col rounded-xl border border-borde bg-white shadow-tarjeta">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-borde-suave px-4 py-2 text-xs">
-        <span className={ventanaAbierta ? 'text-emerald-700' : 'text-suave'}>
+    <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2 text-xs">
+        <span className={ventanaAbierta ? 'font-medium text-exito-texto' : 'text-muted-foreground'}>
           {ventanaAbierta
             ? `Ventana de 24 h abierta hasta ${fechaHora(new Date(ventanaHasta!))}: puedes escribir libremente`
             : 'Ventana de 24 h cerrada: solo plantillas aprobadas por Meta'}
@@ -102,18 +111,18 @@ export function ChatCliente({
       </div>
 
       <div className="h-[55vh] min-h-72 space-y-2 overflow-y-auto bg-[#efeae2] px-3 py-4">
-        {mensajes.length === 0 && <p className="py-10 text-center text-sm text-suave">Todavía no hay mensajes.</p>}
+        {mensajes.length === 0 && <p className="py-10 text-center text-sm text-muted-foreground">Todavía no hay mensajes.</p>}
         {mensajes.map((m) => (
-          <div key={m.id} className={cx('flex', m.direccion === 'saliente' ? 'justify-end' : 'justify-start')}>
+          <div key={m.id} className={cn('flex', m.direccion === 'saliente' ? 'justify-end' : 'justify-start')}>
             <div
-              className={cx(
+              className={cn(
                 'max-w-[85%] rounded-lg px-3 py-2 text-sm shadow-sm sm:max-w-[70%]',
                 m.direccion === 'saliente' ? 'bg-[#d9fdd3]' : 'bg-white',
                 m.origen === 'manual' && 'border border-dashed border-gray-400',
               )}
             >
-              {m.plantilla_clave && <p className="mb-0.5 text-[11px] text-suave">Plantilla: {m.plantilla_clave}</p>}
-              <p className="whitespace-pre-wrap text-tinta">{m.cuerpo}</p>
+              {m.plantilla_clave && <p className="mb-0.5 text-[11px] text-muted-foreground">Plantilla: {m.plantilla_clave}</p>}
+              <p className="whitespace-pre-wrap text-foreground">{m.cuerpo}</p>
               {m.metadata?.botones && (
                 <div className="mt-2 flex flex-wrap gap-1">
                   {m.metadata.botones.map((b) => (
@@ -121,15 +130,23 @@ export function ChatCliente({
                   ))}
                 </div>
               )}
-              {m.error && <p className="mt-1 text-xs text-red-700">⚠ {m.error}</p>}
+              {m.error && (
+                <p className="mt-1 flex items-start gap-1 text-xs text-destructive">
+                  <CircleAlert aria-hidden className="mt-px size-3.5 shrink-0" />
+                  {m.error}
+                </p>
+              )}
               {m.metadata?.advertencia && <p className="mt-1 text-[11px] text-amber-800">{m.metadata.advertencia}</p>}
-              <p className="mt-0.5 text-right text-[11px] text-suave">
+              <p className="mt-0.5 text-right text-[11px] text-muted-foreground">
                 {m.origen === 'manual' && 'Registrado a mano · '}
                 {m.origen === 'celular' && 'Desde el celular · '}
                 {m.origen === 'importado' && 'Historial del celular · '}
                 {m.direccion === 'saliente' && m.autor?.nombre && `${m.autor.nombre} · `}
                 {hora(m.created_at)}{' '}
-                <span className={m.estado === 'leido' ? 'text-sky-600' : ''}>{ICONO_ESTADO[m.estado] ?? ''}</span>
+                {ICONO_ESTADO[m.estado] && (() => {
+                  const { Icono, texto } = ICONO_ESTADO[m.estado]
+                  return <Icono aria-label={texto} className={cn('inline size-3.5 align-[-2px]', m.estado === 'leido' && 'text-sky-600')} />
+                })()}
               </p>
             </div>
           </div>
@@ -137,7 +154,7 @@ export function ChatCliente({
         <div ref={fin} />
       </div>
 
-      <div className="border-t border-borde-suave p-3">
+      <div className="border-t border-border p-3">
         {bloqueado ? (
           <Aviso tipo="alerta">Esta persona pidió no ser contactada (Baja). No se le envían mensajes.</Aviso>
         ) : (
@@ -155,9 +172,10 @@ export function ChatCliente({
                   key={k}
                   type="button"
                   onClick={() => setModo(k)}
-                  className={cx(
-                    'rounded-full px-3 py-1',
-                    modoEfectivo === k ? 'bg-marino-800 text-white' : 'bg-gray-100 text-suave hover:bg-gray-200',
+                  aria-pressed={modoEfectivo === k}
+                  className={cn(
+                    'min-h-9 rounded-full px-3.5 py-1 transition-colors',
+                    modoEfectivo === k ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent hover:text-primary',
                   )}
                 >
                   {t}
@@ -169,7 +187,7 @@ export function ChatCliente({
               <Formulario accion={enviarDesdeChat} reiniciar className="flex items-end gap-2">
                 <input type="hidden" name="persona_id" value={personaId} />
                 <input type="hidden" name="lead_id" value={leadId ?? ''} />
-                <AreaTexto name="texto" rows={2} placeholder="Escribe un mensaje" required className="flex-1" />
+                <Textarea name="texto" rows={2} placeholder="Escribe un mensaje" required className="flex-1" />
                 <BotonEnviar variante="whatsapp">Enviar</BotonEnviar>
               </Formulario>
             )}
@@ -179,7 +197,7 @@ export function ChatCliente({
                 <input type="hidden" name="persona_id" value={personaId} />
                 <input type="hidden" name="lead_id" value={leadId ?? ''} />
                 {modo === 'texto' && !ventanaAbierta && (
-                  <p className="text-xs text-suave">Fuera de la ventana de 24 horas solo puedes enviar plantillas.</p>
+                  <p className="text-xs text-muted-foreground">Fuera de la ventana de 24 horas solo puedes enviar plantillas.</p>
                 )}
                 <Seleccion name="plantilla" value={plantilla} onChange={(e) => setPlantilla(e.target.value)} required>
                   <option value="">Elige una plantilla</option>
@@ -201,15 +219,15 @@ export function ChatCliente({
               <Formulario accion={registrarManual} reiniciar className="space-y-2">
                 <input type="hidden" name="persona_id" value={personaId} />
                 <input type="hidden" name="lead_id" value={leadId ?? ''} />
-                <p className="text-xs text-suave">
+                <p className="text-xs text-muted-foreground">
                   Para dejar constancia de un mensaje clave conversado fuera del panel. No se envía nada.
                 </p>
                 <Seleccion name="direccion" defaultValue="entrante">
                   <option value="entrante">Lo escribió el cliente</option>
                   <option value="saliente">Lo escribió DepaHost</option>
                 </Seleccion>
-                <AreaTexto name="texto" rows={2} required />
-                <BotonEnviar variante="secundario">Registrar</BotonEnviar>
+                <Textarea name="texto" rows={2} required />
+                <BotonEnviar variante="outline">Registrar</BotonEnviar>
               </Formulario>
             )}
 
@@ -217,8 +235,8 @@ export function ChatCliente({
               <Formulario accion={simularEntrante} reiniciar className="flex items-end gap-2">
                 <input type="hidden" name="persona_id" value={personaId} />
                 <input type="hidden" name="lead_id" value={leadId ?? ''} />
-                <Entrada name="texto" placeholder="Mensaje como si lo escribiera el cliente" required className="flex-1" />
-                <BotonEnviar variante="secundario">Simular</BotonEnviar>
+                <Input name="texto" placeholder="Mensaje como si lo escribiera el cliente" required className="flex-1" />
+                <BotonEnviar variante="outline">Simular</BotonEnviar>
               </Formulario>
             )}
           </>

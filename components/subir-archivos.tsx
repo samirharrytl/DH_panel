@@ -4,7 +4,9 @@ import Image from 'next/image'
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { crearClienteNavegador } from '@/lib/supabase/navegador'
-import { Boton, cx } from '@/components/legado'
+import { Upload, X } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import type { Resultado } from '@/lib/resultado'
 
 // Buckets privados de Storage. Las políticas solo dejan subir a quien puede editar el inmueble, y la
@@ -172,33 +174,34 @@ export function SelectorArchivos({
         }}
       />
       <div className="flex flex-wrap items-center gap-2">
-        <Boton variante="secundario" tamano="sm" disabled={disabled} onClick={() => entrada.current?.click()}>
+        <Button variant="outline" size="sm" disabled={disabled} onClick={() => entrada.current?.click()}>
+          <Upload aria-hidden />
           {etiqueta}
-        </Boton>
-        <span className="text-xs text-suave">{reglas.texto}</span>
+        </Button>
+        <span className="text-xs text-muted-foreground">{reglas.texto}</span>
       </div>
-      {control.error && <p className="text-xs text-red-700">{control.error}</p>}
+      {control.error && <p className="text-xs text-destructive">{control.error}</p>}
       {control.items.length > 0 && (
-        <ul className={cx(control.bucket === 'inmuebles' ? 'grid grid-cols-3 gap-2 sm:grid-cols-4' : 'space-y-1')}>
+        <ul className={cn(control.bucket === 'inmuebles' ? 'grid grid-cols-3 gap-2 sm:grid-cols-4' : 'space-y-1')}>
           {control.items.map((i) => (
             <li key={i.id} className="relative">
               {i.vista && control.bucket === 'inmuebles' ? (
-                <div className="relative aspect-square overflow-hidden rounded-lg border border-borde bg-fondo">
+                <div className="relative aspect-square overflow-hidden rounded-lg border border-border bg-background">
                   <Image src={i.vista} alt={i.archivo.name} fill unoptimized sizes="120px" className="object-cover" />
                 </div>
               ) : (
-                <p className="truncate rounded-lg border border-borde px-3 py-2 pr-9 text-sm text-tinta">
-                  {i.archivo.name} <span className="text-xs text-suave">({tamano(i.archivo.size)})</span>
+                <p className="truncate rounded-lg border border-border px-3 py-2 pr-9 text-sm text-foreground">
+                  {i.archivo.name} <span className="text-xs text-muted-foreground">({tamano(i.archivo.size)})</span>
                 </p>
               )}
               <button
                 type="button"
                 onClick={() => control.quitar([i.archivo])}
                 disabled={disabled}
-                className="absolute top-1 right-1 rounded-full bg-white/90 px-1.5 text-sm text-suave shadow hover:text-red-700"
+                className="absolute top-1 right-1 grid size-7 place-items-center rounded-full bg-card/90 text-muted-foreground shadow hover:text-destructive"
                 aria-label={`Quitar ${i.archivo.name}`}
               >
-                ✕
+                <X aria-hidden className="size-4" />
               </button>
             </li>
           ))}
@@ -225,8 +228,8 @@ export function SubirFotos({
     <div className="space-y-2">
       <SelectorArchivos control={fotos} etiqueta="Elegir fotos" disabled={pendiente} />
       {fotos.items.length > 0 && (
-        <Boton
-          tamano="sm"
+        <Button
+          size="sm"
           disabled={pendiente}
           onClick={() => {
             setAviso(null)
@@ -243,9 +246,9 @@ export function SubirFotos({
           }}
         >
           {pendiente ? 'Subiendo…' : `Subir ${fotos.items.length} foto(s)`}
-        </Boton>
+        </Button>
       )}
-      {aviso && <p className={cx('text-xs', aviso.ok ? 'text-emerald-700' : 'text-red-700')}>{aviso.texto}</p>}
+      {aviso && <p className={cn('text-xs', aviso.ok ? 'text-emerald-700' : 'text-red-700')}>{aviso.texto}</p>}
     </div>
   )
 }

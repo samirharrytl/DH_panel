@@ -89,7 +89,7 @@ export async function SeccionVisitas({ lead, inmueble }: PropsSeccion & { inmueb
                         <BotonAccion accion={pedirOpinionVisita.bind(null, c.id)} variante="whatsapp">
                           Pedir opinión
                         </BotonAccion>
-                        <Dialogo titulo="Opinión de la visita" boton={c.opinion ? 'Editar opinión' : 'Registrar opinión'} variante="primario">
+                        <Dialogo titulo="Opinión de la visita" boton={c.opinion ? 'Editar opinión' : 'Registrar opinión'} variante="default">
                           <Formulario accion={registrarOpinionVisita}>
                             <input type="hidden" name="cita_id" value={c.id} />
                             <input type="hidden" name="lead_id" value={lead.id} />

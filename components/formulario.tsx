@@ -3,16 +3,22 @@
 import { createContext, useActionState, useContext, useEffect, useRef, useState, useTransition, type ReactNode } from 'react'
 import { useFormStatus } from 'react-dom'
 import { useRouter } from 'next/navigation'
-import { Aviso, Boton, claseBoton, cx } from '@/components/legado'
+import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
+import { Aviso } from '@/components/campos'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 
 import type { Resultado } from '@/lib/resultado'
 export type { Resultado }
 type Accion = (previo: Resultado | null, datos: FormData) => Promise<Resultado>
+export type Variante = 'default' | 'exito' | 'outline' | 'ghost' | 'peligro' | 'whatsapp'
+type Tamano = 'sm' | 'default'
 
 const ContextoDialogo = createContext<{ cerrar: () => void } | null>(null)
 
-// Formulario conectado a una Server Action: muestra el error o el mensaje de éxito y, dentro de un
-// diálogo, lo cierra al terminar bien.
+// Formulario conectado a una Server Action: muestra el error dentro del formulario y el éxito en un
+// aviso emergente; dentro de un diálogo, lo cierra al terminar bien.
 export function Formulario({
   accion,
   children,
@@ -36,6 +42,7 @@ export function Formulario({
 
   useEffect(() => {
     if (estado?.ok) {
+      if (estado.mensaje) toast.success(estado.mensaje)
       if (reiniciar) ref.current?.reset()
       alTerminarRef.current?.(estado)
       dialogo?.cerrar()
@@ -46,87 +53,68 @@ export function Formulario({
     <form ref={ref} action={accionForm} className={className ?? 'space-y-4'}>
       {children}
       {estado && !estado.ok && <Aviso tipo="error">{estado.error}</Aviso>}
-      {estado?.ok && estado.mensaje && !dialogo && <Aviso tipo="exito">{estado.mensaje}</Aviso>}
     </form>
   )
 }
 
 export function BotonEnviar({
   children,
-  variante = 'primario',
-  tamano = 'md',
+  variante = 'default',
+  tamano = 'default',
   className,
   name,
   value,
 }: {
   children: ReactNode
-  variante?: 'primario' | 'secundario' | 'peligro' | 'whatsapp' | 'fantasma'
-  tamano?: 'sm' | 'md'
+  variante?: Variante
+  tamano?: Tamano
   className?: string
   name?: string
   value?: string
 }) {
   const { pending } = useFormStatus()
   return (
-    <button type="submit" name={name} value={value} disabled={pending} className={cx(claseBoton(variante, tamano), className)}>
+    <Button type="submit" name={name} value={value} disabled={pending} variant={variante} size={tamano} className={className}>
       {pending ? 'Guardando…' : children}
-    </button>
+    </Button>
   )
 }
 
-// Diálogo modal nativo. Los formularios de adentro lo cierran al terminar bien.
+// Diálogo modal. Los formularios de adentro lo cierran al terminar bien.
 export function Dialogo({
   titulo,
   boton,
   children,
-  variante = 'secundario',
+  variante = 'outline',
   tamano = 'sm',
-  ancho = 'max-w-lg',
+  ancho = 'sm:max-w-lg',
 }: {
   titulo: ReactNode
   boton: ReactNode
   children: ReactNode
-  variante?: 'primario' | 'secundario' | 'peligro' | 'whatsapp' | 'fantasma'
-  tamano?: 'sm' | 'md'
+  variante?: Variante
+  tamano?: Tamano
   ancho?: string
 }) {
-  const ref = useRef<HTMLDialogElement>(null)
   const [abierto, setAbierto] = useState(false)
-  const [contexto] = useState(() => ({ cerrar: () => ref.current?.close() }))
+  const [contexto] = useState(() => ({ cerrar: () => setAbierto(false) }))
 
   return (
-    <>
-      <Boton
-        variante={variante}
-        tamano={tamano}
-        onClick={() => {
-          setAbierto(true)
-          ref.current?.showModal()
-        }}
-      >
-        {boton}
-      </Boton>
-      <dialog
-        ref={ref}
-        onClose={() => setAbierto(false)}
-        className={cx('m-auto w-[calc(100%-2rem)] rounded-xl p-0 shadow-flotante', ancho)}
-      >
-        <div className="flex items-center justify-between border-b border-borde-suave px-4 py-3">
-          <h2 className="text-base font-semibold text-tinta">{titulo}</h2>
-          <button
-            type="button"
-            onClick={() => ref.current?.close()}
-            className="rounded p-1 text-suave hover:bg-gray-100"
-            aria-label="Cerrar"
-          >
-            ✕
-          </button>
+    <Dialog open={abierto} onOpenChange={setAbierto}>
+      <DialogTrigger asChild>
+        <Button variant={variante} size={tamano}>
+          {boton}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className={cn('max-h-[90vh] gap-0 overflow-y-auto p-0', ancho)}>
+        <DialogHeader className="border-b border-border px-5 py-4">
+          <DialogTitle className="font-titulo text-lg text-primary">{titulo}</DialogTitle>
+        </DialogHeader>
+        <div className="p-5">
+          <ContextoDialogo.Provider value={contexto}>{children}</ContextoDialogo.Provider>
         </div>
-        <div className="max-h-[75vh] overflow-y-auto p-4">
-          {abierto && <ContextoDialogo.Provider value={contexto}>{children}</ContextoDialogo.Provider>}
-        </div>
-      </dialog>
-    </>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -135,47 +123,48 @@ export function BotonAccion({
   accion,
   children,
   confirmar,
-  variante = 'secundario',
+  variante = 'outline',
   tamano = 'sm',
   className,
 }: {
   accion: () => Promise<Resultado>
   children: ReactNode
   confirmar?: string
-  variante?: 'primario' | 'secundario' | 'peligro' | 'whatsapp' | 'fantasma'
-  tamano?: 'sm' | 'md'
+  variante?: Variante
+  tamano?: Tamano
   className?: string
 }) {
   const [pendiente, iniciar] = useTransition()
-  const [aviso, setAviso] = useState<{ ok: boolean; texto: string } | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   return (
     <span className="inline-flex flex-col items-start gap-1">
-      <Boton
-        variante={variante}
-        tamano={tamano}
+      <Button
+        variant={variante}
+        size={tamano}
         className={className}
         disabled={pendiente}
         onClick={() => {
           if (confirmar && !window.confirm(confirmar)) return
-          setAviso(null)
+          setError(null)
           iniciar(async () => {
             const r = await accion()
             if (!r.ok) {
-              setAviso({ ok: false, texto: r.error })
+              setError(r.error)
               return
             }
-            if (r.mensaje) {
-              setAviso({ ok: true, texto: r.mensaje })
-              window.setTimeout(() => setAviso(null), 6000)
-            }
+            if (r.mensaje) toast.success(r.mensaje)
             router.refresh()
           })
         }}
       >
         {pendiente ? 'Procesando…' : children}
-      </Boton>
-      {aviso && <span className={cx('max-w-xs text-xs', aviso.ok ? 'text-emerald-700' : 'text-red-700')}>{aviso.texto}</span>}
+      </Button>
+      {error && (
+        <span role="alert" className="max-w-xs text-xs text-destructive">
+          {error}
+        </span>
+      )}
     </span>
   )
 }

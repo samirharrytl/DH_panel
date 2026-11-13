@@ -163,7 +163,7 @@ export async function SeccionResumen({ lead }: PropsSeccion) {
                     </p>
                   </div>
                   {r.estado === 'pendiente' && activo && !p.no_contactar ? (
-                    <BotonAccion accion={enviarRefuerzo.bind(null, r.id)} variante={vence ? 'whatsapp' : 'secundario'}>
+                    <BotonAccion accion={enviarRefuerzo.bind(null, r.id)} variante={vence ? 'whatsapp' : 'outline'}>
                       Enviar refuerzo
                     </BotonAccion>
                   ) : (

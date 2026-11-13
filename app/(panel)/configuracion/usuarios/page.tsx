@@ -25,7 +25,7 @@ export default async function PaginaUsuarios() {
         <p className="text-sm text-suave">
           Cada persona tiene su propio acceso. El asesor ve solo los leads que se le asignan; el administrador ve todo.
         </p>
-        <Dialogo titulo="Nuevo usuario" boton="+ Nuevo usuario" variante="primario" tamano="md">
+        <Dialogo titulo="Nuevo usuario" boton="+ Nuevo usuario" variante="default" tamano="default">
           <Formulario accion={crearUsuario}>
             <Campo etiqueta="Nombre">
               <Entrada name="nombre" required />
@@ -92,7 +92,7 @@ export default async function PaginaUsuarios() {
                   {u.id !== yo.id && (
                     <BotonAccion
                       accion={cambiarActivo.bind(null, u.id, !u.activo)}
-                      variante={u.activo ? 'peligro' : 'secundario'}
+                      variante={u.activo ? 'peligro' : 'outline'}
                       confirmar={
                         u.activo
                           ? `¿Desactivar a ${u.nombre}? No podrá entrar, pero su historial se conserva.`

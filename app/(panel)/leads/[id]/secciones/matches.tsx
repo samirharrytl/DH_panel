@@ -222,7 +222,7 @@ export async function SeccionMatches({ lead }: PropsSeccion) {
                                   <BotonAccion
                                     key={r}
                                     accion={registrarRespuestaMatch.bind(null, o.id, lead.id, r)}
-                                    variante={o.respuesta ? 'fantasma' : 'secundario'}
+                                    variante={o.respuesta ? 'ghost' : 'outline'}
                                   >
                                     {RESPUESTAS_MATCH[r]}
                                   </BotonAccion>

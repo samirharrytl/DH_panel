@@ -55,7 +55,7 @@ export async function SeccionCitas({ lead }: PropsSeccion) {
         titulo="Citas con el propietario"
         acciones={
           puedeAgendar && (
-            <Dialogo titulo="Agendar cita" boton="+ Agendar cita" variante="primario">
+            <Dialogo titulo="Agendar cita" boton="+ Agendar cita" variante="exito">
               <Formulario accion={agendarCita}>
                 <input type="hidden" name="lead_id" value={lead.id} />
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -118,7 +118,7 @@ export async function SeccionCitas({ lead }: PropsSeccion) {
                   <div className="flex flex-wrap gap-2">
                     <AccionesCita cita={c} compacto />
                     {c.estado === 'programada' && (
-                      <Dialogo titulo="Resultado de la cita" boton="Registrar resultado" variante="primario">
+                      <Dialogo titulo="Resultado de la cita" boton="Registrar resultado" variante="default">
                         <Formulario accion={registrarResultadoCita}>
                           <input type="hidden" name="cita_id" value={c.id} />
                           <input type="hidden" name="lead_id" value={lead.id} />

@@ -1,5 +1,7 @@
 import { isoALocal, hoyLima, ahoraMs } from '@/lib/formato'
-import { AreaTexto, Campo, Entrada, Seleccion } from '@/components/legado'
+import { Campo, Seleccion } from '@/components/campos'
+import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
 import { BotonAccion, BotonEnviar, Dialogo, Formulario } from '@/components/formulario'
 import { cancelarCita, enviarAvisoCita, reprogramarCita } from '@/app/(panel)/agenda/acciones'
 
@@ -48,10 +50,10 @@ export function AccionesCita({ cita, compacto = false }: { cita: CitaBasica; com
           <input type="hidden" name="cita_id" value={cita.id} />
           <input type="hidden" name="lead_id" value={cita.lead_id} />
           <Campo etiqueta="Nueva fecha y hora">
-            <Entrada type="datetime-local" name="inicio" defaultValue={isoALocal(cita.inicio)} required />
+            <Input type="datetime-local" name="inicio" defaultValue={isoALocal(cita.inicio)} required />
           </Campo>
           <Campo etiqueta="Motivo">
-            <Entrada name="motivo" placeholder="Lo pidió por WhatsApp" />
+            <Input name="motivo" placeholder="Lo pidió por WhatsApp" />
           </Campo>
           <BotonEnviar>Reprogramar</BotonEnviar>
         </Formulario>
@@ -67,7 +69,7 @@ export function AccionesCita({ cita, compacto = false }: { cita: CitaBasica; com
             </Seleccion>
           </Campo>
           <Campo etiqueta="Motivo">
-            <AreaTexto name="motivo" rows={2} />
+            <Textarea name="motivo" rows={2} />
           </Campo>
           <BotonEnviar variante="peligro">Confirmar</BotonEnviar>
         </Formulario>

@@ -101,11 +101,11 @@ export default async function PaginaInmueble({ params }: PageProps<'/inmuebles/[
                     {puedeEditar && (
                       <div className="flex flex-wrap gap-1">
                         {n > 0 && (
-                          <BotonAccion accion={hacerPortada.bind(null, f.id)} variante="fantasma">
+                          <BotonAccion accion={hacerPortada.bind(null, f.id)} variante="ghost">
                             Portada
                           </BotonAccion>
                         )}
-                        <BotonAccion accion={borrarFoto.bind(null, f.id)} variante="fantasma" confirmar="¿Borrar esta foto?">
+                        <BotonAccion accion={borrarFoto.bind(null, f.id)} variante="ghost" confirmar="¿Borrar esta foto?">
                           Borrar
                         </BotonAccion>
                       </div>
@@ -228,7 +228,7 @@ export default async function PaginaInmueble({ params }: PageProps<'/inmuebles/[
               activo && (
                 <>
                   {i.estado === 'en_captacion' && (
-                    <Dialogo titulo="Registrar contrato firmado" boton="Registrar contrato" variante="primario">
+                    <Dialogo titulo="Registrar contrato firmado" boton="Registrar contrato" variante="exito">
                       <FormularioContrato inmuebleId={i.id} hoy={hoy} />
                     </Dialogo>
                   )}

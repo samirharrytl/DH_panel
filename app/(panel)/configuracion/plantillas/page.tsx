@@ -53,7 +53,7 @@ export default async function PaginaPlantillas() {
                   p.cuerpo !== p.cuerpo_defecto && (
                     <BotonAccion
                       accion={restablecerPlantilla.bind(null, p.clave)}
-                      variante="fantasma"
+                      variante="ghost"
                       confirmar="¿Volver al texto por defecto?"
                     >
                       Restablecer

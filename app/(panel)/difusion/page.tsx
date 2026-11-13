@@ -71,8 +71,8 @@ export default async function PaginaDifusion() {
         hoy={hoy}
         destino="publicaciones"
         esAdmin={usuario.esAdmin}
-        variante={destacado ? 'primario' : 'secundario'}
-        tamano={destacado ? 'md' : 'sm'}
+        variante={destacado ? 'default' : 'outline'}
+        tamano={destacado ? 'default' : 'sm'}
       />
     )
   }

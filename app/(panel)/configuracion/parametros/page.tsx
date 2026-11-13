@@ -96,10 +96,10 @@ export default async function PaginaParametros() {
                         <input type="hidden" name="clave" value={p.clave} />
                         <input type="hidden" name="tipo" value={p.tipo} />
                         <Control p={p} />
-                        <BotonEnviar variante="secundario">Guardar</BotonEnviar>
+                        <BotonEnviar variante="outline">Guardar</BotonEnviar>
                       </Formulario>
                       {cambiado && (
-                        <BotonAccion accion={restablecerParametro.bind(null, p.clave)} variante="fantasma" tamano="md">
+                        <BotonAccion accion={restablecerParametro.bind(null, p.clave)} variante="ghost" tamano="default">
                           Restablecer
                         </BotonAccion>
                       )}
