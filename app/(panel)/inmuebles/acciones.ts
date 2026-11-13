@@ -34,6 +34,10 @@ export async function editarInmueble(_: Resultado | null, f: FormData): Promise<
   if (!direccion || !distrito) return fallo('La dirección y el distrito son obligatorios')
   if (!precio || precio <= 0) return fallo('Indica el precio de venta')
   if (conservacion && !(conservacion in CONSERVACION)) return fallo('Estado de conservación no válido')
+  const rentMin = numero(f, 'rentabilidad_min')
+  const rentMax = numero(f, 'rentabilidad_max')
+  if (rentMax !== null && rentMin === null) return fallo('Indica la rentabilidad mínima')
+  if (rentMin !== null && rentMax !== null && rentMax < rentMin) return fallo('La rentabilidad máxima no puede ser menor que la mínima')
 
   const otras = (texto(f, 'otras_caracteristicas') ?? '')
     .split(',')
@@ -60,6 +64,10 @@ export async function editarInmueble(_: Resultado | null, f: FormData): Promise<
       precio,
       conservacion,
       descripcion: texto(f, 'descripcion'),
+      destacado: casilla(f, 'destacado'),
+      rentabilidad_min: rentMin,
+      rentabilidad_max: rentMax,
+      anios_recupero: numero(f, 'anios_recupero'),
     })
     .eq('id', id)
     .select('id, propietario_lead_id')

@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { COOKIE_ACTIVIDAD, COOKIE_TTL } from '@/lib/sesion'
 
-const RUTAS_PUBLICAS = ['/login', '/recuperar', '/auth/', '/api/whatsapp/webhook', '/api/cron/']
+const RUTAS_PUBLICAS = ['/login', '/recuperar', '/auth/', '/api/whatsapp/webhook', '/api/cron/', '/api/v1/']
 
 // Renueva la sesión de Supabase en cada petición, protege las rutas del panel y cierra la sesión
 // tras el tiempo de inactividad configurado (HU-01). El cliente avisa su actividad con la cookie

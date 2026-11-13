@@ -59,6 +59,33 @@ export function registrar({ db, prueba, como, registrar, esperarError, uno, ADMI
     assert.ok(k.dias >= 181 && k.dias <= 184)
   })
 
+  prueba('Sitio web: catálogo sin datos privados y leads del sitio', async () => {
+    await esperarError(q(ASESORA, `select * from inmuebles_web()`), /permission denied/)
+    const cat = (await q(null, `select * from inmuebles_web()`)).rows
+    const i = cat.find((r) => r.id === inmueble)
+    assert.ok(i, 'el inmueble en cartera y autorizado aparece')
+    assert.match(i.slug, /^departamento-en-miraflores-dh-\d{4}$/)
+    assert.deepEqual(i.fotos, [`${inmueble}/a.jpg`, `${inmueble}/b.jpg`])
+    assert.ok(!('direccion' in i) && !('acceso_codigo' in i))
+
+    const lead = await val(null, `select registrar_lead_web('saved-list', 'Lucía Web', '987 111 222', null, $1, 'Hola', true, '{"canal_detalle":"Web · Guardó inmuebles"}')`, [[inmueble]])
+    const l = await uno(db, `select l.tipo, l.canal, l.consentimiento_datos, l.consentimiento_marketing, l.inmueble_interes_id, p.telefono
+      from leads l join personas p on p.id = l.persona_id where l.id = $1`, [lead])
+    assert.deepEqual(
+      { ...l },
+      { tipo: 'interesado', canal: 'web', consentimiento_datos: true, consentimiento_marketing: false, inmueble_interes_id: inmueble, telefono: '51987111222' },
+    )
+    const anonimo = await val(null, `select registrar_lead_web('cart', null, null, null, $1, null, false, null)`, [[inmueble, '00000000-0000-0000-0000-000000000099']])
+    assert.equal(anonimo, null)
+    const e = await uno(db, `select count(*)::int n from eventos where tipo = 'interes_web' and inmueble_id = $1`, [inmueble])
+    assert.equal(e.n, 2, 'un interés con lead y uno anónimo; el id desconocido se ignora')
+    const prop = await val(null, `select registrar_lead_web('owner-sell', 'Raúl Vende', '944555666', null, null, 'Área: 90', true, null)`)
+    assert.equal((await uno(db, `select tipo from leads where id = $1`, [prop])).tipo, 'propietario')
+    await esperarError(q(null, `select registrar_lead_web('owner-rent', 'X', '944555667', null, null, null, true, null)`), /Origen/)
+    // Para no alterar los conteos de insights (HU-30), que esperan un solo lead por este inmueble
+    await db.query(`update leads set inmueble_interes_id = null where id = $1`, [lead])
+  })
+
   prueba('HU-17: contrato por vencer según el parámetro de aviso', async () => {
     const r = await uno(db, `select count(*)::int n from contratos where estado = 'vigente' and vence_el <= hoy_lima() + param_int('contrato_aviso_dias')`)
     assert.equal(r.n, 1)

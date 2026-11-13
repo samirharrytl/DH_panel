@@ -29,6 +29,10 @@ export type InmuebleVista = {
   acceso_dni: boolean
   acceso_otros: string | null
   autoriza_publicar: boolean
+  destacado: boolean
+  rentabilidad_min: number | null
+  rentabilidad_max: number | null
+  anios_recupero: number | null
   en_cartera_at: string | null
   vendido_at: string | null
   retirado_at: string | null

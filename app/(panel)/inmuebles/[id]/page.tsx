@@ -188,9 +188,22 @@ export default async function PaginaInmueble({ params }: PageProps<'/inmuebles/[
                     <Campo etiqueta="Otras características" ayuda="Separadas por comas.">
                       <Input name="otras_caracteristicas" defaultValue={i.caracteristicas.filter((c) => !CARACTERISTICAS.includes(c)).join(', ')} />
                     </Campo>
-                    <Campo etiqueta="Descripción">
+                    <Campo etiqueta="Descripción" ayuda="Se publica en el sitio web: no pongas la dirección exacta.">
                       <Textarea name="descripcion" defaultValue={i.descripcion ?? ''} />
                     </Campo>
+                    <p className="text-sm font-medium text-foreground">Sitio web</p>
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      <Campo etiqueta="Rentabilidad mín. (% anual)">
+                        <Input name="rentabilidad_min" type="number" min={0} step="0.1" defaultValue={i.rentabilidad_min ?? ''} />
+                      </Campo>
+                      <Campo etiqueta="Rentabilidad máx. (% anual)">
+                        <Input name="rentabilidad_max" type="number" min={0} step="0.1" defaultValue={i.rentabilidad_max ?? ''} />
+                      </Campo>
+                      <Campo etiqueta="Años de recupero">
+                        <Input name="anios_recupero" type="number" min={0.1} step="0.1" defaultValue={i.anios_recupero ?? ''} />
+                      </Campo>
+                    </div>
+                    <Casilla name="destacado" defaultChecked={i.destacado} etiqueta="Destacado en el sitio web" />
                     <BotonEnviar>Guardar</BotonEnviar>
                   </Formulario>
                 </Dialogo>
@@ -212,6 +225,15 @@ export default async function PaginaInmueble({ params }: PageProps<'/inmuebles/[
                 {i.dormitorios ?? '—'} / {i.banos ?? '—'}
               </Dato>
               <Dato etiqueta="Cocheras">{i.cocheras}</Dato>
+              <Dato etiqueta="Rentabilidad (sitio web)">
+                {i.rentabilidad_min === null
+                  ? '—'
+                  : `${num(i.rentabilidad_min)}${i.rentabilidad_max !== null && i.rentabilidad_max !== i.rentabilidad_min ? `–${num(i.rentabilidad_max)}` : ''} % anual`}
+                {i.anios_recupero !== null && <span className="block text-xs text-muted-foreground">Recupero en {num(i.anios_recupero)} años</span>}
+              </Dato>
+              <Dato etiqueta="En el sitio web">
+                {i.estado === 'en_cartera' && i.autoriza_publicar ? (i.destacado ? 'Publicado, destacado' : 'Publicado') : 'No se muestra'}
+              </Dato>
               <Dato etiqueta="Extras">
                 {[i.ascensor && 'ascensor', i.mascotas && 'mascotas', ...i.caracteristicas].filter(Boolean).join(', ') || '—'}
               </Dato>

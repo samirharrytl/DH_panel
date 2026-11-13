@@ -61,6 +61,20 @@ programada, entre las 8:00 y las 21:00 de Lima. Llámalo cada 15 minutos desde u
 cron-job.org) con el encabezado `Authorization: Bearer <CRON_SECRET>`. Fuera de la ventana de 24 horas solo sale
 si la plantilla tiene su nombre aprobado en Meta (Configuración → Plantillas); si no, queda en `errores`.
 
+## Sitio web (landing en Astro)
+
+El panel es el backend del sitio `depahostcapital`. Expone, sin sesión, las rutas que el sitio usa de su contrato
+(`openapi/depahost-api.json` del sitio):
+
+- `GET /api/v1/properties`: inmuebles En cartera con autorización para publicar. Muestra el distrito, nunca la
+  dirección ni los datos de acceso. Las fotos van como URLs firmadas por 6 horas; Astro las copia al construir.
+- `POST /api/v1/leads`: formularios del sitio. Con celular crea o une el lead (canal Web); sin celular solo guarda el
+  interés por cada inmueble. Los de alquiler no se registran.
+
+Variables: `WEB_ORIGINS` (orígenes del sitio, separados por comas, para CORS) y `TURNSTILE_SECRET_KEY` (captcha).
+En el sitio, `API_URL` y `PUBLIC_API_URL` apuntan a `https://<panel>/api`. La rentabilidad, los años de recupero y
+«Destacado» se editan en la ficha del inmueble.
+
 ## Comandos
 
 | Comando | Qué hace |
