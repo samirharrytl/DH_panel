@@ -3,7 +3,7 @@ import { crearClienteServidor } from '@/lib/supabase/server'
 import { Navegacion, type ItemNav } from '@/components/navegacion'
 import { Campana, type Notificacion } from '@/components/campana'
 import { Suspense } from 'react'
-import { Recorrido } from '@/components/guia/recorrido'
+import { Recorrido, ReservaGuia } from '@/components/guia/recorrido'
 import { VigilanteInactividad } from '@/components/vigilante-inactividad'
 import { LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -71,11 +71,13 @@ export default async function LayoutPanel({ children }: LayoutProps<'/'>) {
         }
       />
       <VigilanteInactividad minutos={Number(param?.valor ?? 30)} />
-      <main className="mx-auto max-w-6xl px-4 py-6 lg:px-10 lg:py-10">{children}</main>
-      {/* Guía interactiva en curso (se inicia desde /guias) */}
+      {/* Guía interactiva en curso (se inicia desde /guias). Va antes del contenido: en el celular
+          ocupa su sitio bajo el encabezado en vez de flotar encima de la página */}
       <Suspense>
         <Recorrido />
       </Suspense>
+      <main className="mx-auto max-w-6xl px-4 py-6 lg:px-10 lg:py-10">{children}</main>
+      <ReservaGuia />
     </div>
   )
 }
