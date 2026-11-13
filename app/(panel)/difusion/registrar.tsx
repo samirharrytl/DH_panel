@@ -1,7 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { AreaTexto, Aviso, Campo, Casilla, Entrada } from '@/components/legado'
+import { Aviso, Campo, Casilla } from '@/components/campos'
+import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
 import { BotonEnviar, Dialogo, Formulario } from '@/components/formulario'
 import { registrarPublicacion } from './acciones'
 
@@ -36,9 +38,9 @@ export function RegistrarPublicacion({
         }}
       >
         <input type="hidden" name="inmueble_id" value={inmueble.id} />
-        <p className="text-sm text-suave">{inmueble.descripcion}</p>
+        <p className="text-sm text-muted-foreground">{inmueble.descripcion}</p>
         <fieldset>
-          <legend className="mb-2 text-sm font-medium text-tinta">¿Dónde lo publicaste?</legend>
+          <legend className="mb-2 text-sm font-medium text-foreground">¿Dónde lo publicaste?</legend>
           {redes.length ? (
             <div className="grid grid-cols-2 gap-2">
               {redes.map((r) => (
@@ -59,13 +61,13 @@ export function RegistrarPublicacion({
           )}
         </fieldset>
         <Campo etiqueta="Fecha de publicación">
-          <Entrada type="date" name="fecha" defaultValue={hoy} max={hoy} required />
+          <Input type="date" name="fecha" defaultValue={hoy} max={hoy} required />
         </Campo>
         <Campo
           etiqueta="Texto de la publicación"
           ayuda="Muestra la zona, nunca la dirección exacta. Cada red recibe su propio enlace de WhatsApp al final del texto."
         >
-          <AreaTexto name="texto" defaultValue={texto} rows={9} />
+          <Textarea name="texto" defaultValue={texto} rows={9} />
         </Campo>
         <BotonEnviar>Confirmar publicación</BotonEnviar>
       </Formulario>

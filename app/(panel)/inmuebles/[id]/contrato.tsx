@@ -1,7 +1,9 @@
 'use client'
 
 import { crearClienteNavegador } from '@/lib/supabase/navegador'
-import { AreaTexto, Campo, Entrada } from '@/components/legado'
+import { Campo } from '@/components/campos'
+import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
 import { BotonEnviar, Formulario, type Resultado } from '@/components/formulario'
 import { SelectorArchivos, subirArchivos, useArchivos } from '@/components/subir-archivos'
 import { registrarContrato, renovarContrato } from '../acciones'
@@ -36,13 +38,13 @@ export function FormularioContrato({ inmuebleId, contratoId, hoy }: { inmuebleId
       {contratoId && <input type="hidden" name="contrato_id" value={contratoId} />}
       <div className="grid gap-3 sm:grid-cols-2">
         <Campo etiqueta="Fecha de firma">
-          <Entrada type="date" name="fecha_firma" defaultValue={hoy} required />
+          <Input type="date" name="fecha_firma" defaultValue={hoy} required />
         </Campo>
         <Campo etiqueta="Plazo (meses)">
-          <Entrada type="number" name="plazo_meses" min={1} required />
+          <Input type="number" name="plazo_meses" min={1} required />
         </Campo>
         <Campo etiqueta="Comisión (%)">
-          <Entrada type="number" name="comision_pct" min={0} max={100} step="0.01" required />
+          <Input type="number" name="comision_pct" min={0} max={100} step="0.01" required />
         </Campo>
       </div>
       {(
@@ -52,21 +54,21 @@ export function FormularioContrato({ inmuebleId, contratoId, hoy }: { inmuebleId
         ] as const
       ).map(([name, texto]) => (
         <fieldset key={name}>
-          <legend className="mb-1 text-sm font-medium text-tinta">{texto}</legend>
+          <legend className="mb-1 text-sm font-medium text-foreground">{texto}</legend>
           <div className="flex gap-4">
             {SI_NO.map(([v, t]) => (
               <label key={v} className="flex items-center gap-2 text-sm">
-                <input type="radio" name={name} value={v} required className="accent-marino-800" /> {t}
+                <input type="radio" name={name} value={v} required className="accent-primary" /> {t}
               </label>
             ))}
           </div>
         </fieldset>
       ))}
       <Campo etiqueta="Notas">
-        <AreaTexto name="notas" rows={2} />
+        <Textarea name="notas" rows={2} />
       </Campo>
       <div>
-        <p className="mb-1 text-sm font-medium text-tinta">Copia escaneada (opcional)</p>
+        <p className="mb-1 text-sm font-medium text-foreground">Copia escaneada (opcional)</p>
         <SelectorArchivos control={copia} etiqueta="Elegir archivo" />
       </div>
       <BotonEnviar>{contratoId ? 'Renovar contrato' : 'Registrar contrato'}</BotonEnviar>

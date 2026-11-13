@@ -5,9 +5,12 @@ import { exigirUsuario } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { INTENCIONES, TIPOS_LEAD, etiqueta, type TipoLead } from '@/lib/catalogos'
 import { ahoraMs, fecha, fechaCorta, telefono } from '@/lib/formato'
-import { EncabezadoPagina, Insignia, Tarjeta, Vacio, cx } from '@/components/legado'
+import { EncabezadoPagina, Tarjeta, Vacio } from '@/components/campos'
+import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 import { BotonAccion } from '@/components/formulario'
 import { enviarNovedadesGenerales } from '../leads/acciones'
+import { Check } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Marketing' }
 
@@ -52,10 +55,11 @@ function Chip({ href, activo, children }: { href: string; activo: boolean; child
   return (
     <Link
       href={href}
-      className={cx(
-        'inline-flex h-8 items-center gap-1 rounded-full border px-3 text-sm whitespace-nowrap',
-        activo ? 'border-marino-800 bg-marino-800 text-white' : 'border-borde bg-white text-tinta hover:border-marino-200',
+      className={cn(
+        'inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3.5 text-sm whitespace-nowrap transition-colors',
+        activo ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-foreground hover:border-primary',
       )}
+      aria-current={activo ? 'true' : undefined}
     >
       {children}
     </Link>
@@ -131,12 +135,14 @@ export default async function PaginaMarketing({ searchParams }: PageProps<'/mark
       </div>
       <div className="mb-4 flex flex-wrap items-center gap-2 text-sm">
         <Chip href={enlace(f, { marketing: f.marketing ? '' : 'con' })} activo={!!f.marketing}>
-          {f.marketing ? '✓ ' : ''}Solo con consentimiento
+          {f.marketing && <Check aria-hidden className="size-4" />}
+          Solo con consentimiento
         </Chip>
         <Chip href={enlace(f, { bajas: f.bajas ? '' : '1' })} activo={!!f.bajas}>
-          {f.bajas ? '✓ ' : ''}Mostrar bajas ({enBaja})
+          {f.bajas && <Check aria-hidden className="size-4" />}
+          Mostrar bajas ({enBaja})
         </Chip>
-        <span className="text-suave">
+        <span className="text-muted-foreground">
           {clientes.length} {clientes.length === 1 ? 'cliente' : 'clientes'} · {reciben} pueden recibir novedades
         </span>
       </div>
@@ -152,37 +158,37 @@ export default async function PaginaMarketing({ searchParams }: PageProps<'/mark
           return (
             <li
               key={c.persona_id}
-              className={cx(
-                'grid gap-x-3 gap-y-2 rounded-xl border bg-white px-4 py-3 shadow-tarjeta md:grid-cols-[minmax(0,2fr)_minmax(0,2fr)_minmax(0,1.2fr)_auto] md:items-center',
-                c.no_contactar ? 'border-red-200 opacity-75' : 'border-borde',
+              className={cn(
+                'grid gap-x-3 gap-y-2 rounded-2xl border bg-card px-4 py-3 md:grid-cols-[minmax(0,2fr)_minmax(0,2fr)_minmax(0,1.2fr)_auto] md:items-center',
+                c.no_contactar ? 'border-red-200 opacity-75' : 'border-border',
               )}
             >
               <div className="min-w-0">
-                <Link href={`/leads/${c.lead_id}?tab=cierre`} className="block truncate font-medium text-tinta hover:underline">
+                <Link href={`/leads/${c.lead_id}?tab=cierre`} className="block truncate font-medium text-foreground hover:underline">
                   {c.nombre}
                 </Link>
-                <p className="text-xs text-suave">
+                <p className="text-xs text-muted-foreground">
                   {telefono(c.telefono)} · {ROL_CLIENTE[c.tipo] ?? TIPOS_LEAD[c.tipo]}
                   {c.cliente_desde && ` desde el ${fecha(c.cliente_desde)}`}
                 </p>
-                {usuario.esAdmin && <p className="text-xs text-suave">{c.asesor_nombre ?? 'Sin asesor'}</p>}
+                {usuario.esAdmin && <p className="text-xs text-muted-foreground">{c.asesor_nombre ?? 'Sin asesor'}</p>}
               </div>
               <div className="flex flex-wrap gap-1">
                 {c.intencion ? (
-                  <Insignia color="marino">{etiqueta(INTENCIONES, c.intencion)}</Insignia>
+                  <Badge variant="marino">{etiqueta(INTENCIONES, c.intencion)}</Badge>
                 ) : (
-                  <Insignia color="gris">Sin intención</Insignia>
+                  <Badge variant="gris">Sin intención</Badge>
                 )}
                 {c.consentimiento_marketing ? (
-                  <Insignia color="verde">Acepta marketing</Insignia>
+                  <Badge variant="verde">Acepta marketing</Badge>
                 ) : (
-                  <Insignia color="gris">Sin consentimiento</Insignia>
+                  <Badge variant="gris">Sin consentimiento</Badge>
                 )}
-                {c.no_contactar && <Insignia color="rojo">Baja</Insignia>}
+                {c.no_contactar && <Badge variant="rojo">Baja</Badge>}
               </div>
-              <div className="text-xs text-suave">
+              <div className="text-xs text-muted-foreground">
                 Últimas novedades
-                <span className="block text-sm text-tinta">{c.ultimas_novedades_at ? fecha(c.ultimas_novedades_at) : 'Nunca'}</span>
+                <span className="block text-sm text-foreground">{c.ultimas_novedades_at ? fecha(c.ultimas_novedades_at) : 'Nunca'}</span>
               </div>
               <div className="md:justify-self-end">
                 {puede ? (
@@ -190,7 +196,7 @@ export default async function PaginaMarketing({ searchParams }: PageProps<'/mark
                     Enviar novedades
                   </BotonAccion>
                 ) : (
-                  <span className="text-xs text-suave">{c.no_contactar ? 'En Baja: no recibe mensajes' : 'No aceptó marketing'}</span>
+                  <span className="text-xs text-muted-foreground">{c.no_contactar ? 'En Baja: no recibe mensajes' : 'No aceptó marketing'}</span>
                 )}
               </div>
             </li>
@@ -199,22 +205,22 @@ export default async function PaginaMarketing({ searchParams }: PageProps<'/mark
       </ul>
 
       <Tarjeta titulo={`Leads sin respuesta con novedades pendientes (${pendientes.length})`} className="mt-6" id="no-responde">
-        <p className="mb-3 text-sm text-suave">
+        <p className="mb-3 text-sm text-muted-foreground">
           Leads en &quot;No responde&quot; que aceptaron marketing. Reciben novedades cada {String(param?.valor ?? 30)} días.
         </p>
         {pendientes.length === 0 ? (
           <Vacio>No hay leads sin respuesta con novedades pendientes.</Vacio>
         ) : (
-          <ul className="divide-y divide-borde-suave">
+          <ul className="divide-y divide-border">
             {pendientes.map((l) => {
               const ultimas = novedadesPrevias?.find((x) => x.id === l.id)?.ultimas_novedades_at as string | null | undefined
               return (
                 <li key={l.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
                   <div className="min-w-0">
-                    <Link href={`/leads/${l.id}`} className="font-medium text-tinta hover:underline">
+                    <Link href={`/leads/${l.id}`} className="font-medium text-foreground hover:underline">
                       {l.nombre}
                     </Link>
-                    <p className="text-xs text-suave">
+                    <p className="text-xs text-muted-foreground">
                       {TIPOS_LEAD[l.tipo]} · {telefono(l.telefono)} · Tocan desde el {fechaCorta(l.proxima_accion_at)} ·{' '}
                       {ultimas ? `últimas el ${fecha(ultimas)}` : 'nunca recibió novedades'}
                       {usuario.esAdmin && ` · ${l.asesor_nombre ?? 'Sin asesor'}`}

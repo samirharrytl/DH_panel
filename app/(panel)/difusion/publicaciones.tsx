@@ -1,6 +1,9 @@
 import Link from 'next/link'
 import { fecha, fechaHora, num } from '@/lib/formato'
-import { Campo, Entrada, Insignia, claseBoton } from '@/components/legado'
+import { Campo } from '@/components/campos'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { buttonVariants } from '@/components/ui/button'
 import { BotonEnviar, Dialogo, Formulario } from '@/components/formulario'
 import { Copiar } from '@/components/copiar'
 import { guardarMetricas } from './acciones'
@@ -33,18 +36,18 @@ function ItemPublicacion({ p, numero, hoy, mostrarInmueble }: { p: Publicacion; 
   const esDeHoy = p.publicada_el === hoy
 
   return (
-    <li className={esDeHoy ? 'rounded-lg border border-emerald-300 bg-emerald-50/40 p-3' : 'rounded-lg border border-borde-suave p-3'}>
+    <li className={esDeHoy ? 'rounded-lg border border-emerald-300 bg-emerald-50/40 p-3' : 'rounded-lg border border-border p-3'}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <Insignia color={esDeHoy ? 'verde' : 'marino'}>{p.red}</Insignia>
-            <span className="text-sm text-tinta">{esDeHoy ? 'Hoy' : fecha(p.publicada_el)}</span>
-            <span className="font-mono text-xs text-suave" title="Código de la publicación">
+            <Badge variant={esDeHoy ? 'verde' : 'marino'}>{p.red}</Badge>
+            <span className="text-sm text-foreground">{esDeHoy ? 'Hoy' : fecha(p.publicada_el)}</span>
+            <span className="font-mono text-xs text-muted-foreground" title="Código de la publicación">
               {p.codigo}
             </span>
           </div>
           {mostrarInmueble && p.inmueble && (
-            <Link href={`/inmuebles/${p.inmueble_id}`} className="mt-1 block truncate text-sm font-medium text-marino-800 hover:underline">
+            <Link href={`/inmuebles/${p.inmueble_id}`} className="mt-1 block truncate text-sm font-medium text-primary hover:underline">
               {p.inmueble.codigo} · {describirCorto(p.inmueble)}
             </Link>
           )}
@@ -57,14 +60,14 @@ function ItemPublicacion({ p, numero, hoy, mostrarInmueble }: { p: Publicacion; 
       </div>
 
       <div className="mt-3 space-y-1">
-        <p className="text-xs text-suave">Enlace de WhatsApp de esta publicación</p>
+        <p className="text-xs text-muted-foreground">Enlace de WhatsApp de esta publicación</p>
         {enlace ? (
           <div className="flex items-center gap-2">
             <a
               href={enlace}
               target="_blank"
               rel="noopener noreferrer"
-              className="min-w-0 flex-1 truncate rounded-md bg-fondo px-2 py-1.5 font-mono text-xs text-marino-700 hover:underline"
+              className="min-w-0 flex-1 truncate rounded-md bg-background px-2 py-1.5 font-mono text-xs text-primary hover:underline"
             >
               {enlace}
             </a>
@@ -77,27 +80,27 @@ function ItemPublicacion({ p, numero, hoy, mostrarInmueble }: { p: Publicacion; 
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {p.url ? (
-          <a href={p.url} target="_blank" rel="noopener noreferrer" className={claseBoton('fantasma', 'sm')}>
+          <a href={p.url} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
             Ver publicación ↗
           </a>
         ) : (
-          <span className="text-xs text-tenue">Sin enlace a la publicación</span>
+          <span className="text-xs text-muted-foreground">Sin enlace a la publicación</span>
         )}
         <Dialogo titulo={`Publicación ${p.codigo} · ${p.red}`} boton="Editar enlace y métricas" variante="ghost">
           <Formulario accion={guardarMetricas}>
             <input type="hidden" name="id" value={p.id} />
             <Campo etiqueta="Enlace a la publicación">
-              <Entrada type="url" name="url" defaultValue={p.url ?? ''} placeholder="https://www.instagram.com/p/…" />
+              <Input type="url" name="url" defaultValue={p.url ?? ''} placeholder="https://www.instagram.com/p/…" />
             </Campo>
             <div className="grid grid-cols-2 gap-3">
               <Campo etiqueta="Vistas">
-                <Entrada type="number" name="vistas" min={0} step={1} defaultValue={p.vistas} />
+                <Input type="number" name="vistas" min={0} step={1} defaultValue={p.vistas} />
               </Campo>
               <Campo etiqueta="Interacciones">
-                <Entrada type="number" name="interacciones" min={0} step={1} defaultValue={p.interacciones} />
+                <Input type="number" name="interacciones" min={0} step={1} defaultValue={p.interacciones} />
               </Campo>
             </div>
-            <p className="text-xs text-suave">
+            <p className="text-xs text-muted-foreground">
               Se ingresan a mano mientras no haya integración con las redes. Anota el total acumulado que muestra la red.
               {p.metricas_at && ` Última actualización: ${fechaHora(p.metricas_at)}.`}
             </p>
@@ -108,9 +111,9 @@ function ItemPublicacion({ p, numero, hoy, mostrarInmueble }: { p: Publicacion; 
 
       {paraRed && (
         <details open={esDeHoy} className="mt-2">
-          <summary className="cursor-pointer text-sm font-medium text-marino-700">Texto para publicar</summary>
+          <summary className="cursor-pointer text-sm font-medium text-primary">Texto para publicar</summary>
           <div className="mt-2 space-y-2">
-            <p className="rounded-lg bg-fondo p-3 text-sm break-words whitespace-pre-wrap text-tinta">{paraRed}</p>
+            <p className="rounded-lg bg-background p-3 text-sm break-words whitespace-pre-wrap text-foreground">{paraRed}</p>
             <Copiar texto={paraRed} etiqueta="Copiar texto con enlace" variante="default" />
           </div>
         </details>
@@ -122,8 +125,8 @@ function ItemPublicacion({ p, numero, hoy, mostrarInmueble }: { p: Publicacion; 
 function Metrica({ etiqueta, valor }: { etiqueta: string; valor: number }) {
   return (
     <div className="flex flex-col-reverse">
-      <dt className="text-xs text-suave">{etiqueta}</dt>
-      <dd className="text-base font-semibold text-tinta">{num(valor)}</dd>
+      <dt className="text-xs text-muted-foreground">{etiqueta}</dt>
+      <dd className="text-base font-semibold text-foreground">{num(valor)}</dd>
     </div>
   )
 }

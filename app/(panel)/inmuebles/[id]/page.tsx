@@ -6,7 +6,10 @@ import { exigirUsuario } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { CONSERVACION, ESTADOS_INMUEBLE, TIPOS_INMUEBLE, colorEstadoInmueble, etiqueta } from '@/lib/catalogos'
 import { fecha, fechaHora, hoyLima, num, soles } from '@/lib/formato'
-import { AreaTexto, Aviso, Campo, Casilla, Dato, EncabezadoPagina, Entrada, Insignia, Seleccion, Tarjeta, Vacio } from '@/components/legado'
+import { Aviso, Campo, Casilla, Dato, EncabezadoPagina, Seleccion, Tarjeta, Vacio } from '@/components/campos'
+import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
 import { BotonAccion, BotonEnviar, Dialogo, Formulario } from '@/components/formulario'
 import { SubirFotos } from '@/components/subir-archivos'
 import { borrarFoto, editarAcceso, editarInmueble, hacerPortada, registrarFotos, retirarInmueble } from '../acciones'
@@ -65,7 +68,7 @@ export default async function PaginaInmueble({ params }: PageProps<'/inmuebles/[
         titulo={
           <span className="flex flex-wrap items-center gap-2">
             {i.codigo} · {etiqueta(TIPOS_INMUEBLE, i.tipo)} en {i.distrito}
-            <Insignia color={colorEstadoInmueble(i.estado)}>{ESTADOS_INMUEBLE[i.estado]}</Insignia>
+            <Badge variant={colorEstadoInmueble(i.estado)}>{ESTADOS_INMUEBLE[i.estado]}</Badge>
             <InsigniaVencimiento venceEl={i.contrato_vence_el} hoy={hoy} avisoDias={avisoDias} />
           </span>
         }
@@ -75,7 +78,7 @@ export default async function PaginaInmueble({ params }: PageProps<'/inmuebles/[
             {i.propietario_lead_id && (
               <>
                 {' · '}
-                <Link href={`/leads/${i.propietario_lead_id}?tab=citas`} className="text-marino-700 hover:underline">
+                <Link href={`/leads/${i.propietario_lead_id}?tab=citas`} className="text-primary hover:underline">
                   {i.propietario_nombre ?? 'Propietario'}
                 </Link>
               </>
@@ -92,11 +95,11 @@ export default async function PaginaInmueble({ params }: PageProps<'/inmuebles/[
               <ul className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {fotos.map((f, n) => (
                   <li key={f.id} className="space-y-1">
-                    <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-marino-50">
+                    <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-accent">
                       {url.get(f.ruta) && (
                         <Image src={url.get(f.ruta)!} alt={`Foto ${n + 1} de ${i.codigo}`} fill unoptimized sizes="200px" className="object-cover" />
                       )}
-                      {n === 0 && <Insignia className="absolute top-1 left-1">Portada</Insignia>}
+                      {n === 0 && <Badge className="absolute top-1 left-1">Portada</Badge>}
                     </div>
                     {puedeEditar && (
                       <div className="flex flex-wrap gap-1">
@@ -148,31 +151,31 @@ export default async function PaginaInmueble({ params }: PageProps<'/inmuebles/[
                         </Seleccion>
                       </Campo>
                       <Campo etiqueta="Dirección" className="sm:col-span-2">
-                        <Entrada name="direccion" defaultValue={i.direccion} required />
+                        <Input name="direccion" defaultValue={i.direccion} required />
                       </Campo>
                       <Campo etiqueta="Distrito">
-                        <Entrada name="distrito" list={ID_DISTRITOS} defaultValue={i.distrito} required />
+                        <Input name="distrito" list={ID_DISTRITOS} defaultValue={i.distrito} required />
                       </Campo>
                       <Campo etiqueta="Referencia">
-                        <Entrada name="referencia" defaultValue={i.referencia ?? ''} />
+                        <Input name="referencia" defaultValue={i.referencia ?? ''} />
                       </Campo>
                       <Campo etiqueta="Precio de venta (S/)">
-                        <Entrada name="precio" type="number" min={1} step="0.01" defaultValue={i.precio ?? ''} required />
+                        <Input name="precio" type="number" min={1} step="0.01" defaultValue={i.precio ?? ''} required />
                       </Campo>
                       <Campo etiqueta="Precio esperado por el propietario (S/)">
-                        <Entrada name="precio_esperado" type="number" min={0} step="0.01" defaultValue={i.precio_esperado ?? ''} />
+                        <Input name="precio_esperado" type="number" min={0} step="0.01" defaultValue={i.precio_esperado ?? ''} />
                       </Campo>
                       <Campo etiqueta="Metraje (m²)">
-                        <Entrada name="metraje" type="number" min={0} step="0.01" defaultValue={i.metraje ?? ''} />
+                        <Input name="metraje" type="number" min={0} step="0.01" defaultValue={i.metraje ?? ''} />
                       </Campo>
                       <Campo etiqueta="Dormitorios">
-                        <Entrada name="dormitorios" type="number" min={0} defaultValue={i.dormitorios ?? ''} />
+                        <Input name="dormitorios" type="number" min={0} defaultValue={i.dormitorios ?? ''} />
                       </Campo>
                       <Campo etiqueta="Baños">
-                        <Entrada name="banos" type="number" min={0} defaultValue={i.banos ?? ''} />
+                        <Input name="banos" type="number" min={0} defaultValue={i.banos ?? ''} />
                       </Campo>
                       <Campo etiqueta="Cocheras">
-                        <Entrada name="cocheras" type="number" min={0} defaultValue={i.cocheras} />
+                        <Input name="cocheras" type="number" min={0} defaultValue={i.cocheras} />
                       </Campo>
                     </div>
                     <div className="flex flex-wrap gap-x-4 gap-y-2">
@@ -183,10 +186,10 @@ export default async function PaginaInmueble({ params }: PageProps<'/inmuebles/[
                       ))}
                     </div>
                     <Campo etiqueta="Otras características" ayuda="Separadas por comas.">
-                      <Entrada name="otras_caracteristicas" defaultValue={i.caracteristicas.filter((c) => !CARACTERISTICAS.includes(c)).join(', ')} />
+                      <Input name="otras_caracteristicas" defaultValue={i.caracteristicas.filter((c) => !CARACTERISTICAS.includes(c)).join(', ')} />
                     </Campo>
                     <Campo etiqueta="Descripción">
-                      <AreaTexto name="descripcion" defaultValue={i.descripcion ?? ''} />
+                      <Textarea name="descripcion" defaultValue={i.descripcion ?? ''} />
                     </Campo>
                     <BotonEnviar>Guardar</BotonEnviar>
                   </Formulario>
@@ -196,10 +199,10 @@ export default async function PaginaInmueble({ params }: PageProps<'/inmuebles/[
           >
             <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               <Dato etiqueta="Dirección" className="col-span-2">
-                <a href={enlaceMapa(i.direccion, i.distrito)} target="_blank" rel="noreferrer" className="text-marino-700 hover:underline">
+                <a href={enlaceMapa(i.direccion, i.distrito)} target="_blank" rel="noreferrer" className="text-primary hover:underline">
                   {i.direccion}
                 </a>
-                {i.referencia && <span className="block text-xs text-suave">{i.referencia}</span>}
+                {i.referencia && <span className="block text-xs text-muted-foreground">{i.referencia}</span>}
               </Dato>
               <Dato etiqueta="Conservación">{etiqueta(CONSERVACION, i.conservacion)}</Dato>
               <Dato etiqueta="Precio de venta">{soles(i.precio)}</Dato>
@@ -213,7 +216,7 @@ export default async function PaginaInmueble({ params }: PageProps<'/inmuebles/[
                 {[i.ascensor && 'ascensor', i.mascotas && 'mascotas', ...i.caracteristicas].filter(Boolean).join(', ') || '—'}
               </Dato>
             </dl>
-            {i.descripcion && <p className="mt-3 text-sm whitespace-pre-wrap text-tinta">{i.descripcion}</p>}
+            {i.descripcion && <p className="mt-3 text-sm whitespace-pre-wrap text-foreground">{i.descripcion}</p>}
           </Tarjeta>
 
           <DifusionInmueble inmuebleId={i.id} puedeEditar={puedeEditar} />
@@ -240,9 +243,9 @@ export default async function PaginaInmueble({ params }: PageProps<'/inmuebles/[
                   <Dialogo titulo="Retirar inmueble" boton="Retirar" variante="peligro">
                     <Formulario accion={retirarInmueble}>
                       <input type="hidden" name="inmueble_id" value={i.id} />
-                      <p className="text-sm text-suave">El inmueble sale de la base: deja de publicarse y de ofrecerse en el match.</p>
+                      <p className="text-sm text-muted-foreground">El inmueble sale de la base: deja de publicarse y de ofrecerse en el match.</p>
                       <Campo etiqueta="Motivo">
-                        <AreaTexto name="motivo" rows={2} required placeholder="Venció el contrato, el propietario lo retiró…" />
+                        <Textarea name="motivo" rows={2} required placeholder="Venció el contrato, el propietario lo retiró…" />
                       </Campo>
                       <BotonEnviar variante="peligro">Retirar</BotonEnviar>
                     </Formulario>
@@ -269,14 +272,14 @@ export default async function PaginaInmueble({ params }: PageProps<'/inmuebles/[
               <Vacio>{i.estado === 'en_captacion' ? 'Aún no hay contrato firmado. Al registrarlo, el inmueble pasa a En cartera.' : 'Sin contrato vigente.'}</Vacio>
             )}
             {historial.length > 0 && (
-              <ul className="mt-3 space-y-1 border-t border-borde-suave pt-3 text-xs text-suave">
+              <ul className="mt-3 space-y-1 border-t border-border pt-3 text-xs text-muted-foreground">
                 {historial.map((c) => (
                   <li key={c.id}>
                     {fecha(c.fecha_firma)} → {fecha(c.vence_el)} · {c.estado}
                     {c.archivo_ruta && url.get(c.archivo_ruta) && (
                       <>
                         {' · '}
-                        <a href={url.get(c.archivo_ruta) ?? undefined} target="_blank" rel="noreferrer" className="text-marino-700 hover:underline">
+                        <a href={url.get(c.archivo_ruta) ?? undefined} target="_blank" rel="noreferrer" className="text-primary hover:underline">
                           Ver copia
                         </a>
                       </>
@@ -296,14 +299,14 @@ export default async function PaginaInmueble({ params }: PageProps<'/inmuebles/[
                   <Formulario accion={editarAcceso}>
                     <input type="hidden" name="inmueble_id" value={i.id} />
                     <Campo etiqueta="Llave">
-                      <Entrada name="acceso_llave" defaultValue={i.acceso_llave ?? ''} />
+                      <Input name="acceso_llave" defaultValue={i.acceso_llave ?? ''} />
                     </Campo>
                     <Campo etiqueta="Código">
-                      <Entrada name="acceso_codigo" defaultValue={i.acceso_codigo ?? ''} />
+                      <Input name="acceso_codigo" defaultValue={i.acceso_codigo ?? ''} />
                     </Campo>
                     <Casilla name="acceso_dni" defaultChecked={i.acceso_dni} etiqueta="Piden DNI en la entrada" />
                     <Campo etiqueta="Otras">
-                      <AreaTexto name="acceso_otros" rows={2} defaultValue={i.acceso_otros ?? ''} />
+                      <Textarea name="acceso_otros" rows={2} defaultValue={i.acceso_otros ?? ''} />
                     </Campo>
                     <BotonEnviar>Guardar</BotonEnviar>
                   </Formulario>
@@ -312,7 +315,7 @@ export default async function PaginaInmueble({ params }: PageProps<'/inmuebles/[
             }
           >
             <DatosAcceso acceso={i} />
-            <p className="mt-2 text-xs text-suave">Las visitas toman estos datos al agendarse.</p>
+            <p className="mt-2 text-xs text-muted-foreground">Las visitas toman estos datos al agendarse.</p>
           </Tarjeta>
 
           <Tarjeta titulo="Interés acumulado">
@@ -324,7 +327,7 @@ export default async function PaginaInmueble({ params }: PageProps<'/inmuebles/[
             </dl>
           </Tarjeta>
 
-          <p className="text-xs text-suave">
+          <p className="text-xs text-muted-foreground">
             Asesor: {i.asesor_nombre ?? '—'} · Creado el {fechaHora(i.created_at)}
           </p>
         </div>

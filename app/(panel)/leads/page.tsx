@@ -76,7 +76,7 @@ export default async function PaginaLeads({ searchParams }: PageProps<'/leads'>)
         }
       />
 
-      <form className="mb-4 grid grid-cols-2 gap-2 rounded-xl border border-border bg-white p-3 sm:grid-cols-3 lg:grid-cols-7">
+      <form className="mb-4 grid grid-cols-2 gap-2 rounded-2xl border border-border bg-card p-3 sm:grid-cols-3 lg:grid-cols-7">
         <Input name="q" defaultValue={f.q} placeholder="Nombre o teléfono" className="col-span-2 sm:col-span-3 lg:col-span-2" />
         <Seleccion name="estado" defaultValue={f.estado} aria-label="Estado">
           <option value="activos">Activos</option>

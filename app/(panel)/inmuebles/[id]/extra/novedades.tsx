@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { ESTADOS_LEAD, type EstadoLead } from '@/lib/catalogos'
-import { Insignia, Tarjeta, Vacio } from '@/components/legado'
+import { Tarjeta, Vacio } from '@/components/campos'
+import { Badge } from '@/components/ui/badge'
 import { BotonEnviar, Formulario } from '@/components/formulario'
 import { enviarMatches } from '../../../leads/[id]/secciones/matches-acciones'
 import { colorPuntaje } from '../../../leads/[id]/secciones/matches-formato'
@@ -25,11 +26,11 @@ export async function NovedadesInmueble({ inmuebleId }: PropsExtraInmueble) {
         <ul className="space-y-2">
           {interesados.map((x) => (
             <li key={x.lead_id} className="flex flex-wrap items-center gap-2 text-sm">
-              <Insignia color={colorPuntaje(Number(x.puntaje))}>{Math.round(Number(x.puntaje))}</Insignia>
-              <Link href={`/leads/${x.lead_id}?tab=matches`} className="font-medium text-marino-800 hover:underline">
+              <Badge variant={colorPuntaje(Number(x.puntaje))}>{Math.round(Number(x.puntaje))}</Badge>
+              <Link href={`/leads/${x.lead_id}?tab=matches`} className="font-medium text-primary hover:underline">
                 {x.nombre}
               </Link>
-              <span className="text-suave">{ESTADOS_LEAD[x.estado]}</span>
+              <span className="text-muted-foreground">{ESTADOS_LEAD[x.estado]}</span>
               {x.puede_recibir ? (
                 <Formulario accion={enviarMatches} className="ml-auto">
                   <input type="hidden" name="lead_id" value={x.lead_id} />

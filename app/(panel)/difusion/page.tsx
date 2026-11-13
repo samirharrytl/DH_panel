@@ -4,7 +4,9 @@ import Link from 'next/link'
 import { exigirUsuario } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { fecha, hoyLima, num, soles } from '@/lib/formato'
-import { Aviso, Dato, EncabezadoPagina, EnlaceBoton, Insignia, Tarjeta, Vacio } from '@/components/legado'
+import { Aviso, Dato, EncabezadoPagina, Tarjeta, Vacio } from '@/components/campos'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { parametrosDifusion, urlPortada } from './datos'
 import { ListaPublicaciones } from './publicaciones'
 import { RegistrarPublicacion } from './registrar'
@@ -113,7 +115,7 @@ export default async function PaginaDifusion() {
         {destacada && (
           <Tarjeta
             titulo={todoPublicadoHoy ? 'Todo publicado hoy' : 'Sugerido para hoy'}
-            acciones={<Insignia color={colorMotivo(destacada, hoy)}>{destacada.motivo}</Insignia>}
+            acciones={<Badge variant={colorMotivo(destacada, hoy)}>{destacada.motivo}</Badge>}
           >
             {todoPublicadoHoy && (
               <Aviso tipo="exito" className="mb-4">
@@ -121,7 +123,7 @@ export default async function PaginaDifusion() {
               </Aviso>
             )}
             <div className="grid gap-4 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-              <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-marino-50">
+              <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-accent">
                 {portada ? (
                   <Image
                     src={portada}
@@ -132,14 +134,14 @@ export default async function PaginaDifusion() {
                     className="object-cover"
                   />
                 ) : (
-                  <div className="flex h-full items-center justify-center text-sm text-suave">Sin fotos</div>
+                  <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Sin fotos</div>
                 )}
               </div>
               <div className="min-w-0 space-y-4">
                 <div>
-                  <p className="font-mono text-xs text-suave">{destacada.codigo}</p>
-                  <p className="text-lg font-semibold text-tinta">{describirCorto(destacada)}</p>
-                  <p className="text-xl font-semibold text-marino-800">
+                  <p className="font-mono text-xs text-muted-foreground">{destacada.codigo}</p>
+                  <p className="text-lg font-semibold text-foreground">{describirCorto(destacada)}</p>
+                  <p className="text-xl font-semibold text-primary">
                     {destacada.precio ? soles(destacada.precio) : 'Precio por definir'}
                   </p>
                 </div>
@@ -151,9 +153,9 @@ export default async function PaginaDifusion() {
                 </dl>
                 <div className="flex flex-wrap gap-2">
                   {registrar(destacada, true)}
-                  <EnlaceBoton href={`/inmuebles/${destacada.inmueble_id}`} variante="secundario">
-                    Ver ficha y fotos
-                  </EnlaceBoton>
+                  <Button asChild variant="outline">
+                    <Link href={`/inmuebles/${destacada.inmueble_id}`}>Ver ficha y fotos</Link>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -162,20 +164,20 @@ export default async function PaginaDifusion() {
 
         {sugerencias.length > 1 && (
           <Tarjeta titulo="Siguientes en la rotación">
-            <p className="mb-3 text-sm text-suave">
+            <p className="mb-3 text-sm text-muted-foreground">
               Primero los nuevos, luego los que generan menos interés y los que llevan más tiempo sin publicarse. Solo
               inmuebles en cartera con autorización para publicar.
             </p>
-            <ul className="divide-y divide-borde-suave">
+            <ul className="divide-y divide-border">
               {sugerencias.slice(1).map((s) => (
                 <li key={s.inmueble_id} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
                   <div className="min-w-0">
-                    <Link href={`/inmuebles/${s.inmueble_id}`} className="font-medium text-tinta hover:underline">
+                    <Link href={`/inmuebles/${s.inmueble_id}`} className="font-medium text-foreground hover:underline">
                       {s.codigo} · {describirCorto(s)}
                     </Link>
-                    <p className="text-sm text-marino-800">{s.precio ? soles(s.precio) : 'Precio por definir'}</p>
-                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-suave">
-                      <Insignia color={colorMotivo(s, hoy)}>{s.motivo}</Insignia>
+                    <p className="text-sm text-primary">{s.precio ? soles(s.precio) : 'Precio por definir'}</p>
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <Badge variant={colorMotivo(s, hoy)}>{s.motivo}</Badge>
                       <span>
                         {s.publicaciones === 1 ? '1 publicación' : `${s.publicaciones} publicaciones`}
                         {s.ultima_publicacion && ` · última el ${fecha(s.ultima_publicacion)}`}
@@ -195,7 +197,7 @@ export default async function PaginaDifusion() {
           titulo={`Publicaciones de los últimos ${DIAS_RECIENTES} días`}
           acciones={
             publicaciones.length > 0 && (
-              <span className="text-xs text-suave">
+              <span className="text-xs text-muted-foreground">
                 {publicaciones.length} · {num(totalVistas)} vistas · {num(totalLeads)} leads
               </span>
             )
@@ -208,7 +210,7 @@ export default async function PaginaDifusion() {
             <ListaPublicaciones publicaciones={publicaciones} numero={parametros.numero} hoy={hoy} />
           )}
           {!usuario.esAdmin && publicaciones.length > 0 && (
-            <p className="mt-3 text-xs text-suave">Los leads de cada publicación cuentan solo los que tienes asignados.</p>
+            <p className="mt-3 text-xs text-muted-foreground">Los leads de cada publicación cuentan solo los que tienes asignados.</p>
           )}
         </Tarjeta>
       </div>

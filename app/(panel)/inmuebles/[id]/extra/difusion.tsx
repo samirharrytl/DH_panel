@@ -1,7 +1,7 @@
 import { obtenerUsuario } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { fecha, fechaHora, hoyLima, soles } from '@/lib/formato'
-import { Aviso, Tarjeta, Vacio } from '@/components/legado'
+import { Aviso, Tarjeta, Vacio } from '@/components/campos'
 import { BotonAccion } from '@/components/formulario'
 import { parametrosDifusion } from '../../../difusion/datos'
 import { ListaPublicaciones } from '../../../difusion/publicaciones'
@@ -81,7 +81,7 @@ export async function DifusionInmueble({ inmuebleId, puedeEditar }: PropsExtraIn
             </BotonAccion>
           }
         >
-          <p className="mb-2 text-xs text-suave">
+          <p className="mb-2 text-xs text-muted-foreground">
             Del {fecha(desde)} al {fecha(hoy)} · frecuencia: cada {parametros.frecuencia} días ·{' '}
             {ultimo ? `último envío ${fechaHora(ultimo.enviado_at)}` : 'aún no se envía ninguno'}
           </p>
@@ -90,8 +90,8 @@ export async function DifusionInmueble({ inmuebleId, puedeEditar }: PropsExtraIn
               Faltan {parametros.frecuencia - diasDesdeEnvio} días para el siguiente resumen según la frecuencia configurada.
             </Aviso>
           )}
-          <pre className="rounded-lg bg-fondo p-3 font-sans text-sm whitespace-pre-wrap text-tinta">{resumen}</pre>
-          <p className="mt-2 text-xs text-suave">Las vistas e interacciones se ingresan a mano en cada publicación.</p>
+          <pre className="rounded-lg bg-background p-3 font-sans text-sm whitespace-pre-wrap text-foreground">{resumen}</pre>
+          <p className="mt-2 text-xs text-muted-foreground">Las vistas e interacciones se ingresan a mano en cada publicación.</p>
         </Tarjeta>
       )}
     </>

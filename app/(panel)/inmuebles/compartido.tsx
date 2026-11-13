@@ -1,7 +1,8 @@
 import { DISTRITOS_LIMA } from '@/lib/catalogos'
 import { num } from '@/lib/formato'
-import { Insignia } from '@/components/legado'
+import { Badge } from '@/components/ui/badge'
 import type { Acceso } from './tipos'
+import { Hash, IdCard, KeyRound } from 'lucide-react'
 
 // Piezas sin estado que comparten la base de propiedades, la ficha del lead y la agenda
 
@@ -38,27 +39,30 @@ export const tieneAcceso = (a: Acceso) => Boolean(a.acceso_llave || a.acceso_cod
 
 // Consideraciones de acceso de una cita, visita o inmueble: llave, código, DNI y otras (HU-14, HU-26)
 export function DatosAcceso({ acceso, vacio = 'Sin consideraciones de acceso' }: { acceso: Acceso; vacio?: string }) {
-  if (!tieneAcceso(acceso)) return <p className="text-xs text-tenue">{vacio}</p>
+  if (!tieneAcceso(acceso)) return <p className="text-xs text-muted-foreground">{vacio}</p>
   return (
-    <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-tinta">
+    <ul className="flex flex-wrap gap-x-4 gap-y-1.5 text-sm text-foreground">
       {acceso.acceso_llave && (
-        <li>
-          <span className="text-suave">🔑 Llave:</span> {acceso.acceso_llave}
+        <li className="inline-flex items-center gap-1.5">
+          <KeyRound aria-hidden className="size-4 text-muted-foreground" />
+          <span className="text-muted-foreground">Llave:</span> {acceso.acceso_llave}
         </li>
       )}
       {acceso.acceso_codigo && (
-        <li>
-          <span className="text-suave">🔢 Código:</span> {acceso.acceso_codigo}
+        <li className="inline-flex items-center gap-1.5">
+          <Hash aria-hidden className="size-4 text-muted-foreground" />
+          <span className="text-muted-foreground">Código:</span> {acceso.acceso_codigo}
         </li>
       )}
       {acceso.acceso_dni && (
-        <li>
-          <span className="text-suave">🪪</span> Piden DNI
+        <li className="inline-flex items-center gap-1.5">
+          <IdCard aria-hidden className="size-4 text-muted-foreground" />
+          Piden DNI
         </li>
       )}
       {acceso.acceso_otros && (
         <li className="basis-full whitespace-pre-wrap">
-          <span className="text-suave">Otros:</span> {acceso.acceso_otros}
+          <span className="text-muted-foreground">Otros:</span> {acceso.acceso_otros}
         </li>
       )}
     </ul>
@@ -78,8 +82,8 @@ export function vencimientoContrato(venceEl: string | null, hoy: string, avisoDi
 export function InsigniaVencimiento({ venceEl, hoy, avisoDias }: { venceEl: string | null; hoy: string; avisoDias: number }) {
   const v = vencimientoContrato(venceEl, hoy, avisoDias)
   if (!v || (!v.vencido && !v.porVencer)) return null
-  if (v.vencido) return <Insignia color="rojo">Contrato vencido</Insignia>
-  return <Insignia color="ambar">{v.dias === 0 ? 'Contrato vence hoy' : `Contrato vence en ${v.dias} d`}</Insignia>
+  if (v.vencido) return <Badge variant="rojo">Contrato vencido</Badge>
+  return <Badge variant="ambar">{v.dias === 0 ? 'Contrato vence hoy' : `Contrato vence en ${v.dias} d`}</Badge>
 }
 
 export const enlaceMapa = (direccion: string, distrito?: string | null) =>
