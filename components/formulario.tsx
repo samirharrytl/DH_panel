@@ -112,8 +112,9 @@ export function Dialogo({
           {boton}
         </Button>
       </DialogTrigger>
-      <DialogContent className={cn('max-h-[90vh] gap-0 overflow-y-auto p-0', ancho)}>
-        <DialogHeader className="border-b border-border px-5 py-4">
+      {/* dvh: en el celular la barra del navegador no debe tapar el botón de guardar */}
+      <DialogContent className={cn('max-h-[90dvh] gap-0 overflow-y-auto p-0', ancho)}>
+        <DialogHeader className="border-b border-border py-4 pr-12 pl-5">
           <DialogTitle className="font-titulo text-lg text-primary">{titulo}</DialogTitle>
         </DialogHeader>
         <div className="p-5">

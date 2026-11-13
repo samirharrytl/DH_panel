@@ -18,8 +18,8 @@ export default function PaginaRecuperar() {
         </Campo>
         <BotonEnviar className="w-full">Enviar enlace</BotonEnviar>
       </Formulario>
-      <p className="mt-4 text-center text-sm">
-        <Link href="/login" className="text-primary hover:underline">
+      <p className="mt-2 text-center text-sm">
+        <Link href="/login" className="inline-block py-2 text-primary hover:underline">
           Volver a ingresar
         </Link>
       </p>

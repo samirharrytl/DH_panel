@@ -27,7 +27,7 @@ export function EncabezadoPagina({
         {volver && (
           <Link
             href={volver.href}
-            className="mb-2 inline-flex min-h-8 items-center gap-1 text-sm text-muted-foreground hover:text-primary"
+            className="mb-2 inline-flex min-h-9 items-center gap-1 text-sm text-muted-foreground hover:text-primary"
           >
             <ChevronLeft aria-hidden className="size-4" />
             {volver.texto}
@@ -101,7 +101,7 @@ export function Casilla({
   ...props
 }: Omit<ComponentProps<typeof Checkbox>, 'children'> & { etiqueta: ReactNode }) {
   return (
-    <label className="flex min-h-8 items-start gap-2.5 text-sm text-foreground">
+    <label className="flex min-h-8 items-start gap-2.5 text-sm text-foreground max-sm:min-h-10 max-sm:pt-1">
       {/* Radix vuelve al valor del primer montaje cuando React reinicia el formulario tras guardar; la key lo
           vuelve a montar con el valor guardado */}
       <Checkbox key={String(props.defaultChecked ?? false)} {...props} className={cn('mt-0.5', props.className)} />
@@ -115,7 +115,7 @@ const claseControl =
 
 // Selector nativo: en el celular abre el selector del sistema y envía `name` sin JavaScript
 export function Seleccion({ className, ...props }: ComponentProps<'select'>) {
-  return <select {...props} className={cn(claseControl, className)} />
+  return <select {...props} className={cn(claseControl, 'text-ellipsis', className)} />
 }
 
 // Selector Sí / No / sin dato para campos booleanos opcionales
@@ -167,7 +167,7 @@ export function Aviso({ tipo = 'info', children, className }: { tipo?: keyof typ
 export function Tabla({ children }: { children: ReactNode }) {
   return (
     <Card className="gap-0 py-0">
-      <Table className="min-w-[640px]">{children}</Table>
+      <Table className="sm:min-w-[640px]">{children}</Table>
     </Card>
   )
 }

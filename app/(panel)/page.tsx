@@ -100,7 +100,7 @@ export default async function PaginaHoy() {
           titulo="Atiende primero"
           className="lg:col-span-3"
           acciones={
-            <Link href="/leads" className="text-sm text-muted-foreground hover:text-primary">
+            <Link href="/leads" className="-my-2 inline-flex min-h-9 items-center text-sm text-muted-foreground hover:text-primary">
               Ver la bandeja
             </Link>
           }
@@ -153,7 +153,7 @@ export default async function PaginaHoy() {
           <Tarjeta guia="hoy-citas"
             titulo="Citas y visitas de hoy"
             acciones={
-              <Link href="/agenda" className="text-sm text-muted-foreground hover:text-primary">
+              <Link href="/agenda" className="-my-2 inline-flex min-h-9 items-center text-sm text-muted-foreground hover:text-primary">
                 Ver agenda
               </Link>
             }
@@ -211,7 +211,7 @@ export default async function PaginaHoy() {
             <ul className="-my-2 divide-y divide-border text-sm">
               {porVencer.map((i) => (
                 <li key={i.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-3">
-                  <Link href={`/inmuebles/${i.id}`} className="font-medium text-primary hover:underline">
+                  <Link href={`/inmuebles/${i.id}`} className="-my-2 py-2 font-medium text-primary hover:underline">
                     {i.codigo} {etiqueta(TIPOS_INMUEBLE, i.tipo)} en {i.distrito}
                   </Link>
                   <span className="text-muted-foreground">

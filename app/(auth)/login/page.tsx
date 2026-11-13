@@ -33,8 +33,8 @@ export default async function PaginaLogin({ searchParams }: PageProps<'/login'>)
         </Campo>
         <BotonEnviar className="w-full">Ingresar</BotonEnviar>
       </Formulario>
-      <p className="mt-4 text-center text-sm">
-        <Link href="/recuperar" className="text-primary hover:underline">
+      <p className="mt-2 text-center text-sm">
+        <Link href="/recuperar" className="inline-block py-2 text-primary hover:underline">
           ¿Olvidaste tu contraseña?
         </Link>
       </p>

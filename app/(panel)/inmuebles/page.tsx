@@ -49,7 +49,8 @@ export default async function PaginaInmuebles({ searchParams }: PageProps<'/inmu
   const url = new Map((firmadas ?? []).map((s) => [s.path, s.signedUrl]))
   const hoy = hoyLima()
   const avisoDias = Number(aviso?.valor ?? 30)
-  const hayFiltros = f.estado !== 'activos' || f.distrito || f.tipo || f.min || f.max
+  // Booleano: con `f.max` en 0, React pintaría un «0» suelto junto al botón
+  const hayFiltros = Boolean(f.estado !== 'activos' || f.distrito || f.tipo || f.min || f.max)
 
   return (
     <>
@@ -73,7 +74,7 @@ export default async function PaginaInmuebles({ searchParams }: PageProps<'/inmu
         data-guia="inm-filtros"
         className="mb-4 grid grid-cols-2 gap-2 rounded-2xl border border-border bg-card p-3 sm:grid-cols-3 lg:grid-cols-6"
       >
-        <Seleccion name="estado" defaultValue={f.estado} aria-label="Estado">
+        <Seleccion name="estado" defaultValue={f.estado} aria-label="Estado" className="col-span-2 sm:col-span-1">
           <option value="activos">En captación y en cartera</option>
           <option value="todos">Todos los estados</option>
           {Object.entries(ESTADOS_INMUEBLE).map(([k, v]) => (
@@ -93,7 +94,7 @@ export default async function PaginaInmuebles({ searchParams }: PageProps<'/inmu
         </Seleccion>
         <Input name="min" type="number" min={0} defaultValue={f.min || ''} placeholder="Precio desde (S/)" aria-label="Precio desde" />
         <Input name="max" type="number" min={0} defaultValue={f.max || ''} placeholder="Precio hasta (S/)" aria-label="Precio hasta" />
-        <div className="flex gap-2">
+        <div className="col-span-2 flex gap-2 sm:col-span-1">
           <button type="submit" className={cn(buttonVariants({ variant: 'default' }), 'flex-1')}>
             Filtrar
           </button>

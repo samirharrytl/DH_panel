@@ -212,7 +212,7 @@ export default async function PaginaInmueble({ params }: PageProps<'/inmuebles/[
           >
             <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               <Dato etiqueta="Dirección" className="col-span-2">
-                <a href={enlaceMapa(i.direccion, i.distrito)} target="_blank" rel="noreferrer" className="text-primary hover:underline">
+                <a href={enlaceMapa(i.direccion, i.distrito)} target="_blank" rel="noreferrer" className="py-2 text-primary hover:underline">
                   {i.direccion}
                 </a>
                 {i.referencia && <span className="block text-xs text-muted-foreground">{i.referencia}</span>}

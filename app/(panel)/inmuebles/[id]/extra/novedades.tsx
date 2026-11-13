@@ -27,7 +27,7 @@ export async function NovedadesInmueble({ inmuebleId }: PropsExtraInmueble) {
           {interesados.map((x) => (
             <li key={x.lead_id} className="flex flex-wrap items-center gap-2 text-sm">
               <Badge variant={colorPuntaje(Number(x.puntaje))}>{Math.round(Number(x.puntaje))}</Badge>
-              <Link href={`/leads/${x.lead_id}?tab=matches`} className="font-medium text-primary hover:underline">
+              <Link href={`/leads/${x.lead_id}?tab=matches`} className="-my-2 py-2 font-medium text-primary hover:underline">
                 {x.nombre}
               </Link>
               <span className="text-muted-foreground">{ESTADOS_LEAD[x.estado]}</span>

@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
+import { useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 
@@ -12,8 +13,18 @@ export function Pestanas({ items, param, porDefecto }: { items: Pestana[]; param
   const ruta = usePathname()
   const busqueda = useSearchParams()
   const actual = param ? (busqueda.get(param) ?? porDefecto) : null
+  // En el celular la tira se desliza: al abrir la página en una pestaña que no cabe, la deja a la vista
+  const tira = useRef<HTMLElement>(null)
+  useEffect(() => {
+    const nav = tira.current
+    const activa = nav?.querySelector('[aria-current="page"]')
+    if (!nav || !activa) return
+    const n = nav.getBoundingClientRect()
+    const a = activa.getBoundingClientRect()
+    if (a.left < n.left || a.right > n.right) nav.scrollBy({ left: (a.left + a.right) / 2 - (n.left + n.right) / 2 })
+  }, [ruta, actual])
   return (
-    <nav aria-label="Secciones" className="mb-6 overflow-x-auto">
+    <nav ref={tira} aria-label="Secciones" className="mb-6 overflow-x-auto">
       <div className="inline-flex min-w-max gap-1 rounded-xl bg-muted p-1">
         {items.map((p) => {
           const activa = param

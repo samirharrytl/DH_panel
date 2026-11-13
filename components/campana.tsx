@@ -79,7 +79,7 @@ export function Campana({
             <Button
               variant="link"
               size="sm"
-              className="h-auto px-0 text-xs"
+              className="-my-2 h-auto min-h-9 px-0 text-xs"
               onClick={() =>
                 iniciar(async () => {
                   await marcarLeidas()

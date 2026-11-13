@@ -65,7 +65,7 @@ export function EditorPlantilla({
                 type="button"
                 title={d}
                 onClick={() => insertar(k)}
-                className="rounded border border-border bg-white px-1.5 py-0.5 font-mono text-xs text-primary hover:bg-accent"
+                className="rounded border border-border bg-white px-2 py-2 font-mono text-xs text-primary hover:bg-accent sm:px-1.5 sm:py-0.5"
               >
                 [{k}]
               </button>

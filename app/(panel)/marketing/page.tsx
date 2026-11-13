@@ -164,7 +164,7 @@ export default async function PaginaMarketing({ searchParams }: PageProps<'/mark
               )}
             >
               <div className="min-w-0">
-                <Link href={`/leads/${c.lead_id}?tab=cierre`} className="block truncate font-medium text-foreground hover:underline">
+                <Link href={`/leads/${c.lead_id}?tab=cierre`} className="-my-1.5 block truncate py-1.5 font-medium text-foreground hover:underline">
                   {c.nombre}
                 </Link>
                 <p className="text-xs text-muted-foreground">

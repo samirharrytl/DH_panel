@@ -196,14 +196,14 @@ export async function SeccionCitas({ lead }: PropsSeccion) {
         {inmueble ? (
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
-              <Link href={`/inmuebles/${inmueble.id}`} className="font-medium text-primary hover:underline">
+              <Link href={`/inmuebles/${inmueble.id}`} className="-my-2 py-2 font-medium text-primary hover:underline">
                 {inmueble.codigo} · {etiqueta(TIPOS_INMUEBLE, inmueble.tipo)} en {inmueble.distrito}
               </Link>
               <Badge variant={colorEstadoInmueble(inmueble.estado)}>{ESTADOS_INMUEBLE[inmueble.estado]}</Badge>
             </div>
             <p className="text-sm text-foreground">{soles(inmueble.precio)}</p>
             <p className="text-sm text-muted-foreground">{caracteristicasTexto(inmueble)}</p>
-            <Link href={`/inmuebles/${inmueble.id}`} className="inline-block text-sm text-primary hover:underline">
+            <Link href={`/inmuebles/${inmueble.id}`} className="-my-2 inline-block py-2 text-sm text-primary hover:underline">
               {inmueble.estado === 'en_captacion' ? 'Subir fotos y registrar el contrato' : 'Ver ficha del inmueble'}
             </Link>
           </div>

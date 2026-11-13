@@ -52,28 +52,36 @@ export default async function PaginaUsuarios() {
         <TableHeader>
           <TableRow>
             <TableHead>Nombre</TableHead>
-            <TableHead>Rol</TableHead>
-            <TableHead>Leads vigentes</TableHead>
-            <TableHead>Estado</TableHead>
-            <TableHead>Desde</TableHead>
+            <TableHead className="max-sm:hidden">Rol</TableHead>
+            <TableHead className="max-sm:hidden">Leads vigentes</TableHead>
+            <TableHead className="max-sm:hidden">Estado</TableHead>
+            <TableHead className="max-sm:hidden">Desde</TableHead>
             <TableHead />
           </TableRow>
         </TableHeader>
         <TableBody>
           {usuarios?.map((u) => (
             <TableRow key={u.id} className={u.activo ? '' : 'text-muted-foreground'}>
-              <TableCell>
+              <TableCell className="max-sm:whitespace-normal">
                 <p className="font-medium text-foreground">{u.nombre}</p>
-                <p className="text-xs text-muted-foreground">{u.email}</p>
+                <p className="text-xs break-all text-muted-foreground">{u.email}</p>
+                {/* En el celular las demás columnas se resumen aquí */}
+                <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground sm:hidden">
+                  {u.rol === 'administrador' ? 'Administrador' : 'Asesor'}
+                  <Badge variant={u.activo ? 'verde' : 'gris'}>{u.activo ? 'Activo' : 'Desactivado'}</Badge>
+                  <span>
+                    {porAsesor.get(u.id) ?? 0} {(porAsesor.get(u.id) ?? 0) === 1 ? 'lead' : 'leads'}
+                  </span>
+                </p>
               </TableCell>
-              <TableCell>{u.rol === 'administrador' ? 'Administrador' : 'Asesor'}</TableCell>
-              <TableCell>{porAsesor.get(u.id) ?? 0}</TableCell>
-              <TableCell>
+              <TableCell className="max-sm:hidden">{u.rol === 'administrador' ? 'Administrador' : 'Asesor'}</TableCell>
+              <TableCell className="max-sm:hidden">{porAsesor.get(u.id) ?? 0}</TableCell>
+              <TableCell className="max-sm:hidden">
                 <Badge variant={u.activo ? 'verde' : 'gris'}>{u.activo ? 'Activo' : 'Desactivado'}</Badge>
               </TableCell>
-              <TableCell>{fecha(u.created_at)}</TableCell>
+              <TableCell className="max-sm:hidden">{fecha(u.created_at)}</TableCell>
               <TableCell className="text-right">
-                <div className="flex justify-end gap-2">
+                <div className="flex justify-end gap-2 max-sm:flex-col max-sm:items-end">
                   <Dialogo titulo={`Editar a ${u.nombre}`} boton="Editar">
                     <Formulario accion={editarUsuario}>
                       <input type="hidden" name="id" value={u.id} />

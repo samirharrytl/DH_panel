@@ -109,17 +109,17 @@ export default async function PaginaAgenda({ searchParams }: PageProps<'/agenda'
                     <span className="font-titulo text-lg font-semibold text-primary tabular-nums">{hora(c.inicio)}</span>
                     <Badge variant={c.tipo === 'visita' ? 'marino' : 'azul'}>{c.tipo === 'visita' ? 'Visita' : 'Cita con propietario'}</Badge>
                     <Badge variant={COLOR_CITA[c.estado]}>{ESTADOS_CITA[c.estado]}</Badge>
-                    <Link href={`/leads/${c.lead_id}?tab=${c.tipo === 'visita' ? 'visitas' : 'citas'}`} className="font-medium text-primary hover:underline">
+                    <Link href={`/leads/${c.lead_id}?tab=${c.tipo === 'visita' ? 'visitas' : 'citas'}`} className="-my-2 py-2 font-medium text-primary hover:underline">
                       {c.lead?.persona?.nombre ?? 'Lead'}
                     </Link>
                     {c.inmueble && (
-                      <Link href={`/inmuebles/${c.inmueble.id}`} className="text-sm text-primary hover:underline">
+                      <Link href={`/inmuebles/${c.inmueble.id}`} className="-my-2 py-2 text-sm text-primary hover:underline">
                         {c.inmueble.codigo}
                       </Link>
                     )}
                     {usuario.esAdmin && c.asesor && <span className="text-xs text-muted-foreground">Asesor: {c.asesor.nombre}</span>}
                   </div>
-                  <a href={enlaceMapa(c.direccion, c.distrito)} target="_blank" rel="noreferrer" className="inline-flex items-start gap-1 text-sm text-primary hover:underline">
+                  <a href={enlaceMapa(c.direccion, c.distrito)} target="_blank" rel="noreferrer" className="-mt-2 mb-0 inline-flex items-start gap-1 py-2 text-sm text-primary hover:underline">
                     <Navigation aria-hidden className="mt-0.5 size-4 shrink-0" />
                     {c.direccion}
                   </a>

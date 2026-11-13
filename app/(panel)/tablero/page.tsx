@@ -140,17 +140,20 @@ export default async function PaginaTablero({ searchParams }: PageProps<'/tabler
             {v}
           </Link>
         ))}
-        <form className="flex flex-wrap items-end gap-2" action="/tablero">
+        <form className="flex flex-wrap items-end gap-2 max-sm:grid max-sm:w-full max-sm:grid-cols-2" action="/tablero">
           <input type="hidden" name="periodo" value="personalizado" />
-          <label className="text-xs text-muted-foreground">
+          <label className="text-xs text-muted-foreground max-sm:flex max-sm:flex-col max-sm:gap-1">
             Desde
-            <Input type="date" name="desde" defaultValue={desde} max={hoy} className="h-8 w-40" required />
+            <Input type="date" name="desde" defaultValue={desde} max={hoy} className="h-8 w-40 max-sm:h-10 max-sm:w-full" required />
           </label>
-          <label className="text-xs text-muted-foreground">
+          <label className="text-xs text-muted-foreground max-sm:flex max-sm:flex-col max-sm:gap-1">
             Hasta
-            <Input type="date" name="hasta" defaultValue={hasta} className="h-8 w-40" required />
+            <Input type="date" name="hasta" defaultValue={hasta} className="h-8 w-40 max-sm:h-10 max-sm:w-full" required />
           </label>
-          <button type="submit" className={buttonVariants({ variant: periodo === 'personalizado' ? 'default' : 'outline', size: 'sm' })}>
+          <button
+            type="submit"
+            className={cn(buttonVariants({ variant: periodo === 'personalizado' ? 'default' : 'outline', size: 'sm' }), 'max-sm:col-span-2')}
+          >
             Aplicar
           </button>
         </form>
@@ -208,7 +211,7 @@ export default async function PaginaTablero({ searchParams }: PageProps<'/tabler
                       const n = Number(filas.find((x) => x.estado === estado)?.total ?? 0)
                       return (
                         <li key={estado}>
-                          <Link href={`/leads?estado=${estado}&tipo=${tipo}`} className="block rounded hover:bg-accent">
+                          <Link href={`/leads?estado=${estado}&tipo=${tipo}`} className="-my-1 block rounded py-1 hover:bg-accent">
                             <div className="flex items-center justify-between text-sm">
                               <span className={cn(SALIDAS.includes(estado) ? 'text-muted-foreground' : 'text-foreground')}>{ESTADOS_LEAD[estado]}</span>
                               <span className="font-medium text-foreground tabular-nums">{num(n)}</span>

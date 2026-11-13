@@ -173,7 +173,7 @@ export async function Postventa({ lead, resenaUrl }: Pick<PropsSeccion, 'lead'> 
         </p>
         <Link
           href={p.intencion ? `/marketing?intencion=${p.intencion}` : '/marketing'}
-          className="mt-2 inline-block text-sm text-primary hover:underline"
+          className="-mb-2 inline-block py-2 text-sm text-primary hover:underline"
         >
           Ver lista de marketing
         </Link>

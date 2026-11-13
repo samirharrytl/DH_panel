@@ -83,7 +83,7 @@ export default async function PaginaLeads({ searchParams }: PageProps<'/leads'>)
         <Input name="q" defaultValue={f.q} placeholder="Nombre o teléfono" className="col-span-2 sm:col-span-3 lg:col-span-2" />
         <Seleccion name="estado" defaultValue={f.estado} aria-label="Estado">
           <option value="activos">Activos</option>
-          <option value="todos">Todos los estados</option>
+          <option value="todos">Estado: todos</option>
           {Object.entries(ESTADOS_LEAD).map(([k, v]) => (
             <option key={k} value={k}>
               {v}
@@ -96,7 +96,7 @@ export default async function PaginaLeads({ searchParams }: PageProps<'/leads'>)
           <option value="interesado">Interesados</option>
         </Seleccion>
         <Seleccion name="canal" defaultValue={f.canal} aria-label="Canal">
-          <option value="">Todos los canales</option>
+          <option value="">Canal: todos</option>
           {Object.entries(CANALES).map(([k, v]) => (
             <option key={k} value={k}>
               {v}
@@ -105,7 +105,7 @@ export default async function PaginaLeads({ searchParams }: PageProps<'/leads'>)
         </Seleccion>
         {usuario.esAdmin ? (
           <Seleccion name="asesor" defaultValue={f.asesor} aria-label="Asesor">
-            <option value="">Todos los asesores</option>
+            <option value="">Asesor: todos</option>
             <option value="sin_asignar">Sin asignar</option>
             {asesores?.map((a) => (
               <option key={a.id} value={a.id}>
