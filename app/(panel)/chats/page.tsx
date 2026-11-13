@@ -4,7 +4,10 @@ import { exigirUsuario } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { ESTADOS_LEAD, TIPOS_LEAD, type EstadoLead, type TipoLead } from '@/lib/catalogos'
 import { relativo, telefono } from '@/lib/formato'
-import { Aviso, EncabezadoPagina, EnlaceBoton, Insignia, Vacio, cx } from '@/components/legado'
+import { Aviso, EncabezadoPagina, Vacio } from '@/components/campos'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 import { Chat } from '@/components/chat/chat'
 
 export const metadata: Metadata = { title: 'Chats' }
@@ -52,23 +55,23 @@ export default async function PaginaChats({ searchParams }: PageProps<'/chats'>)
     <>
       <EncabezadoPagina titulo="Chats" descripcion="Todas las conversaciones de WhatsApp del número de DepaHost que puedes ver." />
       <div className="grid gap-4 lg:grid-cols-[20rem_minmax(0,1fr)]">
-        <ul className={cx('space-y-1', personaId && 'hidden lg:block')}>
+        <ul className={cn('space-y-1', personaId && 'hidden lg:block')}>
           {lista.length === 0 && <Vacio>Sin conversaciones todavía.</Vacio>}
           {lista.map(({ ultimo, sinLeer }) => (
             <li key={ultimo.persona_id}>
               <Link
                 href={`/chats?persona=${ultimo.persona_id}`}
-                className={cx(
+                className={cn(
                   'block rounded-lg border px-3 py-2',
-                  ultimo.persona_id === personaId ? 'border-marino-800 bg-marino-50' : 'border-borde bg-white hover:border-marino-200',
+                  ultimo.persona_id === personaId ? 'border-primary bg-accent' : 'border-border bg-card hover:border-primary',
                 )}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="truncate font-medium text-tinta">{ultimo.persona?.nombre}</span>
-                  <span className="shrink-0 text-xs text-suave">{relativo(ultimo.created_at)}</span>
+                  <span className="truncate font-medium text-foreground">{ultimo.persona?.nombre}</span>
+                  <span className="shrink-0 text-xs text-muted-foreground">{relativo(ultimo.created_at)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-xs text-suave">
+                  <span className="truncate text-xs text-muted-foreground">
                     {ultimo.direccion === 'saliente' && 'Tú: '}
                     {ultimo.cuerpo}
                   </span>
@@ -83,17 +86,17 @@ export default async function PaginaChats({ searchParams }: PageProps<'/chats'>)
           <div className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <Link href="/chats" className="text-sm text-marino-700 hover:underline lg:hidden">
+                <Link href="/chats" className="text-sm text-primary hover:underline lg:hidden">
                   ← Chats
                 </Link>
-                <p className="font-semibold text-tinta">{actual.nombre}</p>
-                <p className="text-xs text-suave">{telefono(actual.telefono)}</p>
+                <p className="font-semibold text-foreground">{actual.nombre}</p>
+                <p className="text-xs text-muted-foreground">{telefono(actual.telefono)}</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 {leads?.map((l) => (
-                  <Link key={l.id} href={`/leads/${l.id}`} className="text-sm text-marino-700 hover:underline">
+                  <Link key={l.id} href={`/leads/${l.id}`} className="text-sm text-primary hover:underline">
                     {TIPOS_LEAD[l.tipo as TipoLead]}{' '}
-                    <Insignia color="gris">{ESTADOS_LEAD[l.estado as EstadoLead]}</Insignia>
+                    <Badge variant="gris">{ESTADOS_LEAD[l.estado as EstadoLead]}</Badge>
                   </Link>
                 ))}
               </div>
@@ -102,13 +105,11 @@ export default async function PaginaChats({ searchParams }: PageProps<'/chats'>)
               <Aviso tipo="alerta">
                 Este número escribió pero aún no es un lead.{' '}
                 {usuario.esAdmin && (
-                  <EnlaceBoton
-                    href={`/leads/nuevo?telefono=${actual.telefono}&nombre=${encodeURIComponent(actual.nombre)}`}
-                    tamano="sm"
-                    className="ml-2"
-                  >
-                    Registrar como lead
-                  </EnlaceBoton>
+                  <Button asChild size="sm" className="ml-2">
+                    <Link href={`/leads/nuevo?telefono=${actual.telefono}&nombre=${encodeURIComponent(actual.nombre)}`}>
+                      Registrar como lead
+                    </Link>
+                  </Button>
                 )}
               </Aviso>
             )}
