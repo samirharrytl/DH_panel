@@ -71,7 +71,12 @@ El panel es el backend del sitio `depahostcapital`. Expone, sin sesión, las rut
 - `POST /api/v1/leads`: formularios del sitio. Con celular crea o une el lead (canal Web); sin celular solo guarda el
   interés por cada inmueble. Los de alquiler no se registran.
 
-Variables: `WEB_ORIGINS` (orígenes del sitio, separados por comas, para CORS) y `TURNSTILE_SECRET_KEY` (captcha).
+Para publicar un inmueble: **Inmuebles → Nuevo inmueble** registra al propietario, el inmueble y el contrato en un
+paso (queda En cartera). Sube las fotos en su ficha y presiona **Actualizar web**, que llama al deploy hook de
+Cloudflare para recompilar el sitio (unos 2 minutos).
+
+Variables: `WEB_ORIGINS` (orígenes del sitio, separados por comas, para CORS), `TURNSTILE_SECRET_KEY` (captcha) y
+`CLOUDFLARE_DEPLOY_HOOK_URL` (deploy hook del sitio).
 En el sitio, `API_URL` y `PUBLIC_API_URL` apuntan a `https://<panel>/api`. La rentabilidad, los años de recupero y
 «Destacado» se editan en la ficha del inmueble.
 

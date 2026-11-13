@@ -346,4 +346,22 @@ export function registrar({ db, prueba, como, registrar, esperarError, uno, ADMI
     await q(ADMIN, `update parametros set valor = '1000' where clave = 'whatsapp_servicio_gratis_mes'`)
     await esperarError(q(ADMIN, `update parametros set valor = '-1' where clave = 'whatsapp_tarifa_marketing'`), /mayor o igual a 0/)
   })
+
+  prueba('Sitio web: registro directo de un inmueble con contrato lo publica', async () => {
+    const args = `'departamento', 'Jr. Prueba 456', 'Barranco', 380000, 70, 2, 1, 0, 'Luminoso', current_date, false, 12, 3, true`
+    const id = await val(OTRO, `select registrar_inmueble('966777888', 'Rosa Dueña', 'referido', true, ${args})`)
+    const i = await uno(db, `select i.estado, i.asesor_id, i.autoriza_publicar, l.estado as lead_estado, l.tipo, l.consentimiento_datos
+      from inmuebles i join leads l on l.id = i.propietario_lead_id where i.id = $1`, [id])
+    assert.deepEqual({ ...i }, { estado: 'en_cartera', asesor_id: OTRO, autoriza_publicar: true, lead_estado: 'cliente', tipo: 'propietario', consentimiento_datos: true })
+    const web = (await q(null, `select id from inmuebles_web()`)).rows.map((r) => r.id)
+    assert.ok(web.includes(id), 'aparece en el catálogo del sitio')
+    await esperarError(q(OTRO, `select registrar_inmueble('966777889', 'X', 'otro', false, 'casa', '', 'Lince', 1, null, null, null, null, null, current_date, false, 12, 3, true)`), /dirección/)
+    await esperarError(
+      como(db, null, async () => {
+        await db.exec('set role anon')
+        return db.query(`select registrar_inmueble('966777889', 'X', 'otro', false, ${args})`)
+      }),
+      /permission denied/,
+    )
+  })
 }

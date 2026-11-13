@@ -36,6 +36,23 @@ export function FormularioContrato({ inmuebleId, contratoId, hoy }: { inmuebleId
     <Formulario accion={accion}>
       <input type="hidden" name="inmueble_id" value={inmuebleId} />
       {contratoId && <input type="hidden" name="contrato_id" value={contratoId} />}
+      <CamposContrato hoy={hoy} />
+      <Campo etiqueta="Notas">
+        <Textarea name="notas" rows={2} />
+      </Campo>
+      <div>
+        <p className="mb-1 text-sm font-medium text-foreground">Copia escaneada (opcional)</p>
+        <SelectorArchivos control={copia} etiqueta="Elegir archivo" />
+      </div>
+      <BotonEnviar>{contratoId ? 'Renovar contrato' : 'Registrar contrato'}</BotonEnviar>
+    </Formulario>
+  )
+}
+
+// Fecha, plazo, comisión, exclusividad y autorización para publicar. También los usa el registro directo.
+export function CamposContrato({ hoy }: { hoy: string }) {
+  return (
+    <>
       <div className="grid gap-3 sm:grid-cols-2">
         <Campo etiqueta="Fecha de firma">
           <Input type="date" name="fecha_firma" defaultValue={hoy} required />
@@ -50,7 +67,7 @@ export function FormularioContrato({ inmuebleId, contratoId, hoy }: { inmuebleId
       {(
         [
           ['exclusividad', '¿Con exclusividad?'],
-          ['autoriza_publicar', '¿Autoriza publicar el inmueble en redes?'],
+          ['autoriza_publicar', '¿Autoriza publicar el inmueble en redes y en el sitio web?'],
         ] as const
       ).map(([name, texto]) => (
         <fieldset key={name}>
@@ -64,14 +81,6 @@ export function FormularioContrato({ inmuebleId, contratoId, hoy }: { inmuebleId
           </div>
         </fieldset>
       ))}
-      <Campo etiqueta="Notas">
-        <Textarea name="notas" rows={2} />
-      </Campo>
-      <div>
-        <p className="mb-1 text-sm font-medium text-foreground">Copia escaneada (opcional)</p>
-        <SelectorArchivos control={copia} etiqueta="Elegir archivo" />
-      </div>
-      <BotonEnviar>{contratoId ? 'Renovar contrato' : 'Registrar contrato'}</BotonEnviar>
-    </Formulario>
+    </>
   )
 }

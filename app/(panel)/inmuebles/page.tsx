@@ -10,7 +10,10 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { BotonAccion } from '@/components/formulario'
+import { actualizarWeb } from './acciones'
 import { ID_DISTRITOS, InsigniaVencimiento, ListaDistritos, caracteristicasTexto } from './compartido'
+import { NuevoInmueble } from './nuevo'
 import type { InmuebleVista } from './tipos'
 
 export const metadata: Metadata = { title: 'Inmuebles' }
@@ -50,7 +53,16 @@ export default async function PaginaInmuebles({ searchParams }: PageProps<'/inmu
 
   return (
     <>
-      <EncabezadoPagina titulo="Inmuebles" descripcion="Base de propiedades. Los inmuebles se crean al registrar el resultado de la cita con el propietario." />
+      <EncabezadoPagina
+        titulo="Inmuebles"
+        descripcion="Base de propiedades. Los En cartera con autorización para publicar se muestran en el sitio web."
+        acciones={
+          <div className="flex flex-wrap items-start gap-2">
+            <BotonAccion accion={actualizarWeb}>Actualizar web</BotonAccion>
+            <NuevoInmueble hoy={hoy} />
+          </div>
+        }
+      />
       <ListaDistritos />
 
       <form className="mb-4 grid grid-cols-2 gap-2 rounded-2xl border border-border bg-card p-3 sm:grid-cols-3 lg:grid-cols-6">

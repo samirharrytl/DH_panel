@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { exigirUsuario } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { casilla, deError, entero, exito, fallo, lista, numero, siNo, texto, type Resultado } from '@/lib/acciones'
-import { CONSERVACION, TIPOS_INMUEBLE } from '@/lib/catalogos'
+import { CANALES, CONSERVACION, TIPOS_INMUEBLE } from '@/lib/catalogos'
 import { describirInmueble, enviarMensaje, variablesLead } from '@/lib/mensajeria'
 
 function refrescar(inmuebleId: string | null, leadId?: string | null) {
@@ -219,6 +219,59 @@ export async function renovarContrato(_: Resultado | null, f: FormData): Promise
   if (error) return deError(error)
   refrescar(inmuebleId, await leadDelInmueble(inmuebleId))
   return exito('Contrato renovado')
+}
+
+// Registro directo: propietario, inmueble y contrato en un paso; queda En cartera (y en el sitio web si
+// autoriza publicar). Las fotos se suben después desde su ficha.
+export async function registrarInmueble(_: Resultado | null, f: FormData): Promise<Resultado> {
+  await exigirUsuario()
+  const telefono = texto(f, 'telefono')
+  const nombre = texto(f, 'nombre')
+  const canal = texto(f, 'canal')
+  const tipo = texto(f, 'tipo')
+  const precio = numero(f, 'precio')
+  if (!telefono || !nombre) return fallo('Indica el teléfono y el nombre del propietario')
+  if (!canal || !(canal in CANALES)) return fallo('Elige el canal de origen')
+  if (!tipo || !(tipo in TIPOS_INMUEBLE)) return fallo('Elige el tipo de inmueble')
+  if (!precio || precio <= 0) return fallo('Indica el precio de venta')
+  const c = datosContrato(f)
+  if (c.error || !c.datos) return fallo(c.error ?? 'Datos del contrato incompletos')
+
+  const supabase = await crearClienteServidor()
+  const { data, error } = await supabase.rpc('registrar_inmueble', {
+    p_telefono: telefono,
+    p_nombre: nombre,
+    p_canal: canal,
+    p_consentimiento_datos: casilla(f, 'consentimiento_datos'),
+    p_tipo: tipo,
+    p_direccion: texto(f, 'direccion'),
+    p_distrito: texto(f, 'distrito'),
+    p_precio: precio,
+    p_metraje: numero(f, 'metraje'),
+    p_dormitorios: entero(f, 'dormitorios'),
+    p_banos: entero(f, 'banos'),
+    p_cocheras: entero(f, 'cocheras') ?? 0,
+    p_descripcion: texto(f, 'descripcion'),
+    p_fecha_firma: c.datos.p_fecha_firma,
+    p_exclusividad: c.datos.p_exclusividad,
+    p_plazo_meses: c.datos.p_plazo_meses,
+    p_comision_pct: c.datos.p_comision_pct,
+    p_autoriza_publicar: c.datos.p_autoriza_publicar,
+  })
+  if (error) return deError(error)
+  refrescar(data as string)
+  revalidatePath('/leads')
+  return exito('Inmueble registrado En cartera. Sube sus fotos y actualiza la web.', { id: data as string })
+}
+
+// Recompila el sitio web (landing en Astro, Cloudflare) para que muestre los cambios de los inmuebles
+export async function actualizarWeb(): Promise<Resultado> {
+  await exigirUsuario()
+  const hook = process.env.CLOUDFLARE_DEPLOY_HOOK_URL
+  if (!hook) return fallo('Falta configurar CLOUDFLARE_DEPLOY_HOOK_URL en el servidor')
+  const r = await fetch(hook, { method: 'POST' }).catch(() => null)
+  if (!r?.ok) return fallo(`Cloudflare no aceptó la actualización${r ? ` (${r.status})` : ''}. Inténtalo en un minuto.`)
+  return exito('La web se está actualizando: los cambios se verán en unos minutos.')
 }
 
 export async function retirarInmueble(_: Resultado | null, f: FormData): Promise<Resultado> {
