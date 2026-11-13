@@ -24,6 +24,8 @@ function cors(request: NextRequest): Record<string, string> {
     'Access-Control-Allow-Origin': origen,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'content-type',
+    // El cliente de la landing envía con credentials: 'include'; sin esto el navegador bloquea la respuesta
+    'Access-Control-Allow-Credentials': 'true',
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin',
   }
