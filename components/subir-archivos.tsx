@@ -174,7 +174,7 @@ export function SelectorArchivos({
         }}
       />
       <div className="flex flex-wrap items-center gap-2">
-        <Button variant="outline" size="sm" disabled={disabled} onClick={() => entrada.current?.click()}>
+        <Button type="button" variant="outline" size="sm" disabled={disabled} onClick={() => entrada.current?.click()}>
           <Upload aria-hidden />
           {etiqueta}
         </Button>
@@ -228,7 +228,7 @@ export function SubirFotos({
     <div className="space-y-2">
       <SelectorArchivos control={fotos} etiqueta="Elegir fotos" disabled={pendiente} />
       {fotos.items.length > 0 && (
-        <Button
+        <Button type="button"
           size="sm"
           disabled={pendiente}
           onClick={() => {

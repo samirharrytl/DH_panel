@@ -40,9 +40,9 @@ function activo(ruta: string, href: string) {
   return href === '/' ? ruta === '/' : ruta === href || ruta.startsWith(`${href}/`)
 }
 
-function Logo() {
+function Logo({ alNavegar }: { alNavegar?: () => void }) {
   return (
-    <Link href="/" className="flex items-center gap-1.5 font-titulo text-lg font-bold text-primary">
+    <Link href="/" onClick={alNavegar} className="flex items-center gap-1.5 font-titulo text-lg font-bold text-primary">
       DepaHost
       <span aria-hidden className="size-2 rounded-full bg-exito-vivo" />
     </Link>
@@ -109,7 +109,7 @@ export function Navegacion({ items, pie, campana }: { items: ItemNav[]; pie: Rea
           </SheetTrigger>
           <SheetContent side="left" className="w-72 gap-0 bg-card px-3 py-5">
             <SheetTitle className="mb-6 pl-3">
-              <Logo />
+              <Logo alNavegar={() => setAbierto(false)} />
             </SheetTitle>
             <nav aria-label="Principal" className="flex-1 overflow-y-auto">
               <Enlaces items={items} ruta={ruta} alNavegar={() => setAbierto(false)} />

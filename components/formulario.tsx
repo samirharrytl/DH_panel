@@ -32,7 +32,13 @@ export function Formulario({
   reiniciar?: boolean
   alTerminar?: (r: Extract<Resultado, { ok: true }>) => void
 }) {
-  const [estado, accionForm] = useActionState(accion, null)
+  // El aviso sale al recibir el resultado: si la acción cambia la página y el diálogo se desmonta, el efecto
+  // de abajo ya no corre
+  const [estado, accionForm] = useActionState(async (previo: Resultado | null, datos: FormData) => {
+    const r = await accion(previo, datos)
+    if (r.ok && r.mensaje) toast.success(r.mensaje)
+    return r
+  }, null)
   const dialogo = useContext(ContextoDialogo)
   const ref = useRef<HTMLFormElement>(null)
   const alTerminarRef = useRef(alTerminar)
@@ -42,7 +48,6 @@ export function Formulario({
 
   useEffect(() => {
     if (estado?.ok) {
-      if (estado.mensaje) toast.success(estado.mensaje)
       if (reiniciar) ref.current?.reset()
       alTerminarRef.current?.(estado)
       dialogo?.cerrar()

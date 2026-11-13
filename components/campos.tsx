@@ -99,7 +99,9 @@ export function Casilla({
 }: Omit<ComponentProps<typeof Checkbox>, 'children'> & { etiqueta: ReactNode }) {
   return (
     <label className="flex min-h-8 items-start gap-2.5 text-sm text-foreground">
-      <Checkbox {...props} className={cn('mt-0.5', props.className)} />
+      {/* Radix vuelve al valor del primer montaje cuando React reinicia el formulario tras guardar; la key lo
+          vuelve a montar con el valor guardado */}
+      <Checkbox key={String(props.defaultChecked ?? false)} {...props} className={cn('mt-0.5', props.className)} />
       <span>{etiqueta}</span>
     </label>
   )

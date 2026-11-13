@@ -13,7 +13,8 @@
     "db:migrar": "node scripts/migrar.mjs",
     "crear-admin": "node scripts/crear-admin.mjs",
     "db:demo": "node scripts/datos-demo.mjs",
-    "verificar:rediseno": "node scripts/verificar-rediseno.mjs"
+    "verificar:rediseno": "node scripts/verificar-rediseno.mjs",
+    "test:rediseno": "node scripts/probar-rediseno.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
