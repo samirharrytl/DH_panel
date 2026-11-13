@@ -11,7 +11,9 @@ import {
   etiqueta,
 } from '@/lib/catalogos'
 import { fecha, telefono } from '@/lib/formato'
-import { AreaTexto, Campo, Insignia, Seleccion } from '@/components/legado'
+import { Campo, Seleccion } from '@/components/campos'
+import { Textarea } from '@/components/ui/textarea'
+import { Badge } from '@/components/ui/badge'
 import { BotonEnviar, Dialogo, Formulario } from '@/components/formulario'
 import { asignarLead, cambiarEstado, darBaja, reactivarLead } from '../acciones'
 import type { PropsSeccion } from './tipos'
@@ -29,23 +31,23 @@ export async function Encabezado({ lead, usuario }: PropsSeccion) {
 
   return (
     <div className="mb-4">
-      <Link href="/leads" className="mb-1 inline-block text-sm text-marino-700 hover:underline">
+      <Link href="/leads" className="mb-1 inline-block text-sm text-primary hover:underline">
         ← Leads
       </Link>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-2xl font-semibold text-tinta">{p.nombre}</h1>
-          <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-suave">
-            <a href={`https://wa.me/${p.telefono}`} target="_blank" rel="noreferrer" className="text-marino-700 hover:underline">
+          <h1 className="text-2xl font-semibold text-foreground">{p.nombre}</h1>
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            <a href={`https://wa.me/${p.telefono}`} target="_blank" rel="noreferrer" className="text-primary hover:underline">
               {telefono(p.telefono)}
             </a>
             <span>·</span>
             <span>{TIPOS_LEAD[lead.tipo]}</span>
-            <Insignia color={colorEstado(lead.estado)}>{ESTADOS_LEAD[lead.estado]}</Insignia>
-            {lead.ciclo > 1 && <Insignia color="gris">Ciclo {lead.ciclo}</Insignia>}
-            {p.no_contactar && <Insignia color="rojo">No contactar</Insignia>}
+            <Badge variant={colorEstado(lead.estado)}>{ESTADOS_LEAD[lead.estado]}</Badge>
+            {lead.ciclo > 1 && <Badge variant="gris">Ciclo {lead.ciclo}</Badge>}
+            {p.no_contactar && <Badge variant="rojo">No contactar</Badge>}
           </div>
-          <p className="mt-1 text-xs text-suave">
+          <p className="mt-1 text-xs text-muted-foreground">
             {etiqueta(CANALES, lead.canal)}
             {lead.canal_detalle && ` (${lead.canal_detalle})`} · Registrado el {fecha(lead.created_at)} · Asesor:{' '}
             {lead.asesor?.nombre ?? <span className="text-amber-700">sin asignar</span>}
@@ -75,7 +77,7 @@ export async function Encabezado({ lead, usuario }: PropsSeccion) {
                     </Seleccion>
                   </Campo>
                   <Campo etiqueta="Nota" ayuda="Queda en el historial con tu nombre y la fecha. Obligatoria para descartar.">
-                    <AreaTexto name="nota" />
+                    <Textarea name="nota" />
                   </Campo>
                   <BotonEnviar>Guardar</BotonEnviar>
                 </Formulario>
@@ -103,12 +105,12 @@ export async function Encabezado({ lead, usuario }: PropsSeccion) {
               <Dialogo titulo="Marcar como Baja" boton="Baja" variante="peligro">
                 <Formulario accion={darBaja}>
                   <input type="hidden" name="lead_id" value={lead.id} />
-                  <p className="text-sm text-suave">
+                  <p className="text-sm text-muted-foreground">
                     La persona pidió no ser contactada. Se detienen todos los envíos de inmediato, en todos sus registros
                     (refuerzos, novedades, recordatorios e insights), y se cancelan sus citas programadas.
                   </p>
                   <Campo etiqueta="Motivo o cómo lo pidió">
-                    <AreaTexto name="motivo" />
+                    <Textarea name="motivo" />
                   </Campo>
                   <BotonEnviar variante="peligro">Confirmar Baja</BotonEnviar>
                 </Formulario>
@@ -118,9 +120,9 @@ export async function Encabezado({ lead, usuario }: PropsSeccion) {
               <Dialogo titulo="Reactivar lead" boton="Reactivar">
                 <Formulario accion={reactivarLead}>
                   <input type="hidden" name="lead_id" value={lead.id} />
-                  <p className="text-sm text-suave">Solo si la persona pidió volver a ser contactada.</p>
+                  <p className="text-sm text-muted-foreground">Solo si la persona pidió volver a ser contactada.</p>
                   <Campo etiqueta="¿Cómo lo pidió?">
-                    <AreaTexto name="nota" required />
+                    <Textarea name="nota" required />
                   </Campo>
                   <BotonEnviar>Reactivar</BotonEnviar>
                 </Formulario>

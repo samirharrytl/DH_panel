@@ -11,7 +11,10 @@ import {
   type Nivel,
 } from '@/lib/catalogos'
 import { fecha, fechaHora, hoyLima, soles } from '@/lib/formato'
-import { AreaTexto, Aviso, Campo, Dato, Entrada, Insignia, Seleccion, Tarjeta, Vacio } from '@/components/legado'
+import { Aviso, Campo, Dato, Seleccion, Tarjeta, Vacio } from '@/components/campos'
+import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
 import { BotonEnviar, Dialogo, Formulario } from '@/components/formulario'
 import { iniciarCompraventa, marcarCompraventaCaida, registrarCierre } from './cierre-acciones'
 import { Postventa } from './cierre-postventa'
@@ -146,9 +149,9 @@ export async function SeccionCierre({ lead }: PropsSeccion) {
                     </Seleccion>
                   </Campo>
                   <Campo etiqueta="Notas">
-                    <AreaTexto name="notas" rows={2} placeholder="Banco, notaría, próximos pasos…" />
+                    <Textarea name="notas" rows={2} placeholder="Banco, notaría, próximos pasos…" />
                   </Campo>
-                  <p className="text-xs text-suave">{NO_SEPARACION}</p>
+                  <p className="text-xs text-muted-foreground">{NO_SEPARACION}</p>
                   <BotonEnviar>Iniciar compraventa</BotonEnviar>
                 </Formulario>
               </Dialogo>
@@ -157,7 +160,7 @@ export async function SeccionCierre({ lead }: PropsSeccion) {
         >
           <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <Dato etiqueta="Nivel financiero actual">
-              <Insignia color={alcanza ? 'verde' : 'ambar'}>{NIVELES[nivelActual]}</Insignia>
+              <Badge variant={alcanza ? 'verde' : 'ambar'}>{NIVELES[nivelActual]}</Badge>
             </Dato>
             <Dato etiqueta="Exigido para la compraventa">{NIVELES[nivelExigido]}</Dato>
             <Dato etiqueta="Le interesaron o visitó">{preferidos.length ? `${preferidos.length} en cartera` : 'Ninguno en cartera'}</Dato>
@@ -174,7 +177,7 @@ export async function SeccionCierre({ lead }: PropsSeccion) {
           {enCartera.length === 0 && (
             <Vacio>No hay inmuebles en cartera para iniciar una compraventa.</Vacio>
           )}
-          <p className="mt-3 text-xs text-suave">{NO_SEPARACION}</p>
+          <p className="mt-3 text-xs text-muted-foreground">{NO_SEPARACION}</p>
         </Tarjeta>
       )}
 
@@ -215,11 +218,11 @@ function CompraventaEnCurso({
   const i = cv.inmueble
   const hoy = hoyLima()
   return (
-    <Tarjeta titulo="Compraventa en curso" acciones={<Insignia color="azul">En curso</Insignia>} className="border-sky-300">
+    <Tarjeta titulo="Compraventa en curso" acciones={<Badge variant="azul">En curso</Badge>} className="border-sky-300">
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Dato etiqueta="Inmueble">
           {i ? (
-            <Link href={`/inmuebles/${i.id}`} className="text-marino-700 hover:underline">
+            <Link href={`/inmuebles/${i.id}`} className="text-primary hover:underline">
               {describir(i)}
             </Link>
           ) : (
@@ -229,7 +232,7 @@ function CompraventaEnCurso({
         <Dato etiqueta="Precio del inmueble">{soles(i?.precio)}</Dato>
         <Dato etiqueta="Iniciada">
           {fechaHora(cv.iniciada_at)}
-          {cv.iniciador && <span className="block text-xs text-suave">por {cv.iniciador.nombre}</span>}
+          {cv.iniciador && <span className="block text-xs text-muted-foreground">por {cv.iniciador.nombre}</span>}
         </Dato>
         <Dato etiqueta="Notas">{cv.notas ?? '—'}</Dato>
       </dl>
@@ -238,7 +241,7 @@ function CompraventaEnCurso({
           El inmueble está {ESTADOS_INMUEBLE[i.estado].toLowerCase()}.
         </Aviso>
       )}
-      <p className="mt-3 text-xs text-suave">
+      <p className="mt-3 text-xs text-muted-foreground">
         Sin separación: cuando se firme la compraventa con el acompañamiento del asesor, registra el cierre.
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
@@ -247,23 +250,23 @@ function CompraventaEnCurso({
             <input type="hidden" name="compraventa_id" value={cv.id} />
             <input type="hidden" name="lead_id" value={leadId} />
             <input type="hidden" name="inmueble_id" value={cv.inmueble_id} />
-            <dl className="grid grid-cols-2 gap-3 rounded-lg bg-marino-50 p-3">
+            <dl className="grid grid-cols-2 gap-3 rounded-lg bg-accent p-3">
               <Dato etiqueta="Comprador">{comprador}</Dato>
               <Dato etiqueta="Inmueble">{i ? describir(i) : '—'}</Dato>
             </dl>
             <Campo etiqueta="Fecha de cierre">
-              <Entrada type="date" name="fecha_cierre" defaultValue={hoy} max={hoy} required />
+              <Input type="date" name="fecha_cierre" defaultValue={hoy} max={hoy} required />
             </Campo>
             <div className="grid gap-3 sm:grid-cols-2">
               <Campo etiqueta="Precio de venta (S/)" ayuda="Vacío: se usa el precio del inmueble.">
-                <Entrada type="number" name="precio_venta" min="0" step="0.01" inputMode="decimal" defaultValue={i?.precio ?? ''} />
+                <Input type="number" name="precio_venta" min="0" step="0.01" inputMode="decimal" defaultValue={i?.precio ?? ''} />
               </Campo>
               <Campo etiqueta="Comisión pagada (S/)">
-                <Entrada type="number" name="comision_pagada" min="0" step="0.01" inputMode="decimal" required />
+                <Input type="number" name="comision_pagada" min="0" step="0.01" inputMode="decimal" required />
               </Campo>
             </div>
             <Campo etiqueta="Notas">
-              <AreaTexto name="notas" rows={2} />
+              <Textarea name="notas" rows={2} />
             </Campo>
             <Aviso>
               Al registrar el cierre, el inmueble pasa a Vendido y sale de la base, el comprador pasa a Cliente y otras
@@ -278,7 +281,7 @@ function CompraventaEnCurso({
             <input type="hidden" name="lead_id" value={leadId} />
             <input type="hidden" name="inmueble_id" value={cv.inmueble_id} />
             <Campo etiqueta="Motivo" ayuda="El interesado vuelve a Visita realizada.">
-              <AreaTexto name="motivo" rows={3} required placeholder="No le aprobaron el crédito, desistió…" />
+              <Textarea name="motivo" rows={3} required placeholder="No le aprobaron el crédito, desistió…" />
             </Campo>
             <BotonEnviar variante="peligro">Marcar como caída</BotonEnviar>
           </Formulario>
@@ -291,26 +294,26 @@ function CompraventaEnCurso({
 function FilaCompraventa({ cv }: { cv: Compraventa }) {
   const i = cv.inmueble
   return (
-    <li className="rounded-lg border border-borde-suave px-3 py-2">
+    <li className="rounded-lg border border-border px-3 py-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
         {i ? (
-          <Link href={`/inmuebles/${i.id}`} className="text-sm font-medium text-marino-700 hover:underline">
+          <Link href={`/inmuebles/${i.id}`} className="text-sm font-medium text-primary hover:underline">
             {describir(i)}
           </Link>
         ) : (
-          <span className="text-sm text-suave">Inmueble no disponible</span>
+          <span className="text-sm text-muted-foreground">Inmueble no disponible</span>
         )}
-        <Insignia color={cv.estado === 'cerrada' ? 'verde' : 'gris'}>{cv.estado === 'cerrada' ? 'Cerrada' : 'Caída'}</Insignia>
+        <Badge variant={cv.estado === 'cerrada' ? 'verde' : 'gris'}>{cv.estado === 'cerrada' ? 'Cerrada' : 'Caída'}</Badge>
       </div>
-      <p className="mt-1 text-xs text-suave">
+      <p className="mt-1 text-xs text-muted-foreground">
         {cv.estado === 'cerrada'
           ? `Cerrada el ${fecha(cv.fecha_cierre)} · Precio ${soles(cv.precio_venta)} · Comisión ${soles(cv.comision_pagada)}${
               cv.cerrador ? ` · ${cv.cerrador.nombre}` : ''
             }`
           : `Se cayó (${fecha(cv.updated_at)}): ${cv.motivo_caida ?? 'sin motivo'}`}
       </p>
-      <p className="text-xs text-tenue">Iniciada el {fecha(cv.iniciada_at)}</p>
-      {cv.notas && <p className="mt-1 text-xs whitespace-pre-wrap text-suave">{cv.notas}</p>}
+      <p className="text-xs text-muted-foreground">Iniciada el {fecha(cv.iniciada_at)}</p>
+      {cv.notas && <p className="mt-1 text-xs whitespace-pre-wrap text-muted-foreground">{cv.notas}</p>}
     </li>
   )
 }
@@ -344,18 +347,18 @@ async function InmueblesPropietario({ leadId }: { leadId: string }) {
           {inmuebles.map((i) => {
             const venta = ventas?.find((v) => v.inmueble_id === i.id)
             return (
-              <li key={i.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-borde-suave px-3 py-2">
+              <li key={i.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border px-3 py-2">
                 <div>
-                  <Link href={`/inmuebles/${i.id}`} className="text-sm font-medium text-marino-700 hover:underline">
+                  <Link href={`/inmuebles/${i.id}`} className="text-sm font-medium text-primary hover:underline">
                     {describir(i)}
                   </Link>
-                  <p className="text-xs text-suave">
+                  <p className="text-xs text-muted-foreground">
                     {i.estado === 'vendido'
                       ? `Vendido el ${fecha(venta?.fecha_cierre ?? i.vendido_at)}${venta ? ` por ${soles(venta.precio_venta)}` : ''}`
                       : `Precio ${soles(i.precio)}`}
                   </p>
                 </div>
-                <Insignia color={colorEstadoInmueble(i.estado)}>{ESTADOS_INMUEBLE[i.estado]}</Insignia>
+                <Badge variant={colorEstadoInmueble(i.estado)}>{ESTADOS_INMUEBLE[i.estado]}</Badge>
               </li>
             )
           })}

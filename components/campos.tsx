@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import type { ComponentProps, ReactNode } from 'react'
-import { ChevronLeft, CircleAlert, CircleCheck, Info, TriangleAlert } from 'lucide-react'
+import { ChevronLeft, CircleAlert, CircleCheck, CircleX, Info, TriangleAlert } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Alert } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -164,5 +164,19 @@ export function Tabla({ children }: { children: ReactNode }) {
     <Card className="gap-0 py-0">
       <Table className="min-w-[640px]">{children}</Table>
     </Card>
+  )
+}
+
+// Requisito cumplido o no, con ícono y texto (no solo color)
+export function Habilita({ si, children }: { si: boolean | null | undefined; children: ReactNode }) {
+  const Icono = si ? CircleCheck : CircleX
+  return (
+    <span className="inline-flex items-start gap-2">
+      <Icono aria-hidden className={cn('mt-0.5 size-4 shrink-0', si ? 'text-exito-vivo' : 'text-muted-foreground')} />
+      <span>
+        {children}
+        <span className="sr-only">{si ? ': sí' : ': no'}</span>
+      </span>
+    </span>
   )
 }

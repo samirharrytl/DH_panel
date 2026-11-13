@@ -1,6 +1,6 @@
 import { RESPUESTAS_MATCH, TIPOS_INMUEBLE, etiqueta, type RespuestaMatch } from '@/lib/catalogos'
 import { num, soles } from '@/lib/formato'
-import { cx } from '@/components/legado'
+import { cn } from '@/lib/utils'
 
 // Formatos del match compartidos por la ficha del lead (servidor y cliente) y la ficha del inmueble
 
@@ -35,9 +35,9 @@ export function lineaInmueble(i: InmuebleLinea) {
   return `${partes.join(' · ')} (${i.codigo})`
 }
 
-export const colorPuntaje = (p: number) => (p >= 80 ? 'verde' : p >= 50 ? 'ambar' : 'gris')
+export const colorPuntaje = (p: number) => (p >= 80 ? 'verde' : p >= 50 ? 'ambar' : 'gris') as 'verde' | 'ambar' | 'gris'
 
-export const COLOR_RESPUESTA: Record<RespuestaMatch, string> = {
+export const COLOR_RESPUESTA: Record<RespuestaMatch, 'verde' | 'rojo' | 'azul' | 'ambar' | 'gris'> = {
   me_interesa: 'verde',
   no_me_interesa: 'rojo',
   ver_parecidos: 'azul',
@@ -57,13 +57,13 @@ const PARTES = [
 export function Desglose({ detalle, className }: { detalle: DetalleMatch; className?: string }) {
   const ajuste = Number(detalle.ajuste_respuestas ?? 0)
   return (
-    <ul className={cx('flex flex-wrap gap-1 text-xs', className)}>
+    <ul className={cn('flex flex-wrap gap-1 text-xs', className)}>
       {PARTES.map(([clave, texto, maximo]) => {
         const valor = Number(detalle[clave] ?? 0)
         return (
           <li
             key={clave}
-            className={cx(
+            className={cn(
               'rounded px-1.5 py-0.5',
               valor >= maximo ? 'bg-emerald-50 text-emerald-800' : valor > 0 ? 'bg-amber-50 text-amber-800' : 'bg-gray-100 text-gray-600',
             )}
@@ -73,7 +73,7 @@ export function Desglose({ detalle, className }: { detalle: DetalleMatch; classN
         )
       })}
       {ajuste !== 0 && (
-        <li className={cx('rounded px-1.5 py-0.5', ajuste > 0 ? 'bg-sky-50 text-sky-800' : 'bg-red-50 text-red-800')}>
+        <li className={cn('rounded px-1.5 py-0.5', ajuste > 0 ? 'bg-sky-50 text-sky-800' : 'bg-red-50 text-red-800')}>
           Respuestas previas {ajuste > 0 ? '+' : ''}
           {num(ajuste)}
         </li>

@@ -1,11 +1,15 @@
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { ESTADOS_DERIVACION, FORMAS_PAGO, IMPRESCINDIBLES, NIVELES, ORDEN_NIVEL, TIPOS_INMUEBLE, type Nivel } from '@/lib/catalogos'
 import { fecha, fechaHora, hoyLima, soles } from '@/lib/formato'
-import { AreaTexto, Aviso, Campo, Casilla, Dato, Entrada, Insignia, Seleccion, Tarjeta, Vacio } from '@/components/legado'
+import { Aviso, Campo, Casilla, Dato, Seleccion, Tarjeta, Vacio } from '@/components/campos'
+import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
 import { BotonEnviar, Dialogo, Formulario } from '@/components/formulario'
 import { ID_DISTRITOS, ListaDistritos } from '../../../inmuebles/compartido'
 import { actualizarDerivacion, crearDerivacion, guardarBusqueda, guardarCapacidad } from './perfil-acciones'
 import type { PropsSeccion } from '../tipos'
+import { Habilita } from '@/components/campos'
 
 type Busqueda = {
   finalidad: 'vivir' | 'invertir' | null
@@ -77,11 +81,11 @@ export async function SeccionPerfil({ lead }: PropsSeccion) {
                 </Seleccion>
               </Campo>
               <Campo etiqueta="Distritos" ayuda="Separados por comas. Vacío: cualquiera.">
-                <Entrada name="distritos" list={ID_DISTRITOS} defaultValue={busqueda?.distritos.join(', ') ?? ''} placeholder="Miraflores, San Isidro" />
+                <Input name="distritos" list={ID_DISTRITOS} defaultValue={busqueda?.distritos.join(', ') ?? ''} placeholder="Miraflores, San Isidro" />
               </Campo>
             </div>
             <fieldset>
-              <legend className="mb-1 text-sm font-medium text-tinta">Tipo de inmueble (vacío: cualquiera)</legend>
+              <legend className="mb-1 text-sm font-medium text-foreground">Tipo de inmueble (vacío: cualquiera)</legend>
               <div className="flex flex-wrap gap-x-4 gap-y-2">
                 {Object.entries(TIPOS_INMUEBLE).map(([k, v]) => (
                   <Casilla key={k} name="tipos" value={k} defaultChecked={busqueda?.tipos.includes(k)} etiqueta={v} />
@@ -90,20 +94,20 @@ export async function SeccionPerfil({ lead }: PropsSeccion) {
             </fieldset>
             <div className="grid grid-cols-2 gap-3">
               <Campo etiqueta="Precio desde (S/)">
-                <Entrada name="precio_min" type="number" min={0} step="0.01" defaultValue={busqueda?.precio_min ?? ''} />
+                <Input name="precio_min" type="number" min={0} step="0.01" defaultValue={busqueda?.precio_min ?? ''} />
               </Campo>
               <Campo etiqueta="Precio hasta (S/)">
-                <Entrada name="precio_max" type="number" min={0} step="0.01" defaultValue={busqueda?.precio_max ?? ''} />
+                <Input name="precio_max" type="number" min={0} step="0.01" defaultValue={busqueda?.precio_max ?? ''} />
               </Campo>
               <Campo etiqueta="Dormitorios mínimos">
-                <Entrada name="dormitorios_min" type="number" min={0} defaultValue={busqueda?.dormitorios_min ?? ''} />
+                <Input name="dormitorios_min" type="number" min={0} defaultValue={busqueda?.dormitorios_min ?? ''} />
               </Campo>
               <Campo etiqueta="Metraje mínimo (m²)">
-                <Entrada name="metraje_min" type="number" min={0} step="0.01" defaultValue={busqueda?.metraje_min ?? ''} />
+                <Input name="metraje_min" type="number" min={0} step="0.01" defaultValue={busqueda?.metraje_min ?? ''} />
               </Campo>
             </div>
             <fieldset>
-              <legend className="mb-1 text-sm font-medium text-tinta">Imprescindibles</legend>
+              <legend className="mb-1 text-sm font-medium text-foreground">Imprescindibles</legend>
               <div className="flex flex-wrap gap-x-4 gap-y-2">
                 {IMPRESCINDIBLES.map((x) => (
                   <Casilla key={x} name="imprescindibles" value={x} defaultChecked={busqueda?.imprescindibles.includes(x)} etiqueta={x[0].toUpperCase() + x.slice(1)} />
@@ -111,25 +115,25 @@ export async function SeccionPerfil({ lead }: PropsSeccion) {
               </div>
             </fieldset>
             <Campo etiqueta="Otros imprescindibles" ayuda="Separados por comas.">
-              <Entrada name="otros_imprescindibles" defaultValue={otrosImprescindibles.join(', ')} />
+              <Input name="otros_imprescindibles" defaultValue={otrosImprescindibles.join(', ')} />
             </Campo>
             <Campo etiqueta="Notas">
-              <AreaTexto name="notas" rows={2} defaultValue={busqueda?.notas ?? ''} />
+              <Textarea name="notas" rows={2} defaultValue={busqueda?.notas ?? ''} />
             </Campo>
             {editable && <BotonEnviar>Guardar perfil</BotonEnviar>}
           </fieldset>
         </Formulario>
-        {busqueda && <p className="mt-3 text-xs text-suave">Actualizado el {fechaHora(busqueda.updated_at)}</p>}
+        {busqueda && <p className="mt-3 text-xs text-muted-foreground">Actualizado el {fechaHora(busqueda.updated_at)}</p>}
       </Tarjeta>
 
       <div className="space-y-4">
-        <Tarjeta titulo="Capacidad financiera" acciones={<Insignia color={nivel === 'no_validada' ? 'gris' : 'verde'}>{NIVELES[nivel]}</Insignia>}>
+        <Tarjeta titulo="Capacidad financiera" acciones={<Badge variant={nivel === 'no_validada' ? 'gris' : 'verde'}>{NIVELES[nivel]}</Badge>}>
           <ul className="mb-4 space-y-1 text-sm">
             <li>
-              {alcanza(nivel, exigeVisita) ? '✅' : '⛔'} Agendar visita (exige {NIVELES[exigeVisita]})
+              <Habilita si={alcanza(nivel, exigeVisita)}>Agendar visita (exige {NIVELES[exigeVisita]})</Habilita>
             </li>
             <li>
-              {alcanza(nivel, exigeCompra) ? '✅' : '⛔'} Iniciar la compraventa (exige {NIVELES[exigeCompra]})
+              <Habilita si={alcanza(nivel, exigeCompra)}>Iniciar la compraventa (exige {NIVELES[exigeCompra]})</Habilita>
             </li>
           </ul>
           <Formulario accion={guardarCapacidad}>
@@ -137,7 +141,7 @@ export async function SeccionPerfil({ lead }: PropsSeccion) {
             <fieldset disabled={!editable} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <Campo etiqueta="Presupuesto máximo (S/)">
-                  <Entrada name="presupuesto_max" type="number" min={0} step="0.01" defaultValue={capacidad?.presupuesto_max ?? ''} />
+                  <Input name="presupuesto_max" type="number" min={0} step="0.01" defaultValue={capacidad?.presupuesto_max ?? ''} />
                 </Campo>
                 <Campo etiqueta="Forma de pago">
                   <Seleccion name="forma_pago" defaultValue={capacidad?.forma_pago ?? ''}>
@@ -150,7 +154,7 @@ export async function SeccionPerfil({ lead }: PropsSeccion) {
                   </Seleccion>
                 </Campo>
                 <Campo etiqueta="Cuota inicial disponible (S/)">
-                  <Entrada name="cuota_inicial" type="number" min={0} step="0.01" defaultValue={capacidad?.cuota_inicial ?? ''} />
+                  <Input name="cuota_inicial" type="number" min={0} step="0.01" defaultValue={capacidad?.cuota_inicial ?? ''} />
                 </Campo>
                 <Campo etiqueta="Nivel" ayuda="Con presupuesto y forma de pago sube solo a Declarada.">
                   <Seleccion name="nivel" defaultValue={nivel}>
@@ -168,12 +172,12 @@ export async function SeccionPerfil({ lead }: PropsSeccion) {
                 <Casilla name="techo_propio" defaultChecked={capacidad?.techo_propio} etiqueta="Aplica a Techo Propio" />
               </div>
               <Campo etiqueta="Notas">
-                <AreaTexto name="notas" rows={2} defaultValue={capacidad?.notas ?? ''} />
+                <Textarea name="notas" rows={2} defaultValue={capacidad?.notas ?? ''} />
               </Campo>
               {editable && <BotonEnviar>Guardar capacidad</BotonEnviar>}
             </fieldset>
           </Formulario>
-          {capacidad?.nivel_at && <p className="mt-3 text-xs text-suave">Nivel actualizado el {fechaHora(capacidad.nivel_at)}</p>}
+          {capacidad?.nivel_at && <p className="mt-3 text-xs text-muted-foreground">Nivel actualizado el {fechaHora(capacidad.nivel_at)}</p>}
         </Tarjeta>
 
         <Tarjeta
@@ -184,7 +188,7 @@ export async function SeccionPerfil({ lead }: PropsSeccion) {
                 <Formulario accion={crearDerivacion}>
                   <input type="hidden" name="lead_id" value={lead.id} />
                   <Campo etiqueta="Entidad">
-                    <Entrada name="entidad" required placeholder="Nombre del banco o bróker" />
+                    <Input name="entidad" required placeholder="Nombre del banco o bróker" />
                   </Campo>
                   <Campo etiqueta="Tipo">
                     <Seleccion name="tipo_entidad" defaultValue="banco">
@@ -193,7 +197,7 @@ export async function SeccionPerfil({ lead }: PropsSeccion) {
                     </Seleccion>
                   </Campo>
                   <Campo etiqueta="Notas">
-                    <AreaTexto name="notas" rows={2} />
+                    <Textarea name="notas" rows={2} />
                   </Campo>
                   <BotonEnviar>Registrar derivación</BotonEnviar>
                 </Formulario>
@@ -209,19 +213,19 @@ export async function SeccionPerfil({ lead }: PropsSeccion) {
           {derivaciones?.length ? (
             <ul className="space-y-3">
               {(derivaciones as Derivacion[]).map((d) => (
-                <li key={d.id} className="space-y-1 border-l-2 border-marino-200 pl-3">
+                <li key={d.id} className="space-y-1 border-l-2 border-primary pl-3">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-medium text-tinta">{d.entidad}</span>
-                    <span className="text-xs text-suave">{d.tipo_entidad === 'banco' ? 'Banco' : 'Bróker'}</span>
-                    <Insignia color={['precalificado', 'aprobado'].includes(d.estado) ? 'verde' : ['rechazado', 'desistio'].includes(d.estado) ? 'gris' : 'azul'}>
+                    <span className="font-medium text-foreground">{d.entidad}</span>
+                    <span className="text-xs text-muted-foreground">{d.tipo_entidad === 'banco' ? 'Banco' : 'Bróker'}</span>
+                    <Badge variant={['precalificado', 'aprobado'].includes(d.estado) ? 'verde' : ['rechazado', 'desistio'].includes(d.estado) ? 'gris' : 'azul'}>
                       {ESTADOS_DERIVACION[d.estado]}
-                    </Insignia>
+                    </Badge>
                   </div>
                   <dl className="grid grid-cols-2 gap-2">
                     <Dato etiqueta="Derivado el">{fecha(d.derivado_el)}</Dato>
                     <Dato etiqueta="Respuesta">{fecha(d.respuesta_el)}</Dato>
                   </dl>
-                  {d.notas && <p className="text-sm text-suave">{d.notas}</p>}
+                  {d.notas && <p className="text-sm text-muted-foreground">{d.notas}</p>}
                   {editable && (
                     <Dialogo titulo={`Evaluación en ${d.entidad}`} boton="Actualizar estado">
                       <Formulario accion={actualizarDerivacion}>
@@ -237,10 +241,10 @@ export async function SeccionPerfil({ lead }: PropsSeccion) {
                           </Seleccion>
                         </Campo>
                         <Campo etiqueta="Fecha de respuesta">
-                          <Entrada type="date" name="respuesta_el" defaultValue={d.respuesta_el ?? hoyLima()} />
+                          <Input type="date" name="respuesta_el" defaultValue={d.respuesta_el ?? hoyLima()} />
                         </Campo>
                         <Campo etiqueta="Notas">
-                          <AreaTexto name="notas" rows={2} defaultValue={d.notas ?? ''} />
+                          <Textarea name="notas" rows={2} defaultValue={d.notas ?? ''} />
                         </Campo>
                         <BotonEnviar>Guardar</BotonEnviar>
                       </Formulario>

@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { TIPOS_INMUEBLE, etiqueta } from '@/lib/catalogos'
 import { fecha, num, soles } from '@/lib/formato'
-import { Insignia, cx } from '@/components/legado'
+import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 import { BotonEnviar, Formulario, type Resultado } from '@/components/formulario'
 import { Desglose, colorPuntaje, textoRespuesta, type DetalleMatch } from './matches-formato'
 
@@ -52,10 +53,10 @@ export function SelectorMatches({
           return (
             <li key={s.inmueble_id}>
               <label
-                className={cx(
+                className={cn(
                   'flex gap-3 rounded-lg border px-3 py-2',
-                  marcado ? 'border-marino-800 bg-marino-50' : 'border-borde-suave',
-                  bloqueado ? 'cursor-default' : 'cursor-pointer hover:border-marino-200',
+                  marcado ? 'border-primary bg-accent' : 'border-border',
+                  bloqueado ? 'cursor-default' : 'cursor-pointer hover:border-primary',
                 )}
               >
                 <input
@@ -65,16 +66,16 @@ export function SelectorMatches({
                   checked={marcado}
                   disabled={bloqueado}
                   onChange={() => alternar(s.inmueble_id)}
-                  className="mt-1 size-4 shrink-0 rounded border-tenue accent-marino-800"
+                  className="mt-1 size-4 shrink-0 rounded border-input accent-primary"
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1">
-                    <p className="text-sm font-medium text-tinta">
+                    <p className="text-sm font-medium text-foreground">
                       {s.codigo} · {etiqueta(TIPOS_INMUEBLE, s.tipo)} en {s.distrito}
                     </p>
-                    <Insignia color={colorPuntaje(puntaje)}>{num(puntaje)} pts</Insignia>
+                    <Badge variant={colorPuntaje(puntaje)}>{num(puntaje)} pts</Badge>
                   </div>
-                  <p className="text-xs text-suave">
+                  <p className="text-xs text-muted-foreground">
                     {[
                       soles(s.precio),
                       s.dormitorios !== null ? `${s.dormitorios} dorm.` : null,
@@ -96,8 +97,8 @@ export function SelectorMatches({
         })}
       </ul>
       {habilitado && (
-        <div className="sticky bottom-0 -mx-4 flex flex-wrap items-center justify-between gap-2 border-t border-borde-suave bg-white px-4 py-3">
-          <p className="text-sm text-suave">
+        <div className="sticky bottom-0 -mx-4 flex flex-wrap items-center justify-between gap-2 border-t border-border bg-white px-4 py-3">
+          <p className="text-sm text-muted-foreground">
             {elegidos.length ? `${elegidos.length} de ${maximo} elegidos` : `Elige hasta ${maximo} para enviar`}
           </p>
           {elegidos.length > 0 && (

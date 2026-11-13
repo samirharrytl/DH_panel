@@ -2,7 +2,8 @@ import Link from 'next/link'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { CANALES, ESTADOS_LEAD, RESPUESTAS_MATCH, NIVELES, etiqueta, type EstadoLead } from '@/lib/catalogos'
 import { fechaHora } from '@/lib/formato'
-import { Insignia, Tarjeta, Vacio } from '@/components/legado'
+import { Tarjeta, Vacio } from '@/components/campos'
+import { Badge } from '@/components/ui/badge'
 import type { PropsSeccion } from '../tipos'
 
 // Etiquetas de la bitácora de eventos
@@ -89,12 +90,12 @@ export async function SeccionHistorial({ lead }: PropsSeccion) {
   return (
     <div className="space-y-4">
       {anteriores.length > 0 && (
-        <p className="text-sm text-suave">
+        <p className="text-sm text-muted-foreground">
           Ciclos anteriores:{' '}
           {anteriores.map((o, i) => (
             <span key={o.id}>
               {i > 0 && ', '}
-              <Link href={`/leads/${o.id}?tab=historial`} className="text-marino-700 hover:underline">
+              <Link href={`/leads/${o.id}?tab=historial`} className="text-primary hover:underline">
                 ciclo {o.ciclo} ({ESTADOS_LEAD[o.estado]})
               </Link>
             </span>
@@ -105,21 +106,21 @@ export async function SeccionHistorial({ lead }: PropsSeccion) {
         {items.length === 0 ? (
           <Vacio>Sin movimientos.</Vacio>
         ) : (
-          <ol className="relative space-y-4 border-l border-borde pl-5">
+          <ol className="relative space-y-4 border-l border-border pl-5">
             {items.map((it, i) => (
               <li key={i} className="relative">
                 <span
                   className={`absolute top-1.5 -left-[25px] size-2.5 rounded-full ${
-                    it.tipo === 'estado' ? 'bg-marino-800' : it.tipo === 'nota' ? 'bg-amber-500' : 'bg-gray-300'
+                    it.tipo === 'estado' ? 'bg-primary' : it.tipo === 'nota' ? 'bg-amber-500' : 'bg-gray-300'
                   }`}
                 />
                 <div className="flex flex-wrap items-center gap-2">
-                  {it.tipo === 'estado' && <Insignia>Estado</Insignia>}
-                  {it.tipo === 'nota' && <Insignia color="ambar">Nota</Insignia>}
-                  <p className="text-sm text-tinta whitespace-pre-wrap">{it.texto}</p>
+                  {it.tipo === 'estado' && <Badge>Estado</Badge>}
+                  {it.tipo === 'nota' && <Badge variant="ambar">Nota</Badge>}
+                  <p className="text-sm text-foreground whitespace-pre-wrap">{it.texto}</p>
                 </div>
-                {it.detalle && <p className="mt-0.5 text-sm text-suave">“{it.detalle}”</p>}
-                <p className="text-xs text-tenue">
+                {it.detalle && <p className="mt-0.5 text-sm text-muted-foreground">“{it.detalle}”</p>}
+                <p className="text-xs text-muted-foreground">
                   {fechaHora(it.fecha)} · {it.autor}
                 </p>
               </li>

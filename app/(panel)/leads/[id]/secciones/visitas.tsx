@@ -2,12 +2,16 @@ import Link from 'next/link'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { ESTADOS_CITA, INTERES_VISITA, NIVELES, ORDEN_NIVEL, TIPOS_INMUEBLE, etiqueta, type Nivel } from '@/lib/catalogos'
 import { diaLargo, hora, soles } from '@/lib/formato'
-import { AreaTexto, Aviso, Campo, Entrada, Insignia, Seleccion, Tarjeta, Vacio } from '@/components/legado'
+import { Aviso, Campo, Seleccion, Tarjeta, Vacio } from '@/components/campos'
+import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
 import { BotonAccion, BotonEnviar, Dialogo, Formulario } from '@/components/formulario'
 import { AccionesCita, type CitaBasica } from '@/components/acciones-cita'
 import { DatosAcceso, enlaceMapa } from '../../../inmuebles/compartido'
 import { agendarVisita, marcarVisitaRealizada, pedirOpinionVisita, registrarOpinionVisita } from './visitas-acciones'
 import type { PropsSeccion } from '../tipos'
+import { MapPin } from 'lucide-react'
 
 type Visita = CitaBasica & {
   direccion: string
@@ -52,29 +56,30 @@ export async function SeccionVisitas({ lead, inmueble }: PropsSeccion & { inmueb
         {visitas.length ? (
           <ul className="space-y-4">
             {visitas.map((c) => (
-              <li key={c.id} className="space-y-2 border-l-2 border-marino-200 pl-3">
+              <li key={c.id} className="space-y-2 border-l-2 border-primary pl-3">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="font-medium text-tinta">
+                  <p className="font-medium text-foreground">
                     {diaLargo(c.inicio)}, {hora(c.inicio)}
                   </p>
-                  <Insignia color={COLOR[c.estado]}>{ESTADOS_CITA[c.estado]}</Insignia>
+                  <Badge variant={COLOR[c.estado]}>{ESTADOS_CITA[c.estado]}</Badge>
                   {c.inmueble && (
-                    <Link href={`/inmuebles/${c.inmueble.id}`} className="text-sm text-marino-700 hover:underline">
+                    <Link href={`/inmuebles/${c.inmueble.id}`} className="text-sm text-primary hover:underline">
                       {c.inmueble.codigo} · {etiqueta(TIPOS_INMUEBLE, c.inmueble.tipo)} en {c.inmueble.distrito}
                     </Link>
                   )}
                 </div>
-                <a href={enlaceMapa(c.direccion, c.distrito)} target="_blank" rel="noreferrer" className="block text-sm text-marino-700 hover:underline">
-                  📍 {[c.direccion, c.distrito].filter(Boolean).join(', ')}
+                <a href={enlaceMapa(c.direccion, c.distrito)} target="_blank" rel="noreferrer" className="inline-flex items-start gap-1 text-sm text-primary hover:underline">
+                  <MapPin aria-hidden className="mt-0.5 size-4 shrink-0" />
+                  {[c.direccion, c.distrito].filter(Boolean).join(', ')}
                 </a>
                 <DatosAcceso acceso={c} />
-                {c.notas && <p className="text-sm whitespace-pre-wrap text-suave">{c.notas}</p>}
+                {c.notas && <p className="text-sm whitespace-pre-wrap text-muted-foreground">{c.notas}</p>}
                 {c.opinion && (
-                  <p className="text-sm text-tinta">
+                  <p className="text-sm text-foreground">
                     Opinión: interés {etiqueta(INTERES_VISITA, c.opinion.interes).toLowerCase()}
                     {c.opinion.calificacion ? ` · ${c.opinion.calificacion}/5` : ''}
-                    {c.opinion.le_gusto && ` · 👍 ${c.opinion.le_gusto}`}
-                    {c.opinion.no_le_gusto && ` · 👎 ${c.opinion.no_le_gusto}`}
+                    {c.opinion.le_gusto && `. Le gustó: ${c.opinion.le_gusto}`}
+                    {c.opinion.no_le_gusto && `. No le gustó: ${c.opinion.no_le_gusto}`}
                     {c.opinion.comentario && ` · ${c.opinion.comentario}`}
                   </p>
                 )}
@@ -108,17 +113,17 @@ export async function SeccionVisitas({ lead, inmueble }: PropsSeccion & { inmueb
                                 </Seleccion>
                               </Campo>
                               <Campo etiqueta="Calificación (1 a 5)">
-                                <Entrada name="calificacion" type="number" min={1} max={5} defaultValue={c.opinion?.calificacion ?? ''} />
+                                <Input name="calificacion" type="number" min={1} max={5} defaultValue={c.opinion?.calificacion ?? ''} />
                               </Campo>
                             </div>
                             <Campo etiqueta="Qué le gustó">
-                              <Entrada name="le_gusto" defaultValue={c.opinion?.le_gusto ?? ''} />
+                              <Input name="le_gusto" defaultValue={c.opinion?.le_gusto ?? ''} />
                             </Campo>
                             <Campo etiqueta="Qué no le gustó">
-                              <Entrada name="no_le_gusto" defaultValue={c.opinion?.no_le_gusto ?? ''} />
+                              <Input name="no_le_gusto" defaultValue={c.opinion?.no_le_gusto ?? ''} />
                             </Campo>
                             <Campo etiqueta="Comentario">
-                              <AreaTexto name="comentario" rows={2} defaultValue={c.opinion?.comentario ?? ''} />
+                              <Textarea name="comentario" rows={2} defaultValue={c.opinion?.comentario ?? ''} />
                             </Campo>
                             <BotonEnviar>Guardar opinión</BotonEnviar>
                           </Formulario>
@@ -149,32 +154,32 @@ export async function SeccionVisitas({ lead, inmueble }: PropsSeccion & { inmueb
         ) : (
           <Formulario accion={agendarVisita}>
             <input type="hidden" name="lead_id" value={lead.id} />
-            <Campo etiqueta="Inmueble" ayuda="★ = respondió «Me interesa». La visita toma la dirección y el acceso de su ficha.">
+            <Campo etiqueta="Inmueble" ayuda="«Le interesa» marca los que respondió «Me interesa». La visita toma la dirección y el acceso de su ficha.">
               <Seleccion name="inmueble_id" defaultValue={inmueble ?? ''} required>
                 <option value="" disabled>
                   Elige…
                 </option>
                 {opciones.map((i) => (
                   <option key={i.id} value={i.id}>
-                    {leInteresa.has(i.id) ? '★ ' : ''}
                     {i.codigo} · {etiqueta(TIPOS_INMUEBLE, i.tipo)} en {i.distrito} · {soles(i.precio)}
+                    {leInteresa.has(i.id) ? ' (le interesa)' : ''}
                   </option>
                 ))}
               </Seleccion>
             </Campo>
             <div className="grid grid-cols-2 gap-3">
               <Campo etiqueta="Fecha y hora">
-                <Entrada type="datetime-local" name="inicio" required />
+                <Input type="datetime-local" name="inicio" required />
               </Campo>
               <Campo etiqueta="Duración (min)">
-                <Entrada type="number" name="duracion_min" min={15} max={480} step={15} defaultValue={45} />
+                <Input type="number" name="duracion_min" min={15} max={480} step={15} defaultValue={45} />
               </Campo>
             </div>
             <Campo etiqueta="Notas">
-              <AreaTexto name="notas" rows={2} />
+              <Textarea name="notas" rows={2} />
             </Campo>
-            <BotonEnviar>Agendar visita</BotonEnviar>
-            <p className="text-xs text-suave">
+            <BotonEnviar variante="exito">Agendar visita</BotonEnviar>
+            <p className="text-xs text-muted-foreground">
               En la <Link href="/agenda" className="underline">Agenda</Link> las visitas del día salen agrupadas por distrito.
             </p>
           </Formulario>

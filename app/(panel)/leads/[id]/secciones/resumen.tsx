@@ -2,7 +2,11 @@ import Link from 'next/link'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { ESTADOS_LEAD, MEDIOS_CONTACTO, TIPOS_LEAD, etiqueta } from '@/lib/catalogos'
 import { ahoraMs, fecha, fechaCorta, fechaHora, hoyLima, isoALocal, relativo } from '@/lib/formato'
-import { AreaTexto, Aviso, Campo, Casilla, Dato, Entrada, Insignia, Seleccion, Tarjeta, Vacio, cx } from '@/components/legado'
+import { Aviso, Campo, Casilla, Dato, Seleccion, Tarjeta, Vacio } from '@/components/campos'
+import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 import { BotonAccion, BotonEnviar, Dialogo, Formulario } from '@/components/formulario'
 import {
   actualizarConsentimiento,
@@ -16,6 +20,7 @@ import {
   registrarRespuesta,
 } from '../../acciones'
 import type { PropsSeccion } from '../tipos'
+import { Habilita } from '@/components/campos'
 
 export async function SeccionResumen({ lead }: PropsSeccion) {
   const supabase = await crearClienteServidor()
@@ -62,7 +67,7 @@ export async function SeccionResumen({ lead }: PropsSeccion) {
       <div className="space-y-4">
         {mostrarRetorno && (
           <Tarjeta titulo="Lead que regresa" className="border-amber-300">
-            <p className="mb-3 text-sm text-suave">
+            <p className="mb-3 text-sm text-muted-foreground">
               {resultadoRegreso === 'nuevo_ciclo'
                 ? `Volvió después del plazo de ${param?.valor ?? 6} meses: se trata como nuevo, con su historial visible.`
                 : `Volvió dentro del plazo de ${param?.valor ?? 6} meses: retoma la conversación donde quedó.`}
@@ -93,13 +98,13 @@ export async function SeccionResumen({ lead }: PropsSeccion) {
         )}
 
         <Tarjeta titulo="Seguimiento">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-marino-50 px-3 py-2">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-accent px-3 py-2">
             <div>
-              <p className="text-xs text-suave">Próxima acción</p>
-              <p className="font-medium text-tinta">
+              <p className="text-xs text-muted-foreground">Próxima acción</p>
+              <p className="font-medium text-foreground">
                 {lead.proxima.accion ?? 'Sin próxima acción'}
                 {lead.proxima.fecha && (
-                  <span className={cx('ml-2 text-sm', new Date(lead.proxima.fecha).getTime() < ahoraMs() ? 'text-red-700' : 'text-suave')}>
+                  <span className={cn('ml-2 text-sm', new Date(lead.proxima.fecha).getTime() < ahoraMs() ? 'text-red-700' : 'text-muted-foreground')}>
                     {fechaHora(lead.proxima.fecha)} ({relativo(lead.proxima.fecha)})
                   </span>
                 )}
@@ -110,10 +115,10 @@ export async function SeccionResumen({ lead }: PropsSeccion) {
                 <Formulario accion={guardarProximaAccion}>
                   <input type="hidden" name="lead_id" value={lead.id} />
                   <Campo etiqueta="Acción">
-                    <Entrada name="accion" defaultValue={lead.proxima_accion ?? ''} placeholder="Llamar para coordinar cita" />
+                    <Input name="accion" defaultValue={lead.proxima_accion ?? ''} placeholder="Llamar para coordinar cita" />
                   </Campo>
                   <Campo etiqueta="Fecha y hora" ayuda="Déjalo vacío para quitar la acción manual.">
-                    <Entrada
+                    <Input
                       type="datetime-local"
                       name="fecha"
                       defaultValue={lead.proxima_accion_at ? isoALocal(lead.proxima_accion_at) : ''}
@@ -126,10 +131,10 @@ export async function SeccionResumen({ lead }: PropsSeccion) {
           </div>
 
           <ol className="space-y-2">
-            <li className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-borde-suave px-3 py-2">
+            <li className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border px-3 py-2">
               <div>
-                <p className="text-sm font-medium text-tinta">Día 0 · Bienvenida</p>
-                <p className="text-xs text-suave">
+                <p className="text-sm font-medium text-foreground">Día 0 · Bienvenida</p>
+                <p className="text-xs text-muted-foreground">
                   {lead.bienvenida_at ? `Enviada el ${fechaHora(lead.bienvenida_at)}` : 'Pendiente: envíala en cuanto entra el lead'}
                 </p>
               </div>
@@ -138,23 +143,23 @@ export async function SeccionResumen({ lead }: PropsSeccion) {
                   Enviar bienvenida
                 </BotonAccion>
               )}
-              {lead.bienvenida_at && <Insignia color="verde">Enviada</Insignia>}
+              {lead.bienvenida_at && <Badge variant="verde">Enviada</Badge>}
             </li>
             {refuerzos?.map((r) => {
               const vence = r.estado === 'pendiente' && r.fecha <= hoy
               return (
                 <li
                   key={r.id}
-                  className={cx(
+                  className={cn(
                     'flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2',
-                    vence ? 'border-amber-300 bg-amber-50' : 'border-borde-suave',
+                    vence ? 'border-amber-300 bg-amber-50' : 'border-border',
                   )}
                 >
                   <div>
-                    <p className="text-sm font-medium text-tinta">
+                    <p className="text-sm font-medium text-foreground">
                       Día {r.dia} · Refuerzo {r.numero}
                     </p>
-                    <p className="text-xs text-suave">
+                    <p className="text-xs text-muted-foreground">
                       {r.estado === 'enviado'
                         ? `Enviado el ${fechaHora(r.enviado_at)}`
                         : r.estado === 'cancelado'
@@ -167,15 +172,15 @@ export async function SeccionResumen({ lead }: PropsSeccion) {
                       Enviar refuerzo
                     </BotonAccion>
                   ) : (
-                    <Insignia color={r.estado === 'enviado' ? 'verde' : 'gris'}>
+                    <Badge variant={r.estado === 'enviado' ? 'verde' : 'gris'}>
                       {r.estado === 'enviado' ? 'Enviado' : r.estado === 'cancelado' ? 'Cancelado' : 'Pendiente'}
-                    </Insignia>
+                    </Badge>
                   )}
                 </li>
               )
             })}
           </ol>
-          {lead.respondio_at && <p className="mt-3 text-xs text-suave">Última respuesta del lead: {fechaHora(lead.respondio_at)}</p>}
+          {lead.respondio_at && <p className="mt-3 text-xs text-muted-foreground">Última respuesta del lead: {fechaHora(lead.respondio_at)}</p>}
           <div className="mt-3 flex flex-wrap gap-2">
             {(enCadencia || lead.estado === 'nuevo' || lead.estado === 'no_responde') && lead.vigente && (
               <BotonAccion accion={registrarRespuesta.bind(null, lead.id)}>Respondió por otro medio</BotonAccion>
@@ -185,10 +190,10 @@ export async function SeccionResumen({ lead }: PropsSeccion) {
                 {lead.consentimiento_marketing && !p.no_contactar ? (
                   <BotonAccion accion={enviarNovedadesGenerales.bind(null, lead.id)}>Enviar novedades del mes</BotonAccion>
                 ) : (
-                  <span className="text-xs text-suave">No recibe novedades: no aceptó marketing.</span>
+                  <span className="text-xs text-muted-foreground">No recibe novedades: no aceptó marketing.</span>
                 )}
                 {lead.ultimas_novedades_at && (
-                  <span className="text-xs text-suave">Últimas novedades: {fecha(lead.ultimas_novedades_at)}</span>
+                  <span className="text-xs text-muted-foreground">Últimas novedades: {fecha(lead.ultimas_novedades_at)}</span>
                 )}
               </span>
             )}
@@ -199,16 +204,16 @@ export async function SeccionResumen({ lead }: PropsSeccion) {
           {lead.vigente && (
             <Formulario accion={agregarNota} reiniciar className="mb-4 space-y-2">
               <input type="hidden" name="lead_id" value={lead.id} />
-              <AreaTexto name="texto" placeholder="Qué pasó, qué acordaron…" required />
+              <Textarea name="texto" placeholder="Qué pasó, qué acordaron…" required />
               <BotonEnviar tamano="sm">Agregar nota</BotonEnviar>
             </Formulario>
           )}
           {notas?.length ? (
             <ul className="space-y-3">
               {notas.map((n) => (
-                <li key={n.id} className="border-l-2 border-marino-200 pl-3">
-                  <p className="text-sm whitespace-pre-wrap text-tinta">{n.texto}</p>
-                  <p className="text-xs text-suave">
+                <li key={n.id} className="border-l-2 border-primary pl-3">
+                  <p className="text-sm whitespace-pre-wrap text-foreground">{n.texto}</p>
+                  <p className="text-xs text-muted-foreground">
                     {(n.autor as unknown as { nombre: string } | null)?.nombre ?? 'Sistema'} · {fechaHora(n.created_at)}
                   </p>
                 </li>
@@ -230,13 +235,13 @@ export async function SeccionResumen({ lead }: PropsSeccion) {
                   <input type="hidden" name="lead_id" value={lead.id} />
                   <input type="hidden" name="persona_id" value={p.id} />
                   <Campo etiqueta="Nombre">
-                    <Entrada name="nombre" defaultValue={p.nombre} required />
+                    <Input name="nombre" defaultValue={p.nombre} required />
                   </Campo>
                   <Campo etiqueta="Correo">
-                    <Entrada name="email" type="email" defaultValue={p.email ?? ''} />
+                    <Input name="email" type="email" defaultValue={p.email ?? ''} />
                   </Campo>
                   <Campo etiqueta="Horario preferido" ayuda="Se respeta al escribirle.">
-                    <Entrada name="horario_preferido" defaultValue={p.horario_preferido ?? ''} placeholder="Tardes, después de las 6 p. m." />
+                    <Input name="horario_preferido" defaultValue={p.horario_preferido ?? ''} placeholder="Tardes, después de las 6 p. m." />
                   </Campo>
                   <Campo etiqueta="Prefiere que lo contacten por">
                     <Seleccion name="medio_contacto" defaultValue={p.medio_contacto ?? ''}>
@@ -272,9 +277,9 @@ export async function SeccionResumen({ lead }: PropsSeccion) {
             {lead.tipo === 'interesado' && <Dato etiqueta="Novedades">{lead.recibe_novedades ? 'Sí' : 'No'}</Dato>}
             <Dato etiqueta="Ventana de WhatsApp">
               {p.ultimo_entrante_at && ahoraMs() - new Date(p.ultimo_entrante_at).getTime() < 86_400_000 ? (
-                <Insignia color="verde">Abierta</Insignia>
+                <Badge variant="verde">Abierta</Badge>
               ) : (
-                <Insignia color="gris">Cerrada: solo plantillas</Insignia>
+                <Badge variant="gris">Cerrada: solo plantillas</Badge>
               )}
             </Dato>
           </dl>
@@ -296,10 +301,14 @@ export async function SeccionResumen({ lead }: PropsSeccion) {
           }
         >
           <ul className="space-y-1 text-sm">
-            <li>{lead.consentimiento_datos ? '✅' : '⬜'} Uso de datos personales</li>
-            <li>{lead.consentimiento_marketing ? '✅' : '⬜'} Novedades y marketing</li>
+            <li>
+              <Habilita si={lead.consentimiento_datos}>Uso de datos personales</Habilita>
+            </li>
+            <li>
+              <Habilita si={lead.consentimiento_marketing}>Novedades y marketing</Habilita>
+            </li>
           </ul>
-          <p className="mt-2 text-xs text-suave">
+          <p className="mt-2 text-xs text-muted-foreground">
             {lead.consentimiento_at ? `Registrado el ${fechaHora(lead.consentimiento_at)}` : 'Aún no registrado'}
           </p>
           {!lead.consentimiento_datos && lead.vigente && (
@@ -318,7 +327,7 @@ export async function SeccionResumen({ lead }: PropsSeccion) {
                     <span>
                       {TIPOS_LEAD[o.tipo]} · ciclo {o.ciclo} {!o.vigente && '(anterior)'}
                     </span>
-                    <span className="text-xs text-suave">
+                    <span className="text-xs text-muted-foreground">
                       {ESTADOS_LEAD[o.estado]} · {fechaCorta(o.created_at)}
                     </span>
                   </Link>

@@ -2,7 +2,10 @@ import Link from 'next/link'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { INTENCIONES, etiqueta } from '@/lib/catalogos'
 import { fecha, fechaHora, hoyLima } from '@/lib/formato'
-import { AreaTexto, Aviso, Campo, Dato, Insignia, Seleccion, SiNo, Tarjeta, Vacio, cx } from '@/components/legado'
+import { Aviso, Campo, Dato, Seleccion, SiNo, Tarjeta, Vacio } from '@/components/campos'
+import { Textarea } from '@/components/ui/textarea'
+import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 import { BotonAccion, BotonEnviar, Dialogo, Formulario } from '@/components/formulario'
 import { guardarIntencion, guardarTestimonio, pedirTestimonio } from './cierre-acciones'
 import type { PropsSeccion } from '../tipos'
@@ -61,17 +64,17 @@ export async function Postventa({ lead, resenaUrl }: Pick<PropsSeccion, 'lead'> 
               const toca = !t.pedido_at && t.programado_para <= hoy
               const codigo = t.compraventa?.inmueble?.codigo
               return (
-                <li key={t.id} className={cx('rounded-lg border px-3 py-3', toca ? 'border-amber-300 bg-amber-50' : 'border-borde-suave')}>
+                <li key={t.id} className={cn('rounded-lg border px-3 py-3', toca ? 'border-amber-300 bg-amber-50' : 'border-border')}>
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
-                      <p className="text-sm font-medium text-tinta">
+                      <p className="text-sm font-medium text-foreground">
                         Como {t.rol}
                         {codigo && ` · ${codigo}`}
                         {t.compraventa?.fecha_cierre && (
-                          <span className="font-normal text-suave"> · cierre del {fecha(t.compraventa.fecha_cierre)}</span>
+                          <span className="font-normal text-muted-foreground"> · cierre del {fecha(t.compraventa.fecha_cierre)}</span>
                         )}
                       </p>
-                      <p className={cx('text-xs', toca ? 'text-amber-800' : 'text-suave')}>
+                      <p className={cn('text-xs', toca ? 'text-amber-800' : 'text-muted-foreground')}>
                         {t.pedido_at
                           ? `Pedido el ${fechaHora(t.pedido_at)}${t.pedidor ? ` por ${t.pedidor.nombre}` : ''}`
                           : toca
@@ -101,10 +104,10 @@ export async function Postventa({ lead, resenaUrl }: Pick<PropsSeccion, 'lead'> 
                             </Campo>
                           </div>
                           <Campo etiqueta="Testimonio" ayuda="Tal como lo dio el cliente.">
-                            <AreaTexto name="testimonio" rows={4} defaultValue={t.testimonio ?? ''} />
+                            <Textarea name="testimonio" rows={4} defaultValue={t.testimonio ?? ''} />
                           </Campo>
                           <Campo etiqueta="Notas">
-                            <AreaTexto name="notas" rows={2} defaultValue={t.notas ?? ''} />
+                            <Textarea name="notas" rows={2} defaultValue={t.notas ?? ''} />
                           </Campo>
                           <BotonEnviar>Guardar</BotonEnviar>
                         </Formulario>
@@ -115,15 +118,15 @@ export async function Postventa({ lead, resenaUrl }: Pick<PropsSeccion, 'lead'> 
                     <Dato etiqueta="Testimonio">{siNoTexto(t.dio_testimonio)}</Dato>
                     <Dato etiqueta="Reseña en Google">{siNoTexto(t.dio_resena)}</Dato>
                     <Dato etiqueta="Uso en redes">
-                      {t.autoriza_redes ? <Insignia color="verde">Autorizado</Insignia> : siNoTexto(t.autoriza_redes)}
+                      {t.autoriza_redes ? <Badge variant="verde">Autorizado</Badge> : siNoTexto(t.autoriza_redes)}
                     </Dato>
                   </dl>
                   {t.testimonio && (
-                    <blockquote className="mt-3 border-l-2 border-marino-200 pl-3 text-sm whitespace-pre-wrap text-tinta">
+                    <blockquote className="mt-3 border-l-2 border-primary pl-3 text-sm whitespace-pre-wrap text-foreground">
                       “{t.testimonio}”
                     </blockquote>
                   )}
-                  {t.notas && <p className="mt-2 text-xs whitespace-pre-wrap text-suave">Notas: {t.notas}</p>}
+                  {t.notas && <p className="mt-2 text-xs whitespace-pre-wrap text-muted-foreground">Notas: {t.notas}</p>}
                 </li>
               )
             })}
@@ -156,23 +159,23 @@ export async function Postventa({ lead, resenaUrl }: Pick<PropsSeccion, 'lead'> 
         <dl className="grid grid-cols-2 gap-3">
           <Dato etiqueta="Intención">{p.intencion ? etiqueta(INTENCIONES, p.intencion) : 'Sin registrar'}</Dato>
           <Dato etiqueta="Acepta marketing">
-            {lead.consentimiento_marketing ? <Insignia color="verde">Sí</Insignia> : <Insignia color="gris">No</Insignia>}
+            {lead.consentimiento_marketing ? <Badge variant="verde">Sí</Badge> : <Badge variant="gris">No</Badge>}
           </Dato>
           {p.no_contactar && (
             <Dato etiqueta="Contacto">
-              <Insignia color="rojo">Baja</Insignia>
+              <Badge variant="rojo">Baja</Badge>
             </Dato>
           )}
         </dl>
-        <p className="mt-3 text-xs text-suave">
+        <p className="mt-3 text-xs text-muted-foreground">
           Los clientes siguen en la lista de marketing según su intención. El marketing respeta las bajas y solo se envía a
           quien aceptó recibirlo (consentimiento del lead, Ley 29733).
         </p>
         <Link
           href={p.intencion ? `/marketing?intencion=${p.intencion}` : '/marketing'}
-          className="mt-2 inline-block text-sm text-marino-700 hover:underline"
+          className="mt-2 inline-block text-sm text-primary hover:underline"
         >
-          Ver lista de marketing →
+          Ver lista de marketing
         </Link>
       </Tarjeta>
     </div>

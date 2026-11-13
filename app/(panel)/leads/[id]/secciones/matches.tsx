@@ -2,7 +2,10 @@ import Link from 'next/link'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { NIVELES, ORDEN_NIVEL, RESPUESTAS_MATCH, etiqueta, type Nivel, type RespuestaMatch } from '@/lib/catalogos'
 import { ahoraMs, fechaHora, num, soles } from '@/lib/formato'
-import { Aviso, EnlaceBoton, Insignia, Tarjeta, Vacio, cx } from '@/components/legado'
+import { Aviso, Tarjeta, Vacio } from '@/components/campos'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 import { BotonAccion } from '@/components/formulario'
 import { enviarMatches, registrarRespuestaMatch } from './matches-acciones'
 import { COLOR_RESPUESTA, colorPuntaje, lineaInmueble, textoRespuesta, type InmuebleLinea } from './matches-formato'
@@ -80,45 +83,41 @@ export async function SeccionMatches({ lead }: PropsSeccion) {
       <div className="space-y-4">
         {prioridad.length > 0 && (
           <Tarjeta titulo="Prioridad entre los que le interesan">
-            <p className="mb-3 text-xs text-suave">
+            <p className="mb-3 text-xs text-muted-foreground">
               Orden por ajuste al perfil (50 %), precio frente a su presupuesto (30 %) y disponibilidad de visita (20 %).
             </p>
             <ol className="space-y-2">
               {prioridad.map((x, n) => (
                 <li
                   key={x.inmueble_id}
-                  className={cx(
+                  className={cn(
                     'flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2',
-                    n === 0 ? 'border-emerald-300 bg-emerald-50' : 'border-borde-suave',
+                    n === 0 ? 'border-emerald-300 bg-emerald-50' : 'border-border',
                   )}
                 >
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-tinta">
+                    <p className="text-sm font-medium text-foreground">
                       {n + 1}. {x.codigo} · {x.distrito} · {soles(x.precio)}
                       {n === 0 && prioridad.length > 1 && (
-                        <Insignia color="verde" className="ml-2">
+                        <Badge variant="verde" className="ml-2">
                           Recomendado
-                        </Insignia>
+                        </Badge>
                       )}
                     </p>
-                    <p className="text-xs text-suave">
+                    <p className="text-xs text-muted-foreground">
                       Prioridad {num(Number(x.prioridad) * 100)} % · Ajuste {num(x.ajuste)}/100 · Precio vs. presupuesto{' '}
                       {num(Number(x.factor_precio) * 100)} % ·{' '}
                       {Number(x.disponibilidad) >= 1 ? 'Con llave o código' : 'Sin datos de acceso'}
                     </p>
                   </div>
                   {x.visita_programada ? (
-                    <Insignia color="azul">Visita programada</Insignia>
+                    <Badge variant="azul">Visita programada</Badge>
                   ) : (
                     lead.vigente &&
                     !bloqueo && (
-                      <EnlaceBoton
-                        href={`/leads/${lead.id}?tab=visitas&inmueble=${x.inmueble_id}`}
-                        tamano="sm"
-                        variante={n === 0 ? 'primario' : 'secundario'}
-                      >
-                        Agendar visita
-                      </EnlaceBoton>
+                      <Button asChild size="sm" variant={n === 0 ? 'exito' : 'outline'}>
+                        <Link href={`/leads/${lead.id}?tab=visitas&inmueble=${x.inmueble_id}`}>Agendar visita</Link>
+                      </Button>
                     )
                   )}
                 </li>
@@ -129,7 +128,7 @@ export async function SeccionMatches({ lead }: PropsSeccion) {
 
         <Tarjeta
           titulo="Inmuebles que hacen match"
-          acciones={<span className="text-xs text-suave">{sugerencias.length} en cartera, por ajuste</span>}
+          acciones={<span className="text-xs text-muted-foreground">{sugerencias.length} en cartera, por ajuste</span>}
         >
           {!busqueda && (
             <Aviso tipo="alerta" className="mb-3">
@@ -155,7 +154,7 @@ export async function SeccionMatches({ lead }: PropsSeccion) {
             </Aviso>
           )}
           {!bloqueo && (
-            <p className="mb-3 text-xs text-suave">
+            <p className="mb-3 text-xs text-muted-foreground">
               {ventana
                 ? 'Ventana de WhatsApp abierta: además de la lista, cada opción sale aparte con su foto y los botones Me interesa, No me interesa y Ver parecidos.'
                 : 'Ventana de WhatsApp cerrada: se envía la plantilla con la lista y registras sus respuestas a mano.'}
@@ -174,7 +173,7 @@ export async function SeccionMatches({ lead }: PropsSeccion) {
           ) : (
             <Vacio>Ningún inmueble en cartera encaja con su búsqueda y su capacidad por ahora.</Vacio>
           )}
-          <p className="mt-3 text-xs text-suave">
+          <p className="mt-3 text-xs text-muted-foreground">
             No se muestran los inmuebles fuera de su capacidad
             {cap?.presupuesto_max ? ` (hasta ${soles(cap.presupuesto_max)})` : ''}, de otro tipo ni los que ya rechazó.
           </p>
@@ -186,9 +185,9 @@ export async function SeccionMatches({ lead }: PropsSeccion) {
           {envios.length ? (
             <ol className="space-y-4">
               {envios.map((e) => (
-                <li key={e.id} className="border-l-2 border-marino-200 pl-3">
-                  <p className="flex flex-wrap items-center gap-2 text-xs text-suave">
-                    <Insignia color={e.tipo === 'novedad' ? 'azul' : 'marino'}>{e.tipo === 'novedad' ? 'Novedad' : 'Match'}</Insignia>
+                <li key={e.id} className="border-l-2 border-primary pl-3">
+                  <p className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <Badge variant={e.tipo === 'novedad' ? 'azul' : 'marino'}>{e.tipo === 'novedad' ? 'Novedad' : 'Match'}</Badge>
                     {fechaHora(e.enviado_at)}
                     {e.autor && ` · ${e.autor.nombre}`}
                   </p>
@@ -196,26 +195,26 @@ export async function SeccionMatches({ lead }: PropsSeccion) {
                     {[...e.opciones]
                       .sort((a, b) => Number(b.puntaje ?? 0) - Number(a.puntaje ?? 0))
                       .map((o) => (
-                        <li key={o.id} className="rounded-lg border border-borde-suave px-3 py-2">
+                        <li key={o.id} className="rounded-lg border border-border px-3 py-2">
                           <div className="flex flex-wrap items-start justify-between gap-2">
-                            <p className="min-w-0 text-sm text-tinta">{o.inmueble ? lineaInmueble(o.inmueble) : 'Inmueble'}</p>
+                            <p className="min-w-0 text-sm text-foreground">{o.inmueble ? lineaInmueble(o.inmueble) : 'Inmueble'}</p>
                             {o.puntaje !== null && (
-                              <Insignia color={colorPuntaje(Number(o.puntaje))}>{num(o.puntaje)} pts</Insignia>
+                              <Badge variant={colorPuntaje(Number(o.puntaje))}>{num(o.puntaje)} pts</Badge>
                             )}
                           </div>
                           <div className="mt-1 flex flex-wrap items-center gap-2">
-                            <Insignia color={o.respuesta ? COLOR_RESPUESTA[o.respuesta] : 'gris'}>{textoRespuesta(o.respuesta)}</Insignia>
+                            <Badge variant={o.respuesta ? COLOR_RESPUESTA[o.respuesta] : 'gris'}>{textoRespuesta(o.respuesta)}</Badge>
                             {o.respondido_at && (
-                              <span className="text-xs text-suave">
+                              <span className="text-xs text-muted-foreground">
                                 {fechaHora(o.respondido_at)}
                                 {o.respuesta_por ? ' · registrada en el panel' : ' · por WhatsApp'}
                               </span>
                             )}
-                            {o.inmueble && o.inmueble.estado !== 'en_cartera' && <Insignia color="gris">Ya no está en cartera</Insignia>}
+                            {o.inmueble && o.inmueble.estado !== 'en_cartera' && <Badge variant="gris">Ya no está en cartera</Badge>}
                           </div>
                           {lead.vigente && (
                             <div className="mt-2 flex flex-wrap items-center gap-1">
-                              {o.respuesta && <span className="text-xs text-suave">Cambiar:</span>}
+                              {o.respuesta && <span className="text-xs text-muted-foreground">Cambiar:</span>}
                               {(Object.keys(RESPUESTAS_MATCH) as RespuestaMatch[])
                                 .filter((r) => r !== o.respuesta)
                                 .map((r) => (

@@ -4,7 +4,13 @@ import { exigirUsuario } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { CANALES, ESTADOS_LEAD, TIPOS_LEAD, colorEstado, etiqueta, type EstadoLead } from '@/lib/catalogos'
 import { ahoraMs, fechaCorta, hora, hoyLima, telefono } from '@/lib/formato'
-import { EncabezadoPagina, EnlaceBoton, Entrada, Insignia, Seleccion, Vacio, claseBoton, cx } from '@/components/legado'
+import { EncabezadoPagina, Seleccion, Vacio } from '@/components/campos'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+import { Plus } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Leads' }
 
@@ -60,11 +66,18 @@ export default async function PaginaLeads({ searchParams }: PageProps<'/leads'>)
       <EncabezadoPagina
         titulo="Leads"
         descripcion={usuario.esAdmin ? 'Todos los leads, ordenados por próxima acción.' : 'Tus leads, ordenados por próxima acción.'}
-        acciones={<EnlaceBoton href="/leads/nuevo">+ Registrar lead</EnlaceBoton>}
+        acciones={
+          <Button asChild>
+            <Link href="/leads/nuevo">
+              <Plus aria-hidden />
+              Registrar lead
+            </Link>
+          </Button>
+        }
       />
 
-      <form className="mb-4 grid grid-cols-2 gap-2 rounded-xl border border-borde bg-white p-3 sm:grid-cols-3 lg:grid-cols-7">
-        <Entrada name="q" defaultValue={f.q} placeholder="Nombre o teléfono" className="col-span-2 sm:col-span-3 lg:col-span-2" />
+      <form className="mb-4 grid grid-cols-2 gap-2 rounded-xl border border-border bg-white p-3 sm:grid-cols-3 lg:grid-cols-7">
+        <Input name="q" defaultValue={f.q} placeholder="Nombre o teléfono" className="col-span-2 sm:col-span-3 lg:col-span-2" />
         <Seleccion name="estado" defaultValue={f.estado} aria-label="Estado">
           <option value="activos">Activos</option>
           <option value="todos">Todos los estados</option>
@@ -101,21 +114,21 @@ export default async function PaginaLeads({ searchParams }: PageProps<'/leads'>)
           <span className="hidden lg:block" />
         )}
         <div className="col-span-2 grid grid-cols-2 gap-2 sm:col-span-3 lg:col-span-5">
-          <label className="text-xs text-suave">
+          <label className="text-xs text-muted-foreground">
             Registrado desde
-            <Entrada type="date" name="desde" defaultValue={f.desde} />
+            <Input type="date" name="desde" defaultValue={f.desde} />
           </label>
-          <label className="text-xs text-suave">
+          <label className="text-xs text-muted-foreground">
             hasta
-            <Entrada type="date" name="hasta" defaultValue={f.hasta} />
+            <Input type="date" name="hasta" defaultValue={f.hasta} />
           </label>
         </div>
         <div className="col-span-2 flex items-end gap-2 sm:col-span-3 lg:col-span-2">
-          <button type="submit" className={cx(claseBoton('primario'), 'flex-1')}>
+          <button type="submit" className={cn(buttonVariants({ variant: 'default' }), 'flex-1')}>
             Filtrar
           </button>
           {hayFiltros && (
-            <Link href="/leads" className={claseBoton('fantasma')}>
+            <Link href="/leads" className={buttonVariants({ variant: 'ghost' })}>
               Limpiar
             </Link>
           )}
@@ -134,34 +147,34 @@ export default async function PaginaLeads({ searchParams }: PageProps<'/leads'>)
             <li key={l.id}>
               <Link
                 href={`/leads/${l.id}`}
-                className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 rounded-xl border border-borde bg-white px-4 py-3 shadow-tarjeta hover:border-marino-200 md:grid-cols-[minmax(0,2fr)_minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1.6fr)]"
+                className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 rounded-2xl border border-border bg-card px-4 py-3 transition-colors hover:border-primary md:grid-cols-[minmax(0,2fr)_minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1.6fr)]"
               >
                 <div className="min-w-0">
-                  <p className="truncate font-medium text-tinta">{l.nombre}</p>
-                  <p className="text-xs text-suave">
+                  <p className="truncate font-medium text-foreground">{l.nombre}</p>
+                  <p className="text-xs text-muted-foreground">
                     {telefono(l.telefono)} · {TIPOS_LEAD[l.tipo as keyof typeof TIPOS_LEAD]}
                   </p>
                 </div>
                 <div className="justify-self-end md:justify-self-start">
-                  <Insignia color={colorEstado(l.estado as EstadoLead)}>{ESTADOS_LEAD[l.estado as EstadoLead]}</Insignia>
+                  <Badge variant={colorEstado(l.estado as EstadoLead)}>{ESTADOS_LEAD[l.estado as EstadoLead]}</Badge>
                 </div>
-                <div className="text-xs text-suave md:text-sm">
+                <div className="text-xs text-muted-foreground md:text-sm">
                   {etiqueta(CANALES, l.canal)}
                   <span className="block text-xs">{l.asesor_nombre ?? <span className="text-amber-700">Sin asignar</span>}</span>
                 </div>
                 <div className="text-right text-sm md:text-left">
                   {l.proxima_accion ? (
                     <>
-                      <p className={cx('font-medium', vencida ? 'text-red-700' : hoy ? 'text-amber-700' : 'text-tinta')}>
+                      <p className={cn('font-medium', vencida ? 'text-red-700' : hoy ? 'text-amber-700' : 'text-foreground')}>
                         {l.proxima_accion}
                       </p>
-                      <p className="text-xs text-suave">
+                      <p className="text-xs text-muted-foreground">
                         {vencida ? 'Vencida · ' : hoy ? 'Hoy · ' : ''}
                         {fechaCorta(l.proxima_accion_at)} {hora(l.proxima_accion_at)}
                       </p>
                     </>
                   ) : (
-                    <p className="text-xs text-tenue">Sin próxima acción</p>
+                    <p className="text-xs text-muted-foreground">Sin próxima acción</p>
                   )}
                 </div>
               </Link>
@@ -169,7 +182,7 @@ export default async function PaginaLeads({ searchParams }: PageProps<'/leads'>)
           )
         })}
       </ul>
-      {leads && leads.length >= 300 && <p className="mt-3 text-center text-xs text-suave">Mostrando los primeros 300. Usa los filtros.</p>}
+      {leads && leads.length >= 300 && <p className="mt-3 text-center text-xs text-muted-foreground">Mostrando los primeros 300. Usa los filtros.</p>}
     </>
   )
 }

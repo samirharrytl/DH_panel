@@ -2,13 +2,17 @@ import Link from 'next/link'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { CONSERVACION, ESTADOS_CITA, ESTADOS_INMUEBLE, TIPOS_INMUEBLE, colorEstadoInmueble, etiqueta } from '@/lib/catalogos'
 import { diaLargo, hora, soles } from '@/lib/formato'
-import { AreaTexto, Campo, Casilla, Entrada, Insignia, Seleccion, Tarjeta, Vacio } from '@/components/legado'
+import { Campo, Casilla, Seleccion, Tarjeta, Vacio } from '@/components/campos'
+import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
 import { BotonEnviar, Dialogo, Formulario } from '@/components/formulario'
 import { AccionesCita, type CitaBasica } from '@/components/acciones-cita'
 import { agendarCita, registrarResultadoCita } from '../../../agenda/acciones'
 import { DatosAcceso, ID_DISTRITOS, ListaDistritos, caracteristicasTexto, enlaceMapa } from '../../../inmuebles/compartido'
 import type { InmuebleVista } from '../../../inmuebles/tipos'
 import type { PropsSeccion } from '../tipos'
+import { MapPin } from 'lucide-react'
 
 type Cita = CitaBasica & {
   numero: number | null
@@ -60,35 +64,35 @@ export async function SeccionCitas({ lead }: PropsSeccion) {
                 <input type="hidden" name="lead_id" value={lead.id} />
                 <div className="grid gap-3 sm:grid-cols-2">
                   <Campo etiqueta="Fecha y hora">
-                    <Entrada type="datetime-local" name="inicio" required />
+                    <Input type="datetime-local" name="inicio" required />
                   </Campo>
                   <Campo etiqueta="Duración (min)">
-                    <Entrada type="number" name="duracion_min" min={15} max={480} step={15} defaultValue={60} />
+                    <Input type="number" name="duracion_min" min={15} max={480} step={15} defaultValue={60} />
                   </Campo>
                 </div>
                 <Campo etiqueta="Dirección">
-                  <Entrada name="direccion" defaultValue={base.direccion} required />
+                  <Input name="direccion" defaultValue={base.direccion} required />
                 </Campo>
                 <Campo etiqueta="Distrito">
-                  <Entrada name="distrito" list={ID_DISTRITOS} defaultValue={base.distrito} />
+                  <Input name="distrito" list={ID_DISTRITOS} defaultValue={base.distrito} />
                 </Campo>
-                <fieldset className="space-y-3 rounded-lg border border-borde-suave p-3">
-                  <legend className="px-1 text-sm font-medium text-tinta">Consideraciones de acceso</legend>
+                <fieldset className="space-y-3 rounded-lg border border-border p-3">
+                  <legend className="px-1 text-sm font-medium text-foreground">Consideraciones de acceso</legend>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <Campo etiqueta="Llave">
-                      <Entrada name="acceso_llave" defaultValue={base.acceso_llave} placeholder="La tiene el portero" />
+                      <Input name="acceso_llave" defaultValue={base.acceso_llave} placeholder="La tiene el portero" />
                     </Campo>
                     <Campo etiqueta="Código">
-                      <Entrada name="acceso_codigo" defaultValue={base.acceso_codigo} />
+                      <Input name="acceso_codigo" defaultValue={base.acceso_codigo} />
                     </Campo>
                   </div>
                   <Casilla name="acceso_dni" defaultChecked={base.acceso_dni} etiqueta="Piden DNI en la entrada" />
                   <Campo etiqueta="Otras">
-                    <Entrada name="acceso_otros" defaultValue={base.acceso_otros} />
+                    <Input name="acceso_otros" defaultValue={base.acceso_otros} />
                   </Campo>
                 </fieldset>
                 <Campo etiqueta="Notas">
-                  <AreaTexto name="notas" rows={2} />
+                  <Textarea name="notas" rows={2} />
                 </Campo>
                 <BotonEnviar>Agendar</BotonEnviar>
               </Formulario>
@@ -99,21 +103,22 @@ export async function SeccionCitas({ lead }: PropsSeccion) {
         {lista.length ? (
           <ul className="space-y-4">
             {lista.map((c) => (
-              <li key={c.id} className="space-y-2 border-l-2 border-marino-200 pl-3">
+              <li key={c.id} className="space-y-2 border-l-2 border-primary pl-3">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="font-medium text-tinta">
+                  <p className="font-medium text-foreground">
                     Cita {c.numero ?? ''} · {diaLargo(c.inicio)}, {hora(c.inicio)}
                   </p>
-                  <Insignia color={COLOR_CITA[c.estado]}>{ESTADOS_CITA[c.estado]}</Insignia>
-                  {c.reprogramaciones > 0 && <Insignia color="gris">Reprogramada {c.reprogramaciones}×</Insignia>}
+                  <Badge variant={COLOR_CITA[c.estado]}>{ESTADOS_CITA[c.estado]}</Badge>
+                  {c.reprogramaciones > 0 && <Badge variant="gris">Reprogramada {c.reprogramaciones}×</Badge>}
                 </div>
-                <a href={enlaceMapa(c.direccion, c.distrito)} target="_blank" rel="noreferrer" className="block text-sm text-marino-700 hover:underline">
-                  📍 {[c.direccion, c.distrito].filter(Boolean).join(', ')}
+                <a href={enlaceMapa(c.direccion, c.distrito)} target="_blank" rel="noreferrer" className="inline-flex items-start gap-1 text-sm text-primary hover:underline">
+                  <MapPin aria-hidden className="mt-0.5 size-4 shrink-0" />
+                  {[c.direccion, c.distrito].filter(Boolean).join(', ')}
                 </a>
                 <DatosAcceso acceso={c} />
-                {c.notas && <p className="text-sm whitespace-pre-wrap text-suave">{c.notas}</p>}
-                {c.resultado && <p className="text-sm whitespace-pre-wrap text-tinta">Resultado: {c.resultado}</p>}
-                {c.motivo_cancelacion && <p className="text-sm text-suave">Motivo: {c.motivo_cancelacion}</p>}
+                {c.notas && <p className="text-sm whitespace-pre-wrap text-muted-foreground">{c.notas}</p>}
+                {c.resultado && <p className="text-sm whitespace-pre-wrap text-foreground">Resultado: {c.resultado}</p>}
+                {c.motivo_cancelacion && <p className="text-sm text-muted-foreground">Motivo: {c.motivo_cancelacion}</p>}
                 {lead.vigente && (
                   <div className="flex flex-wrap gap-2">
                     <AccionesCita cita={c} compacto />
@@ -123,7 +128,7 @@ export async function SeccionCitas({ lead }: PropsSeccion) {
                           <input type="hidden" name="cita_id" value={c.id} />
                           <input type="hidden" name="lead_id" value={lead.id} />
                           <Campo etiqueta="Cómo fue la cita">
-                            <AreaTexto name="resultado" rows={2} placeholder="Qué se vio, qué se acordó…" />
+                            <Textarea name="resultado" rows={2} placeholder="Qué se vio, qué se acordó…" />
                           </Campo>
                           <div className="grid gap-3 sm:grid-cols-2">
                             <Campo etiqueta="Tipo de inmueble">
@@ -148,30 +153,30 @@ export async function SeccionCitas({ lead }: PropsSeccion) {
                               </Seleccion>
                             </Campo>
                             <Campo etiqueta="Dirección" className="sm:col-span-2">
-                              <Entrada name="direccion" defaultValue={c.direccion} required />
+                              <Input name="direccion" defaultValue={c.direccion} required />
                             </Campo>
                             <Campo etiqueta="Distrito">
-                              <Entrada name="distrito" list={ID_DISTRITOS} defaultValue={c.distrito ?? base.distrito} required />
+                              <Input name="distrito" list={ID_DISTRITOS} defaultValue={c.distrito ?? base.distrito} required />
                             </Campo>
                             <Campo etiqueta="Precio acordado (S/)">
-                              <Entrada name="precio" type="number" min={1} step="0.01" defaultValue={inmueble?.precio ?? calif?.precio_esperado ?? ''} required />
+                              <Input name="precio" type="number" min={1} step="0.01" defaultValue={inmueble?.precio ?? calif?.precio_esperado ?? ''} required />
                             </Campo>
                             <Campo etiqueta="Metraje (m²)">
-                              <Entrada name="metraje" type="number" min={0} step="0.01" defaultValue={inmueble?.metraje ?? calif?.metraje ?? ''} />
+                              <Input name="metraje" type="number" min={0} step="0.01" defaultValue={inmueble?.metraje ?? calif?.metraje ?? ''} />
                             </Campo>
                             <Campo etiqueta="Dormitorios">
-                              <Entrada name="dormitorios" type="number" min={0} defaultValue={inmueble?.dormitorios ?? calif?.dormitorios ?? ''} />
+                              <Input name="dormitorios" type="number" min={0} defaultValue={inmueble?.dormitorios ?? calif?.dormitorios ?? ''} />
                             </Campo>
                             <Campo etiqueta="Baños">
-                              <Entrada name="banos" type="number" min={0} defaultValue={inmueble?.banos ?? calif?.banos ?? ''} />
+                              <Input name="banos" type="number" min={0} defaultValue={inmueble?.banos ?? calif?.banos ?? ''} />
                             </Campo>
                             <Campo etiqueta="Cocheras">
-                              <Entrada name="cocheras" type="number" min={0} defaultValue={inmueble?.cocheras ?? (calif?.cochera ? 1 : 0)} />
+                              <Input name="cocheras" type="number" min={0} defaultValue={inmueble?.cocheras ?? (calif?.cochera ? 1 : 0)} />
                             </Campo>
                           </div>
                           <Casilla name="ascensor" defaultChecked={inmueble?.ascensor ?? false} etiqueta="Tiene ascensor" />
                           <Campo etiqueta="Descripción">
-                            <AreaTexto name="descripcion" rows={2} defaultValue={inmueble?.descripcion ?? ''} />
+                            <Textarea name="descripcion" rows={2} defaultValue={inmueble?.descripcion ?? ''} />
                           </Campo>
                           <BotonEnviar>Guardar y crear ficha del inmueble</BotonEnviar>
                         </Formulario>
@@ -191,15 +196,15 @@ export async function SeccionCitas({ lead }: PropsSeccion) {
         {inmueble ? (
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
-              <Link href={`/inmuebles/${inmueble.id}`} className="font-medium text-marino-800 hover:underline">
+              <Link href={`/inmuebles/${inmueble.id}`} className="font-medium text-primary hover:underline">
                 {inmueble.codigo} · {etiqueta(TIPOS_INMUEBLE, inmueble.tipo)} en {inmueble.distrito}
               </Link>
-              <Insignia color={colorEstadoInmueble(inmueble.estado)}>{ESTADOS_INMUEBLE[inmueble.estado]}</Insignia>
+              <Badge variant={colorEstadoInmueble(inmueble.estado)}>{ESTADOS_INMUEBLE[inmueble.estado]}</Badge>
             </div>
-            <p className="text-sm text-tinta">{soles(inmueble.precio)}</p>
-            <p className="text-sm text-suave">{caracteristicasTexto(inmueble)}</p>
-            <Link href={`/inmuebles/${inmueble.id}`} className="inline-block text-sm text-marino-700 hover:underline">
-              {inmueble.estado === 'en_captacion' ? 'Subir fotos y registrar el contrato →' : 'Ver ficha del inmueble →'}
+            <p className="text-sm text-foreground">{soles(inmueble.precio)}</p>
+            <p className="text-sm text-muted-foreground">{caracteristicasTexto(inmueble)}</p>
+            <Link href={`/inmuebles/${inmueble.id}`} className="inline-block text-sm text-primary hover:underline">
+              {inmueble.estado === 'en_captacion' ? 'Subir fotos y registrar el contrato' : 'Ver ficha del inmueble'}
             </Link>
           </div>
         ) : (

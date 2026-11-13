@@ -3,7 +3,9 @@ import { exigirUsuario } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { CANALES, TIPOS_INMUEBLE, etiqueta } from '@/lib/catalogos'
 import { soles } from '@/lib/formato'
-import { AreaTexto, Campo, Casilla, EncabezadoPagina, Entrada, Seleccion, Tarjeta } from '@/components/legado'
+import { Campo, Casilla, EncabezadoPagina, Seleccion, Tarjeta } from '@/components/campos'
+import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
 import { BotonEnviar, Formulario } from '@/components/formulario'
 import { registrarLead } from '../acciones'
 
@@ -29,7 +31,7 @@ export default async function PaginaNuevoLead({ searchParams }: PageProps<'/lead
         <Formulario accion={registrarLead}>
           <div className="grid gap-4 sm:grid-cols-2">
             <Campo etiqueta="Teléfono (WhatsApp)" ayuda="Celular peruano de 9 dígitos o con código de país.">
-              <Entrada
+              <Input
                 name="telefono"
                 type="tel"
                 inputMode="tel"
@@ -39,7 +41,7 @@ export default async function PaginaNuevoLead({ searchParams }: PageProps<'/lead
               />
             </Campo>
             <Campo etiqueta="Nombre">
-              <Entrada name="nombre" required defaultValue={typeof nombre === 'string' ? nombre : ''} />
+              <Input name="nombre" required defaultValue={typeof nombre === 'string' ? nombre : ''} />
             </Campo>
             <Campo etiqueta="Tipo">
               <Seleccion name="tipo" required defaultValue={typeof tipo === 'string' ? tipo : ''}>
@@ -63,10 +65,10 @@ export default async function PaginaNuevoLead({ searchParams }: PageProps<'/lead
               </Seleccion>
             </Campo>
             <Campo etiqueta="Detalle del canal" ayuda="Opcional: campaña, portal, quién lo refirió…">
-              <Entrada name="canal_detalle" />
+              <Input name="canal_detalle" />
             </Campo>
             <Campo etiqueta="Correo">
-              <Entrada name="email" type="email" />
+              <Input name="email" type="email" />
             </Campo>
             <Campo etiqueta="Inmueble que mencionó" ayuda="Opcional. Personaliza la bienvenida.">
               <Seleccion name="inmueble_id" defaultValue="">
@@ -79,7 +81,7 @@ export default async function PaginaNuevoLead({ searchParams }: PageProps<'/lead
               </Seleccion>
             </Campo>
             <Campo etiqueta="Código de publicación" ayuda="Si llegó por un enlace de una publicación (ej. P1A2B3C).">
-              <Entrada name="codigo_publicacion" className="uppercase" />
+              <Input name="codigo_publicacion" className="" />
             </Campo>
             {usuario.esAdmin && (
               <Campo etiqueta="Asignar a">
@@ -95,11 +97,11 @@ export default async function PaginaNuevoLead({ searchParams }: PageProps<'/lead
             )}
           </div>
           <Campo etiqueta="Nota inicial">
-            <AreaTexto name="nota" placeholder="Qué dijo, qué busca o qué quiere vender" />
+            <Textarea name="nota" placeholder="Qué dijo, qué busca o qué quiere vender" />
           </Campo>
-          <fieldset className="space-y-2 rounded-lg bg-marino-50 p-3">
+          <fieldset className="space-y-2 rounded-lg bg-accent p-3">
             <legend className="sr-only">Consentimiento</legend>
-            <p className="text-sm font-medium text-tinta">Consentimiento (Ley 29733 de Protección de Datos Personales)</p>
+            <p className="text-sm font-medium text-foreground">Consentimiento (Ley 29733 de Protección de Datos Personales)</p>
             <Casilla name="consentimiento_datos" etiqueta="Aceptó el uso de sus datos personales para que DepaHost lo atienda" />
             <Casilla name="consentimiento_marketing" etiqueta="Aceptó recibir novedades y marketing de DepaHost" />
           </fieldset>

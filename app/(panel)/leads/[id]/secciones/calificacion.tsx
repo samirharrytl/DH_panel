@@ -1,7 +1,9 @@
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { TIPOS_INMUEBLE, URGENCIAS } from '@/lib/catalogos'
 import { fechaHora } from '@/lib/formato'
-import { AreaTexto, Aviso, Campo, Entrada, Seleccion, SiNo, Tarjeta } from '@/components/legado'
+import { Aviso, Campo, Seleccion, SiNo, Tarjeta } from '@/components/campos'
+import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
 import { BotonEnviar, Formulario } from '@/components/formulario'
 import { ID_DISTRITOS, ListaDistritos } from '../../../inmuebles/compartido'
 import { guardarCalificacion } from './calificacion-acciones'
@@ -85,10 +87,10 @@ export async function SeccionCalificacion({ lead }: PropsSeccion) {
                 <SiNo name="hipoteca" valor={q?.hipoteca} />
               </Campo>
               <Campo etiqueta="Banco" falta={!!q?.hipoteca && f(q?.hipoteca_banco)}>
-                <Entrada name="hipoteca_banco" defaultValue={q?.hipoteca_banco ?? ''} />
+                <Input name="hipoteca_banco" defaultValue={q?.hipoteca_banco ?? ''} />
               </Campo>
               <Campo etiqueta="Saldo pendiente (S/)" falta={!!q?.hipoteca && f(q?.hipoteca_saldo)}>
-                <Entrada name="hipoteca_saldo" type="number" min={0} step="0.01" defaultValue={q?.hipoteca_saldo ?? ''} />
+                <Input name="hipoteca_saldo" type="number" min={0} step="0.01" defaultValue={q?.hipoteca_saldo ?? ''} />
               </Campo>
             </div>
 
@@ -104,22 +106,22 @@ export async function SeccionCalificacion({ lead }: PropsSeccion) {
                 </Seleccion>
               </Campo>
               <Campo etiqueta="Dirección" falta={f(q?.direccion)} className="sm:col-span-2">
-                <Entrada name="direccion" defaultValue={q?.direccion ?? ''} />
+                <Input name="direccion" defaultValue={q?.direccion ?? ''} />
               </Campo>
               <Campo etiqueta="Distrito" falta={f(q?.distrito)}>
-                <Entrada name="distrito" list={ID_DISTRITOS} defaultValue={q?.distrito ?? ''} />
+                <Input name="distrito" list={ID_DISTRITOS} defaultValue={q?.distrito ?? ''} />
               </Campo>
               <Campo etiqueta="Metraje (m²)" falta={f(q?.metraje)}>
-                <Entrada name="metraje" type="number" min={0} step="0.01" defaultValue={q?.metraje ?? ''} />
+                <Input name="metraje" type="number" min={0} step="0.01" defaultValue={q?.metraje ?? ''} />
               </Campo>
               <Campo etiqueta="Precio esperado (S/)" falta={f(q?.precio_esperado)}>
-                <Entrada name="precio_esperado" type="number" min={0} step="0.01" defaultValue={q?.precio_esperado ?? ''} />
+                <Input name="precio_esperado" type="number" min={0} step="0.01" defaultValue={q?.precio_esperado ?? ''} />
               </Campo>
               <Campo etiqueta="Dormitorios" falta={f(q?.dormitorios)}>
-                <Entrada name="dormitorios" type="number" min={0} defaultValue={q?.dormitorios ?? ''} />
+                <Input name="dormitorios" type="number" min={0} defaultValue={q?.dormitorios ?? ''} />
               </Campo>
               <Campo etiqueta="Baños" falta={f(q?.banos)}>
-                <Entrada name="banos" type="number" min={0} defaultValue={q?.banos ?? ''} />
+                <Input name="banos" type="number" min={0} defaultValue={q?.banos ?? ''} />
               </Campo>
               <Campo etiqueta="Cochera" falta={f(q?.cochera)}>
                 <SiNo name="cochera" valor={q?.cochera} />
@@ -145,20 +147,20 @@ export async function SeccionCalificacion({ lead }: PropsSeccion) {
               </Campo>
             </div>
             <Campo etiqueta="Si hay copropietarios: quiénes y si están de acuerdo">
-              <Entrada name="copropietarios_detalle" defaultValue={q?.copropietarios_detalle ?? ''} />
+              <Input name="copropietarios_detalle" defaultValue={q?.copropietarios_detalle ?? ''} />
             </Campo>
             <Campo etiqueta="Notas">
-              <AreaTexto name="notas" defaultValue={q?.notas ?? ''} />
+              <Textarea name="notas" defaultValue={q?.notas ?? ''} />
             </Campo>
             {lead.vigente && <BotonEnviar>Guardar calificación</BotonEnviar>}
           </fieldset>
         </Formulario>
-        {q && <p className="mt-3 text-xs text-suave">Actualizada el {fechaHora(q.updated_at)}</p>}
+        {q && <p className="mt-3 text-xs text-muted-foreground">Actualizada el {fechaHora(q.updated_at)}</p>}
       </Tarjeta>
 
       <Tarjeta titulo={falta.length ? `Faltan ${falta.length} datos` : 'Datos completos'}>
         {falta.length ? (
-          <ul className="list-disc space-y-1 pl-5 text-sm text-tinta">
+          <ul className="list-disc space-y-1 pl-5 text-sm text-foreground">
             {falta.map((x) => (
               <li key={x}>{x}</li>
             ))}
