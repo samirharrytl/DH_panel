@@ -28,10 +28,12 @@ export async function POST(request: NextRequest) {
   // Un usuario desactivado (HU-02) no recibe nada: el filtro inner sobre perfiles no devuelve su aviso
   if (!aviso) return NextResponse.json({ ok: true, enviados: 0 })
 
-  const { data: subs } = await supabase
+  const { data: subs, error: errorSubs } = await supabase
     .from('suscripciones_push')
     .select('endpoint, p256dh, auth')
     .eq('usuario_id', aviso.usuario_id)
+  // Si la tabla no está en la caché de PostgREST o falta un permiso, antes se veía como "0 enviados" sin pista
+  if (errorSubs) return NextResponse.json({ ok: false, error: errorSubs.message }, { status: 500 })
 
   const carga = JSON.stringify({ titulo: aviso.titulo, cuerpo: aviso.cuerpo, enlace: aviso.enlace ?? '/' })
   const opciones = {
@@ -41,6 +43,7 @@ export async function POST(request: NextRequest) {
   }
   let enviados = 0
   const vencidas: string[] = []
+  const errores: { estado?: number; mensaje: string }[] = []
   await Promise.all(
     (subs ?? []).map(async (s) => {
       try {
@@ -50,10 +53,20 @@ export async function POST(request: NextRequest) {
         const estado = (e as { statusCode?: number }).statusCode
         // 404/410: el navegador anuló la suscripción (desinstaló la app, borró datos, quitó el permiso)
         if (estado === 404 || estado === 410) vencidas.push(s.endpoint)
-        else console.error('Push fallido', estado, (e as Error).message)
+        else {
+          console.error('Push fallido', estado, (e as Error).message)
+          // Se devuelve en la respuesta para poder diagnosticar desde net._http_response
+          errores.push({ estado, mensaje: (e as Error).message })
+        }
       }
     }),
   )
   if (vencidas.length) await supabase.from('suscripciones_push').delete().in('endpoint', vencidas)
-  return NextResponse.json({ ok: true, enviados, vencidas: vencidas.length })
+  return NextResponse.json({
+    ok: true,
+    enviados,
+    vencidas: vencidas.length,
+    revisadas: subs?.length ?? 0,
+    ...(errores.length ? { errores } : {}),
+  })
 }
