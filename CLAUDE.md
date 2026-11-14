@@ -18,6 +18,7 @@ Si una regla de negocio no está en estos documentos, pregunta antes de inventar
 - Tailwind CSS
 - Interfaz en español (Perú), usable desde el celular
 - Fechas y recordatorios en la zona horaria America/Lima
+- Panel instalable (PWA) con notificaciones push: cada fila nueva de `notificaciones` dispara el trigger `notificaciones_push`, que llama con `pg_net` a `/api/push` (`web-push`). Configuración en el README
 
 ## WhatsApp
 

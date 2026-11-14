@@ -61,6 +61,46 @@ programada, entre las 8:00 y las 21:00 de Lima. Llámalo cada 15 minutos desde u
 cron-job.org) con el encabezado `Authorization: Bearer <CRON_SECRET>`. Fuera de la ventana de 24 horas solo sale
 si la plantilla tiene su nombre aprobado en Meta (Configuración → Plantillas); si no, queda en `errores`.
 
+## Notificaciones push (celular y computadora)
+
+Cada aviso de la campana (lead nuevo o asignado, mensaje de WhatsApp, cita, etc.) también llega como notificación
+del sistema a los dispositivos donde el usuario activó los avisos, aunque el panel esté cerrado. Con el panel
+abierto, en los dispositivos sin push activado aparece un aviso emergente.
+
+Cómo funciona: el trigger `notificaciones_push` llama con `pg_net` a `POST /api/push`, que envía el aviso con
+`web-push` a cada dispositivo guardado en `suscripciones_push`. `public/sw.js` lo muestra y, al tocarlo, abre el
+lead o el chat.
+
+Configuración (una sola vez):
+
+1. Genera las claves: `npx web-push generate-vapid-keys`. Pon `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` y
+   `VAPID_SUBJECT` (`mailto:<correo>` o la URL `https://` del panel) en `.env.local` y en Vercel. Si cambias las
+   claves, cada usuario debe volver a activar los avisos.
+2. Aplica las migraciones (`npm run db:migrar`). Habilitan `pg_net`.
+3. En el SQL Editor de Supabase, guarda en Vault la URL del panel y el mismo `CRON_SECRET` de Vercel:
+
+   ```sql
+   select vault.create_secret('https://<panel>', 'panel_url');
+   select vault.create_secret('<CRON_SECRET>', 'panel_cron_secret');
+   ```
+
+   Para cambiarlos: `select vault.update_secret(id, '<nuevo valor>') from vault.secrets where name = 'panel_url';`.
+   Sin estos secretos no salen pushes, pero la campana sigue funcionando.
+
+Activar en cada dispositivo: abre la campana y toca **Activar avisos en este dispositivo**.
+
+- **iPhone (iOS 16.4+):** primero instala el panel. En Safari toca **Compartir → Agregar a inicio**, ábrelo desde ese
+  ícono y activa los avisos ahí.
+- **Android:** funciona en Chrome. Si quieres, instálalo con **⋮ → Agregar a la pantalla principal**.
+- **Computadora:** Chrome, Edge, Firefox o Safari. Los avisos llegan mientras el navegador esté abierto, aunque no
+  tenga la pestaña del panel.
+
+Cerrar sesión no apaga los avisos del dispositivo; para eso está **Desactivar** en la campana. Si otro usuario los
+activa en el mismo navegador, el dispositivo pasa a ser suyo. Los usuarios desactivados no reciben pushes.
+
+En local: los pushes los envía el panel cuya URL está en `panel_url` (no `localhost`), así que para probarlos
+activa los avisos en ese panel. Revisa las llamadas de la base en `net._http_response`.
+
 ## Sitio web (landing en Astro)
 
 El panel es el backend del sitio `depahostcapital`. Expone, sin sesión, las rutas que el sitio usa de su contrato

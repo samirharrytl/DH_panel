@@ -2,13 +2,15 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { Bell } from 'lucide-react'
+import { toast } from 'sonner'
 import { crearClienteNavegador } from '@/lib/supabase/navegador'
 import { relativo } from '@/lib/formato'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { AvisosDispositivo, useAvisosDispositivo } from '@/components/avisos-dispositivo'
 
 export type Notificacion = {
   id: number
@@ -20,7 +22,7 @@ export type Notificacion = {
 }
 
 // Alertas del usuario: leads nuevos o asignados, citas agendadas o reprogramadas, mensajes entrantes.
-// Se actualiza en vivo con Supabase Realtime.
+// Se actualiza en vivo con Supabase Realtime; si este dispositivo no tiene push activado, muestra un toast.
 export function Campana({
   usuarioId,
   notificaciones,
@@ -34,6 +36,12 @@ export function Campana({
   const [abierta, setAbierta] = useState(false)
   const [, iniciar] = useTransition()
   const sinLeer = notificaciones.filter((n) => !n.leida_at).length
+  const avisos = useAvisosDispositivo()
+  // Con push activo el aviso ya llega del sistema; el toast es para los dispositivos sin push
+  const conPush = useRef(false)
+  useEffect(() => {
+    conPush.current = avisos.estado === 'activo'
+  }, [avisos.estado])
 
   useEffect(() => {
     const supabase = crearClienteNavegador()
@@ -52,7 +60,15 @@ export function Campana({
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'notificaciones', filter: `usuario_id=eq.${usuarioId}` },
-        () => router.refresh(),
+        ({ new: n }) => {
+          router.refresh()
+          if (conPush.current) return
+          const aviso = n as Notificacion
+          toast(aviso.titulo, {
+            description: aviso.cuerpo ?? undefined,
+            action: { label: 'Ver', onClick: () => router.push(aviso.enlace ?? '/') },
+          })
+        },
       )
       .subscribe()
     return () => {
@@ -106,6 +122,7 @@ export function Campana({
             </li>
           ))}
         </ul>
+        <AvisosDispositivo avisos={avisos} />
       </PopoverContent>
     </Popover>
   )

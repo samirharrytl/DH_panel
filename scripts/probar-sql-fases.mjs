@@ -364,4 +364,47 @@ export function registrar({ db, prueba, como, registrar, esperarError, uno, ADMI
       /permission denied/,
     )
   })
+
+  prueba('Push: el dispositivo es del último usuario que lo activa y cada uno ve solo los suyos', async () => {
+    const ep = 'https://push.test/dispositivo-1'
+    await q(ASESORA, `select guardar_suscripcion_push($1, 'p1', 'a1')`, [ep])
+    assert.equal(await val(ASESORA, `select count(*)::int from suscripciones_push`), 1)
+    await q(OTRO, `select guardar_suscripcion_push($1, 'p2', 'a2')`, [ep])
+    const s = await uno(db, `select usuario_id, p256dh from suscripciones_push where endpoint = $1`, [ep])
+    assert.deepEqual({ ...s }, { usuario_id: OTRO, p256dh: 'p2' }, 'el navegador compartido pasa al nuevo usuario')
+    assert.equal(await val(ASESORA, `select count(*)::int from suscripciones_push`), 0)
+    await esperarError(q(ASESORA, `insert into suscripciones_push (endpoint, usuario_id, p256dh, auth) values ('https://x', $1, 'p', 'a')`, [ASESORA]), /permission denied|row-level security/)
+    await q(ASESORA, `delete from suscripciones_push where endpoint = $1`, [ep])
+    assert.equal(await val(OTRO, `select count(*)::int from suscripciones_push`), 1, 'no borra el de otro')
+    await q(OTRO, `delete from suscripciones_push where endpoint = $1`, [ep])
+    assert.equal(await val(OTRO, `select count(*)::int from suscripciones_push`), 0)
+    await esperarError(
+      como(db, null, async () => {
+        await db.exec('set role anon')
+        return db.query(`select guardar_suscripcion_push('https://y', 'p', 'a')`)
+      }),
+      /permission denied/,
+    )
+    // Sin pg_net ni Vault (PGlite, local) el trigger no estorba
+    await db.query(`insert into notificaciones (usuario_id, tipo, titulo) values ($1, 'prueba', 'Aviso')`, [ASESORA])
+  })
+
+  prueba('Push: cada aviso nuevo llama a /api/push con el secreto de Vault', async () => {
+    await db.exec(`
+      create schema net;
+      create table net.llamadas (url text, body jsonb, headers jsonb);
+      create function net.http_post(url text, body jsonb, headers jsonb) returns bigint language sql as
+        $$ insert into net.llamadas values (url, body, headers) returning 1::bigint $$;
+      create schema vault;
+      create table vault.decrypted_secrets (name text, decrypted_secret text);
+      insert into vault.decrypted_secrets values ('panel_url', 'https://panel.test/'), ('panel_cron_secret', 's3cr3t');
+    `)
+    try {
+      const n = await uno(db, `insert into notificaciones (usuario_id, tipo, titulo) values ($1, 'prueba', 'Aviso') returning id`, [ASESORA])
+      const ll = await uno(db, `select url, body, headers->>'Authorization' as auth from net.llamadas`)
+      assert.deepEqual({ ...ll }, { url: 'https://panel.test/api/push', body: { id: Number(n.id) }, auth: 'Bearer s3cr3t' })
+    } finally {
+      await db.exec('drop schema net cascade; drop schema vault cascade;')
+    }
+  })
 }

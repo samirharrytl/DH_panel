@@ -2,7 +2,10 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { COOKIE_ACTIVIDAD, COOKIE_TTL } from '@/lib/sesion'
 
-const RUTAS_PUBLICAS = ['/login', '/recuperar', '/auth/', '/api/whatsapp/webhook', '/api/cron/', '/api/v1/']
+// sw.js y el manifest se piden sin sesión (instalar la app en iPhone); /api/push lo llama la base con su secreto
+const RUTAS_PUBLICAS = [
+  '/login', '/recuperar', '/auth/', '/api/whatsapp/webhook', '/api/cron/', '/api/v1/', '/api/push', '/sw.js', '/manifest.webmanifest',
+]
 
 // Renueva la sesión de Supabase en cada petición, protege las rutas del panel y cierra la sesión
 // tras el tiempo de inactividad configurado (HU-01). El cliente avisa su actividad con la cookie

@@ -53,7 +53,7 @@ La persona responsable del seguimiento ingresa con su usuario y ve en un solo lu
 ### Seguimiento
 
 - Cada lead muestra su próxima acción y su fecha: refuerzo, cita, visita o envío de novedades.
-- El asesor recibe alertas de leads nuevos, citas agendadas o reprogramadas y refuerzos pendientes.
+- El asesor recibe alertas de leads nuevos, mensajes, citas agendadas o reprogramadas y refuerzos pendientes, en la campana del panel y como notificación push en el celular o la computadora, aunque el panel esté cerrado.
 - El asesor chatea con el lead desde la plataforma, y toda la conversación queda en el historial de su ficha.
 - Cada cambio de estado queda registrado con fecha y autor.
 
