@@ -1,5 +1,9 @@
 // Service worker del panel: muestra los avisos push que envía /api/push y abre el panel al tocarlos.
 
+// Toma el control de las pestañas ya abiertas: navigate() solo funciona en pestañas controladas
+self.addEventListener('install', () => self.skipWaiting())
+self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()))
+
 self.addEventListener('push', (event) => {
   const aviso = event.data ? event.data.json() : { titulo: 'Panel DepaHost' }
   const enlace = aviso.enlace || '/'
@@ -21,8 +25,11 @@ self.addEventListener('notificationclick', (event) => {
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((ventanas) => {
       const abierta = ventanas.find((v) => v.url.startsWith(self.location.origin))
-      if (abierta) return abierta.focus().then((v) => v.navigate(url))
-      return self.clients.openWindow(url)
+      if (!abierta) return self.clients.openWindow(url)
+      return abierta
+        .focus()
+        .then((v) => v.navigate(url))
+        .catch(() => self.clients.openWindow(url))
     }),
   )
 })

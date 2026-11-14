@@ -64,8 +64,14 @@ begin
   perform net.http_post(
     url := rtrim(v_url, '/') || '/api/push',
     body := jsonb_build_object('id', new.id),
-    headers := jsonb_build_object('Content-Type', 'application/json', 'Authorization', 'Bearer ' || v_secreto)
+    headers := jsonb_build_object('Content-Type', 'application/json', 'Authorization', 'Bearer ' || v_secreto),
+    -- Margen para el arranque en frío de Vercel más la llamada al servicio de push (por defecto, 5 s)
+    timeout_milliseconds := 10000
   );
+  return new;
+exception when others then
+  -- Un push fallido nunca debe deshacer el lead o el mensaje que creó el aviso
+  raise warning 'notificaciones_push: %', sqlerrm;
   return new;
 end $$;
 

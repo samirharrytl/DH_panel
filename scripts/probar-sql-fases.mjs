@@ -393,8 +393,15 @@ export function registrar({ db, prueba, como, registrar, esperarError, uno, ADMI
     await db.exec(`
       create schema net;
       create table net.llamadas (url text, body jsonb, headers jsonb);
-      create function net.http_post(url text, body jsonb, headers jsonb) returns bigint language sql as
-        $$ insert into net.llamadas values (url, body, headers) returning 1::bigint $$;
+      create table net.falla (activa boolean);
+      insert into net.falla values (false);
+      create function net.http_post(url text, body jsonb, headers jsonb, timeout_milliseconds int) returns bigint
+      language plpgsql as $$
+      begin
+        if (select activa from net.falla) then raise exception 'pg_net caído'; end if;
+        insert into net.llamadas values (url, body, headers || jsonb_build_object('timeout', timeout_milliseconds));
+        return 1;
+      end $$;
       create schema vault;
       create table vault.decrypted_secrets (name text, decrypted_secret text);
       insert into vault.decrypted_secrets values ('panel_url', 'https://panel.test/'), ('panel_cron_secret', 's3cr3t');
@@ -403,6 +410,11 @@ export function registrar({ db, prueba, como, registrar, esperarError, uno, ADMI
       const n = await uno(db, `insert into notificaciones (usuario_id, tipo, titulo) values ($1, 'prueba', 'Aviso') returning id`, [ASESORA])
       const ll = await uno(db, `select url, body, headers->>'Authorization' as auth from net.llamadas`)
       assert.deepEqual({ ...ll }, { url: 'https://panel.test/api/push', body: { id: Number(n.id) }, auth: 'Bearer s3cr3t' })
+      assert.equal((await uno(db, `select headers->>'timeout' t from net.llamadas`)).t, '10000', 'margen para el arranque en frío de Vercel')
+      // Si el push falla, el aviso (y el lead o mensaje que lo creó) se guarda igual
+      await db.exec('update net.falla set activa = true')
+      await db.query(`insert into notificaciones (usuario_id, tipo, titulo) values ($1, 'prueba', 'Sin push')`, [ASESORA])
+      assert.equal((await uno(db, `select count(*)::int n from notificaciones where titulo = 'Sin push'`)).n, 1)
     } finally {
       await db.exec('drop schema net cascade; drop schema vault cascade;')
     }
