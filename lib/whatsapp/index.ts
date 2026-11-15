@@ -37,6 +37,8 @@ function traducirError(codigo: number | undefined, mensaje: string) {
       return 'El token de WhatsApp venció o no es válido.'
     case 131030:
       return 'Con el número de prueba de Meta solo se puede escribir a números registrados como destinatarios de prueba.'
+    case 131005:
+      return 'El token de WhatsApp no tiene permiso sobre este número: revisa que WHATSAPP_TOKEN y WHATSAPP_PHONE_NUMBER_ID sean de la misma app y cuenta de WhatsApp Business.'
     default:
       return `WhatsApp rechazó el mensaje: ${mensaje}`
   }
@@ -55,7 +57,19 @@ async function enviar(telefono: string, contenido: Record<string, unknown>): Pro
       signal: AbortSignal.timeout(15_000),
     })
     const datos = await r.json().catch(() => ({}))
-    if (!r.ok) return { ok: false, error: traducirError(datos?.error?.code, datos?.error?.message ?? r.statusText) }
+    if (!r.ok) {
+      const e = datos?.error ?? {}
+      // Datos para cruzar con Meta (Business Settings, soporte): nada secreto, el token nunca se muestra
+      const pistas = [
+        `código ${e.code ?? r.status}${e.error_subcode ? `/${e.error_subcode}` : ''}`,
+        e.error_data?.details && `detalle: ${e.error_data.details}`,
+        `número ID ${phoneId}`,
+        `API ${VERSION}`,
+        e.fbtrace_id && `fbtrace_id ${e.fbtrace_id}`,
+      ].filter(Boolean)
+      console.error('[whatsapp] envío rechazado', { status: r.status, error: e, phoneId, version: VERSION })
+      return { ok: false, error: `${traducirError(e.code, e.message ?? r.statusText)} (${pistas.join(' · ')})` }
+    }
     const waId = datos?.messages?.[0]?.id
     return waId ? { ok: true, waId } : { ok: false, error: 'WhatsApp no devolvió el identificador del mensaje' }
   } catch (e) {
