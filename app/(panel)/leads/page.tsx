@@ -23,6 +23,7 @@ function textoParam(v: string | string[] | undefined) {
 export default async function PaginaLeads({ searchParams }: PageProps<'/leads'>) {
   const usuario = await exigirUsuario()
   const sp = await searchParams
+  const porIntencion = sp.vista === 'intenciones'
   const f = {
     q: textoParam(sp.q),
     estado: textoParam(sp.estado) || 'activos',
@@ -49,11 +50,34 @@ export default async function PaginaLeads({ searchParams }: PageProps<'/leads'>)
     const digitos = limpio.replace(/\D/g, '')
     consulta = consulta.or(`nombre.ilike.%${limpio}%${digitos.length >= 3 ? `,telefono.like.%${digitos}%` : ''}`)
   }
-  const [{ data: leads, error }, { data: asesores }] = await Promise.all([
-    consulta
-      .order('proxima_accion_at', { ascending: true, nullsFirst: false })
-      .order('created_at', { ascending: false })
-      .limit(300),
+  // Vista por intención: una fila por cada vez que la persona dejó sus datos, aunque se repita
+  let ci = supabase
+    .from('eventos')
+    .select(
+      'id, created_at, datos, lead:leads!inner(id, tipo, estado, asesor_id, asesor:perfiles!leads_asesor_id_fkey(nombre)), persona:personas!inner(id, nombre)',
+    )
+    .in('tipo', ['lead_registrado', 'lead_regreso'])
+  if (f.estado === 'activos') ci = ci.not('lead.estado', 'in', CERRADOS)
+  else if (f.estado !== 'todos') ci = ci.eq('lead.estado', f.estado)
+  if (f.tipo) ci = ci.eq('lead.tipo', f.tipo)
+  if (f.canal) ci = ci.eq('datos->>canal', f.canal)
+  if (f.asesor === 'sin_asignar') ci = ci.is('lead.asesor_id', null)
+  else if (f.asesor) ci = ci.eq('lead.asesor_id', f.asesor)
+  if (f.desde) ci = ci.gte('created_at', `${f.desde}T00:00:00-05:00`)
+  if (f.hasta) ci = ci.lte('created_at', `${f.hasta}T23:59:59-05:00`)
+  if (f.q) {
+    const digitos = f.q.replace(/\D/g, '')
+    ci = digitos.length >= 3 ? ci.like('datos->>telefono', `%${digitos}%`) : ci.ilike('persona.nombre', `%${f.q.replace(/[,()%*]/g, ' ')}%`)
+  }
+
+  const [{ data: leads, error }, { data: intenciones, error: errorIntenciones }, { data: asesores }] = await Promise.all([
+    porIntencion
+      ? { data: null, error: null }
+      : consulta
+          .order('proxima_accion_at', { ascending: true, nullsFirst: false })
+          .order('created_at', { ascending: false })
+          .limit(300),
+    porIntencion ? ci.order('created_at', { ascending: false }).limit(300) : { data: null, error: null },
     usuario.esAdmin ? supabase.from('perfiles').select('id, nombre').eq('activo', true).order('nombre') : { data: null },
   ])
 
@@ -65,7 +89,13 @@ export default async function PaginaLeads({ searchParams }: PageProps<'/leads'>)
     <>
       <EncabezadoPagina
         titulo="Leads"
-        descripcion={usuario.esAdmin ? 'Todos los leads, ordenados por próxima acción.' : 'Tus leads, ordenados por próxima acción.'}
+        descripcion={
+          porIntencion
+            ? 'Cada vez que un cliente dejó sus datos, aunque se repita. Toca una para ver su historial completo.'
+            : usuario.esAdmin
+              ? 'Todos los leads, ordenados por próxima acción.'
+              : 'Tus leads, ordenados por próxima acción.'
+        }
         acciones={
           <Button asChild data-guia="leads-registrar">
             <Link href="/leads/nuevo">
@@ -76,10 +106,27 @@ export default async function PaginaLeads({ searchParams }: PageProps<'/leads'>)
         }
       />
 
+      <nav className="mb-3 inline-flex rounded-xl border border-border bg-card p-1 text-sm" aria-label="Vista">
+        {[
+          { href: '/leads', texto: 'Por lead', activa: !porIntencion },
+          { href: '/leads?vista=intenciones', texto: 'Por intención', activa: porIntencion },
+        ].map((v) => (
+          <Link
+            key={v.href}
+            href={v.href}
+            aria-current={v.activa ? 'page' : undefined}
+            className={cn('rounded-lg px-3 py-1.5', v.activa ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground')}
+          >
+            {v.texto}
+          </Link>
+        ))}
+      </nav>
+
       <form
         data-guia="leads-filtros"
         className="mb-4 grid grid-cols-2 gap-2 rounded-2xl border border-border bg-card p-3 sm:grid-cols-3 lg:grid-cols-7"
       >
+        {porIntencion && <input type="hidden" name="vista" value="intenciones" />}
         <Input name="q" defaultValue={f.q} placeholder="Nombre o teléfono" className="col-span-2 sm:col-span-3 lg:col-span-2" />
         <Seleccion name="estado" defaultValue={f.estado} aria-label="Estado">
           <option value="activos">Activos</option>
@@ -131,7 +178,7 @@ export default async function PaginaLeads({ searchParams }: PageProps<'/leads'>)
             Filtrar
           </button>
           {hayFiltros && (
-            <Link href="/leads" className={buttonVariants({ variant: 'ghost' })}>
+            <Link href={porIntencion ? '/leads?vista=intenciones' : '/leads'} className={buttonVariants({ variant: 'ghost' })}>
               Limpiar
             </Link>
           )}
@@ -139,7 +186,47 @@ export default async function PaginaLeads({ searchParams }: PageProps<'/leads'>)
       </form>
 
       {error && <Vacio>No se pudieron cargar los leads: {error.message}</Vacio>}
+      {errorIntenciones && <Vacio>No se pudieron cargar las intenciones: {errorIntenciones.message}</Vacio>}
       {leads?.length === 0 && <Vacio>No hay leads con estos filtros.</Vacio>}
+      {intenciones?.length === 0 && <Vacio>No hay intenciones con estos filtros.</Vacio>}
+
+      {intenciones && intenciones.length > 0 && (
+        <ul className="space-y-2">
+          {intenciones.map((i) => {
+            const lead = i.lead as unknown as { tipo: string; estado: EstadoLead; asesor: { nombre: string } | null }
+            const persona = i.persona as unknown as { id: string; nombre: string }
+            const d = (i.datos ?? {}) as Record<string, string | undefined>
+            return (
+              <li key={i.id}>
+                <Link
+                  href={`/personas/${persona.id}`}
+                  className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 rounded-2xl border border-border bg-card px-4 py-3 transition-colors hover:border-primary md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1.6fr)_auto]"
+                >
+                  <p className="text-sm text-muted-foreground">
+                    {fechaCorta(i.created_at)} {hora(i.created_at)}
+                  </p>
+                  <div className="justify-self-end md:order-last">
+                    <Badge variant={colorEstado(lead.estado)}>{ESTADOS_LEAD[lead.estado]}</Badge>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-foreground">{persona.nombre}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {telefono(d.telefono)} · {TIPOS_LEAD[lead.tipo as keyof typeof TIPOS_LEAD]}
+                    </p>
+                  </div>
+                  <div className="text-xs text-muted-foreground md:text-sm">
+                    {d.canal_detalle ?? etiqueta(CANALES, d.canal ?? '')}
+                    <span className="block text-xs">{lead.asesor?.nombre ?? <span className="text-amber-700">Sin asignar</span>}</span>
+                  </div>
+                </Link>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+      {intenciones && intenciones.length >= 300 && (
+        <p className="mt-3 text-center text-xs text-muted-foreground">Mostrando las últimas 300. Usa los filtros.</p>
+      )}
 
       <ul data-guia="leads-lista" className="space-y-2">
         {leads?.map((l) => {
@@ -156,6 +243,7 @@ export default async function PaginaLeads({ searchParams }: PageProps<'/leads'>)
                   <p className="truncate font-medium text-foreground">{l.nombre}</p>
                   <p className="text-xs text-muted-foreground">
                     {telefono(l.telefono)} · {TIPOS_LEAD[l.tipo as keyof typeof TIPOS_LEAD]}
+                    {l.intenciones > 1 && ` · ${l.intenciones} intenciones`}
                   </p>
                 </div>
                 <div className="justify-self-end md:justify-self-start">

@@ -183,4 +183,12 @@ export function registrar({ db, prueba, como, registrar, esperarError, uno, ADMI
     const c = await uno(db, `select estado from citas where id = $1`, [cita])
     assert.equal(c.estado, 'cancelada')
   })
+
+  prueba('Bandeja: cada lead muestra cuántas intenciones tiene', async () => {
+    const lead = await web('contact', '911000060', null, null)
+    await web('ad-buy', '911000060', null, null)
+    await web('saved-list', '911000060', null, null)
+    const r = await q(ADMIN, `select intenciones from v_bandeja where id = $1`, [lead])
+    assert.equal(r.rows[0].intenciones, 3)
+  })
 }
