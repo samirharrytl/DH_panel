@@ -90,7 +90,12 @@ export default async function PaginaChats({ searchParams }: PageProps<'/chats'>)
                   ← Chats
                 </Link>
                 <p className="font-semibold text-foreground">{actual.nombre}</p>
-                <p className="text-xs text-muted-foreground">{telefono(actual.telefono)}</p>
+                <p className="text-xs text-muted-foreground">
+                  {telefono(actual.telefono)} ·{' '}
+                  <Link href={`/personas/${actual.id}`} className="text-primary hover:underline">
+                    Ver perfil
+                  </Link>
+                </p>
               </div>
               <div className="flex flex-wrap gap-2">
                 {leads?.map((l) => (

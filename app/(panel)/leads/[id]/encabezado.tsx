@@ -36,7 +36,11 @@ export async function Encabezado({ lead, usuario }: PropsSeccion) {
       </Link>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-2xl font-semibold text-foreground">{p.nombre}</h1>
+          <h1 className="text-2xl font-semibold text-foreground">
+            <Link href={`/personas/${p.id}`} className="hover:underline" title="Ver perfil del cliente">
+              {p.nombre}
+            </Link>
+          </h1>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
             <a href={`https://wa.me/${p.telefono}`} target="_blank" rel="noreferrer" className="text-primary hover:underline">
               {telefono(p.telefono)}

@@ -1,13 +1,13 @@
 import Link from 'next/link'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { CANALES, ESTADOS_LEAD, RESPUESTAS_MATCH, NIVELES, etiqueta, type EstadoLead } from '@/lib/catalogos'
-import { fechaHora } from '@/lib/formato'
+import { fechaHora, telefono } from '@/lib/formato'
 import { Tarjeta, Vacio } from '@/components/campos'
 import { Badge } from '@/components/ui/badge'
 import type { PropsSeccion } from '../tipos'
 
 // Etiquetas de la bitácora de eventos
-const EVENTOS: Record<string, (d: Record<string, unknown>) => string> = {
+export const EVENTOS: Record<string, (d: Record<string, unknown>) => string> = {
   lead_registrado: (d) => `Lead registrado (${etiqueta(CANALES, d.canal as string)})`,
   lead_regreso: (d) =>
     d.resultado === 'nuevo_ciclo'
@@ -52,6 +52,15 @@ const EVENTOS: Record<string, (d: Record<string, unknown>) => string> = {
   testimonio_pedido: () => 'Testimonio y reseña pedidos',
   atribucion_publicacion: (d) => `Atribuido a la publicación ${d.codigo} (${d.red})`,
   insights_enviados: () => 'Resumen de insights enviado',
+  interes_web: () => 'Mostró interés en un inmueble desde el sitio web',
+  persona_nueva_whatsapp: (d) => `Escribió por WhatsApp por primera vez (${telefono(d.telefono as string)})`,
+  telefono_agregado: (d) => `Teléfono agregado: ${telefono(d.telefono as string)}`,
+  telefono_quitado: (d) => `Teléfono quitado: ${telefono(d.telefono as string)}`,
+  telefono_principal: (d) => `Teléfono principal: ${telefono(d.anterior as string)} → ${telefono(d.nuevo as string)}`,
+  union_sugerida: () => 'Posible misma persona: comparte correo con otro cliente',
+  union_descartada: () => 'Sugerencia de unión descartada',
+  personas_unidas: (d) => `Se unió con ${(d.absorbida as { nombre?: string } | undefined)?.nombre ?? 'otro registro'}`,
+  lead_cerrado_por_union: () => 'Cerrado al unir dos registros de la misma persona',
 }
 
 type Item = { fecha: string; tipo: 'estado' | 'nota' | 'evento'; texto: string; detalle?: string | null; autor?: string | null }
