@@ -20,7 +20,16 @@ export async function generateMetadata({ params }: PageProps<'/personas/[id]'>):
 
 const INTENCIONES = ['lead_registrado', 'lead_regreso']
 
-type Item = { fecha: string; texto: string; autor: string; intencion?: Record<string, unknown>; nota?: boolean }
+type Item = {
+  fecha: string
+  texto: string
+  autor: string
+  lead?: string | null
+  intencion?: Record<string, unknown>
+  nota?: boolean
+  estado?: boolean
+  detalle?: string | null
+}
 
 export default async function PaginaPersona({ params }: PageProps<'/personas/[id]'>) {
   await exigirUsuario()
@@ -37,26 +46,45 @@ export default async function PaginaPersona({ params }: PageProps<'/personas/[id
       .eq('persona_id', id)
       .order('created_at', { ascending: false }),
     supabase.from('sugerencias_union').select('id, persona_a, persona_b').eq('estado', 'pendiente').or(`persona_a.eq.${id},persona_b.eq.${id}`),
-    supabase.from('eventos').select('tipo, datos, autor_id, created_at').eq('persona_id', id),
+    supabase.from('eventos').select('tipo, datos, autor_id, lead_id, created_at').eq('persona_id', id),
     supabase.from('perfiles').select('id, nombre'),
   ])
   const idsLeads = (leads ?? []).map((l) => l.id)
-  const { data: notas } = idsLeads.length
-    ? await supabase.from('notas').select('texto, autor_id, created_at').in('lead_id', idsLeads)
-    : { data: [] }
+  const [{ data: notas }, { data: estados }] = idsLeads.length
+    ? await Promise.all([
+        supabase.from('notas').select('texto, autor_id, lead_id, created_at').in('lead_id', idsLeads),
+        supabase.from('lead_historial').select('estado_anterior, estado_nuevo, nota, autor_id, lead_id, created_at').in('lead_id', idsLeads),
+      ])
+    : [{ data: [] }, { data: [] }]
   // Solo se ven los nombres de las personas que el usuario puede ver (RLS)
   const otras = (sugerencias ?? []).map((s) => (s.persona_a === id ? s.persona_b : s.persona_a))
   const { data: nombresOtras } = otras.length ? await supabase.from('personas').select('id, nombre').in('id', otras) : { data: [] }
 
   const autor = (uid: string | null) => (uid ? (perfiles?.find((p) => p.id === uid)?.nombre ?? '—') : 'Sistema')
+  // Etiqueta del lead al que pertenece cada movimiento: "Interesado", "Propietario · ciclo 2"
+  const nombreLead = (leadId: string | null) => {
+    const l = leads?.find((x) => x.id === leadId)
+    return l ? `${TIPOS_LEAD[l.tipo as TipoLead]}${l.ciclo > 1 ? ` · ciclo ${l.ciclo}` : ''}` : null
+  }
   const items: Item[] = [
     ...(eventos ?? []).map((e) => ({
       fecha: e.created_at,
       texto: EVENTOS[e.tipo]?.(e.datos ?? {}) ?? e.tipo.replace(/_/g, ' '),
       autor: autor(e.autor_id),
+      lead: nombreLead(e.lead_id),
       intencion: INTENCIONES.includes(e.tipo) ? (e.datos as Record<string, unknown>) : undefined,
     })),
-    ...(notas ?? []).map((n) => ({ fecha: n.created_at, texto: n.texto, autor: autor(n.autor_id), nota: true })),
+    ...(estados ?? []).map((h) => ({
+      fecha: h.created_at,
+      texto: h.estado_anterior
+        ? `${ESTADOS_LEAD[h.estado_anterior as EstadoLead]} → ${ESTADOS_LEAD[h.estado_nuevo as EstadoLead]}`
+        : `Estado inicial: ${ESTADOS_LEAD[h.estado_nuevo as EstadoLead]}`,
+      autor: autor(h.autor_id),
+      lead: nombreLead(h.lead_id),
+      estado: true,
+      detalle: h.nota,
+    })),
+    ...(notas ?? []).map((n) => ({ fecha: n.created_at, texto: n.texto, autor: autor(n.autor_id), lead: nombreLead(n.lead_id), nota: true })),
   ].sort((a, b) => b.fecha.localeCompare(a.fecha))
   const totalIntenciones = items.filter((i) => i.intencion).length
 
@@ -185,15 +213,18 @@ export default async function PaginaPersona({ params }: PageProps<'/personas/[id
               <li key={i} className="relative">
                 <span
                   className={`absolute top-1.5 -left-[25px] size-2.5 rounded-full ${
-                    it.intencion ? 'bg-primary' : it.nota ? 'bg-amber-500' : 'bg-gray-300'
+                    it.intencion ? 'bg-primary' : it.estado ? 'bg-sky-500' : it.nota ? 'bg-amber-500' : 'bg-gray-300'
                   }`}
                 />
                 <div className="flex flex-wrap items-center gap-2">
                   {it.intencion && <Badge>Intención · {TIPOS_LEAD[it.intencion.tipo as TipoLead] ?? 'Lead'}</Badge>}
+                  {it.estado && <Badge variant="gris">Estado</Badge>}
                   {it.nota && <Badge variant="ambar">Nota</Badge>}
+                  {it.lead && !it.intencion && <span className="text-xs text-muted-foreground">{it.lead}</span>}
                   <p className="text-sm whitespace-pre-wrap text-foreground">{it.texto}</p>
                 </div>
                 {it.intencion && <DetalleIntencion d={it.intencion} />}
+                {it.detalle && <p className="mt-0.5 text-sm text-muted-foreground">“{it.detalle}”</p>}
                 <p className="text-xs text-muted-foreground">
                   {fechaHora(it.fecha)} · {it.autor}
                 </p>

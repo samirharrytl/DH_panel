@@ -26,7 +26,7 @@ export default async function PaginaLeads({ searchParams }: PageProps<'/leads'>)
   const porIntencion = sp.vista === 'intenciones'
   const f = {
     q: textoParam(sp.q),
-    estado: textoParam(sp.estado) || 'activos',
+    estado: textoParam(sp.estado) || (porIntencion ? 'todos' : 'activos'),
     tipo: textoParam(sp.tipo),
     canal: textoParam(sp.canal),
     asesor: textoParam(sp.asesor),
@@ -83,7 +83,7 @@ export default async function PaginaLeads({ searchParams }: PageProps<'/leads'>)
 
   const ahora = ahoraMs()
   const finHoy = new Date(`${hoyLima()}T23:59:59-05:00`).getTime()
-  const hayFiltros = Object.entries(f).some(([k, v]) => v && !(k === 'estado' && v === 'activos'))
+  const hayFiltros = Object.entries(f).some(([k, v]) => v && !(k === 'estado' && v === (porIntencion ? 'todos' : 'activos')))
 
   return (
     <>
