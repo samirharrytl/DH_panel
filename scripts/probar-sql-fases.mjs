@@ -86,6 +86,17 @@ export function registrar({ db, prueba, como, registrar, esperarError, uno, ADMI
     await db.query(`update leads set inmueble_interes_id = null where id = $1`, [lead])
   })
 
+  prueba('Sitio web: pauta digital crea interesado o propietario y guarda la publicidad', async () => {
+    const leadDe = (id) => uno(db, `select tipo, consentimiento_marketing from leads where id = $1`, [id])
+    const compra = await val(null, `select registrar_lead_web('ad-buy', 'Ana Pauta', '955111000', 'ana@x.pe', null, null, true, null, true)`)
+    assert.deepEqual({ ...(await leadDe(compra)) }, { tipo: 'interesado', consentimiento_marketing: true })
+    const venta = await val(null, `select registrar_lead_web('ad-sell', 'Raúl Pauta', '955111001', null, null, null, true, null)`)
+    assert.deepEqual({ ...(await leadDe(venta)) }, { tipo: 'propietario', consentimiento_marketing: false })
+    const otraVez = await val(null, `select registrar_lead_web('ad-sell', 'Raúl Pauta', '955111001', null, null, null, true, null, true)`)
+    assert.equal(otraVez, venta, 'vuelve a dejar sus datos: es el mismo lead')
+    assert.equal((await leadDe(venta)).consentimiento_marketing, true, 'suma el consentimiento de publicidad')
+  })
+
   prueba('HU-17: contrato por vencer según el parámetro de aviso', async () => {
     const r = await uno(db, `select count(*)::int n from contratos where estado = 'vigente' and vence_el <= hoy_lima() + param_int('contrato_aviso_dias')`)
     assert.equal(r.n, 1)

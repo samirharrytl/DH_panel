@@ -11,6 +11,9 @@ const ORIGENES: Record<string, string> = {
   contact: 'Contacto',
   'intl-form': 'Formulario en inglés',
   'owner-sell': 'Quiere vender',
+  // Formulario /registro de la landing, destino de las pautas digitales (la campaña llega en la UTM)
+  'ad-buy': 'Pauta digital · Quiere comprar',
+  'ad-sell': 'Pauta digital · Quiere vender',
   // Alquileres: fuera del alcance del panel. Se responde 201 y no se registra (la landing sigue a WhatsApp)
   'owner-rent': '',
 }
@@ -118,6 +121,7 @@ export async function POST(request: NextRequest) {
     p_inmuebles: ids,
     p_nota: telefono ? nota : null,
     p_consentimiento: b.consent === true,
+    p_consentimiento_marketing: b.marketingConsent === true,
     p_detalle: {
       canal_detalle: `Web · ${ORIGENES[origen]}${cadena(utm.source, 200) ? ` · ${cadena(utm.source, 200)}` : ''}`,
       ...(lineas.length ? { detalles: lineas } : {}),
