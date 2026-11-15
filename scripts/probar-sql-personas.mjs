@@ -171,4 +171,16 @@ export function registrar({ db, prueba, como, registrar, esperarError, uno, ADMI
     await db.query(`update personas set ultimo_entrante_at = now() - interval '2 days' where id = $1`, [p])
     assert.equal(await destino(), '51911000040')
   })
+
+  prueba('Unir: con alguien en Baja se cancelan las citas pendientes, igual que en dar_baja', async () => {
+    const enBaja = await registrar(ASESORA, '911000050', 'En Baja', 'interesado')
+    await q(ASESORA, `select dar_baja($1, 'No quiere mensajes')`, [enBaja.lead_id])
+    const conCita = await registrar(ASESORA, '911000051', 'Con Cita', 'propietario')
+    const cita = (
+      await q(ASESORA, `select agendar_cita($1, now() + interval '2 days', 'Av. Brasil 200', 'Jesús María', 60, null, null, false) c`, [conCita.lead_id])
+    ).rows[0].c
+    await unir(ASESORA, conCita.persona_id, enBaja.persona_id)
+    const c = await uno(db, `select estado from citas where id = $1`, [cita])
+    assert.equal(c.estado, 'cancelada')
+  })
 }
