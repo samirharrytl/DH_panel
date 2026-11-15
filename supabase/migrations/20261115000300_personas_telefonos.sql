@@ -663,3 +663,21 @@ begin
 end $$;
 revoke all on function public.unir_personas(uuid, uuid, uuid[]) from public, anon;
 grant execute on function public.unir_personas(uuid, uuid, uuid[]) to authenticated;
+
+-- ---------- Número de envío ----------
+-- Con la ventana de 24 h abierta se responde al número del último mensaje entrante (la ventana es de ese
+-- número); sin ventana, las plantillas van al principal
+create function public.telefono_envio(p_persona_id uuid) returns text
+language sql stable security definer set search_path = public as $$
+  select coalesce(
+    case when public.ventana_abierta(p_persona_id) then (
+      select m.telefono from public.mensajes m
+      where m.persona_id = p_persona_id and m.direccion = 'entrante' and m.origen in ('whatsapp', 'simulado')
+      order by m.created_at desc limit 1
+    ) end,
+    (select telefono from public.personas where id = p_persona_id)
+  )
+  where public.puede_ver_persona(p_persona_id);
+$$;
+revoke all on function public.telefono_envio(uuid) from public, anon;
+grant execute on function public.telefono_envio(uuid) to authenticated;

@@ -53,16 +53,19 @@ export async function enviarMensaje(opciones: {
   const ventanaAbierta =
     !!persona.ultimo_entrante_at && Date.now() - new Date(persona.ultimo_entrante_at).getTime() < VENTANA_MS
   const simulado = modoWhatsApp() === 'simulado'
+  // Con la ventana abierta, al número que escribió por última vez; sin ventana, al principal
+  const { data: destino } = await supabase.rpc('telefono_envio', { p_persona_id: opciones.personaId })
+  const telefono = (destino as string | null) ?? persona.telefono
   let advertencia: string | undefined
 
   let envio
   let tipo = 'texto'
   if (ventanaAbierta) {
     if (opciones.botones?.length) {
-      envio = await enviarBotones(persona.telefono, cuerpo, opciones.botones, opciones.imagenUrl)
+      envio = await enviarBotones(telefono, cuerpo, opciones.botones, opciones.imagenUrl)
       tipo = 'interactivo'
     } else {
-      envio = await enviarTexto(persona.telefono, cuerpo)
+      envio = await enviarTexto(telefono, cuerpo)
     }
   } else {
     if (!plantilla) {
@@ -81,7 +84,7 @@ export async function enviarMensaje(opciones: {
       advertencia = `Simulado: en producción "${plantilla.nombre}" necesita su plantilla aprobada en Meta para enviarse fuera de la ventana de 24 horas.`
     }
     const parametros = variablesEnOrden(plantilla.cuerpo).map((v) => String(opciones.variables?.[v] ?? '').trim() || '-')
-    envio = await enviarPlantilla(persona.telefono, plantilla.meta_nombre ?? opciones.plantilla!, plantilla.meta_idioma, parametros)
+    envio = await enviarPlantilla(telefono, plantilla.meta_nombre ?? opciones.plantilla!, plantilla.meta_idioma, parametros)
     tipo = 'plantilla'
   }
 
@@ -98,6 +101,7 @@ export async function enviarMensaje(opciones: {
     p_error: envio.ok ? null : envio.error,
     p_metadata: {
       ...(opciones.metadata ?? {}),
+      telefono,
       ...(simulado ? { simulado: true } : {}),
       ...(advertencia ? { advertencia } : {}),
       ...(opciones.botones?.length ? { botones: opciones.botones } : {}),

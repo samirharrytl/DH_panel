@@ -159,4 +159,16 @@ export function registrar({ db, prueba, como, registrar, esperarError, uno, ADMI
     const ajena = (await registrar(OTRO, '911000029', 'Ajena', 'interesado')).persona_id
     await esperarError(unir(ASESORA, mia, ajena), /No tienes acceso/)
   })
+
+  // ---------- Número de envío ----------
+  prueba('Envío: con la ventana abierta va al número que escribió; sin ventana, al principal', async () => {
+    const p = (await registrar(ASESORA, '911000040', 'Dos Números', 'interesado')).persona_id
+    await q(ASESORA, `select agregar_telefono($1, '911000041')`, [p])
+    const destino = async () => (await q(ASESORA, `select telefono_envio($1) t`, [p])).rows[0].t
+    assert.equal(await destino(), '51911000040')
+    await entrante('51911000041', 'Escribo desde el otro')
+    assert.equal(await destino(), '51911000041')
+    await db.query(`update personas set ultimo_entrante_at = now() - interval '2 days' where id = $1`, [p])
+    assert.equal(await destino(), '51911000040')
+  })
 }
