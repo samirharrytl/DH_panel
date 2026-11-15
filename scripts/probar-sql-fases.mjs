@@ -195,6 +195,8 @@ export function registrar({ db, prueba, como, registrar, esperarError, uno, ADMI
     assert.ok(r.mensaje_id)
     const dup = await val(null, `select registrar_entrante_whatsapp('51966000222', 'Elena', 'Hola', 'wamid.1')`)
     assert.equal(dup.duplicado, true)
+    const aviso = await uno(db, `select count(*)::int n from notificaciones where usuario_id = $1 and tipo = 'mensaje' and cuerpo like 'Hola, ¿sigue%'`, [ADMIN])
+    assert.equal(aviso.n, 1, 'el administrador recibe un solo aviso aunque el lead sea de otro asesor')
     const p = await uno(db, `select ventana_abierta(persona_id) v from leads where id = $1`, [interesado])
     assert.equal(p.v, true)
     await esperarError(q(OTRO, `select registrar_entrante_whatsapp('51966000222', 'x', 'x', 'wamid.2')`), /permission denied/)
