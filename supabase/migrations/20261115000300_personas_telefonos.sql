@@ -64,7 +64,10 @@ begin
   return new;
 end $$;
 
-create or replace function public.registrar_lead_interno(
+-- ---------- Intenciones ----------
+-- Cada intención guarda su detalle en el evento; firma nueva con p_detalle al final
+drop function public.registrar_lead_interno(text, text, public.tipo_lead, public.canal_origen, text, text, boolean, boolean, uuid, text);
+create function public.registrar_lead_interno(
   p_telefono text,
   p_nombre text,
   p_tipo public.tipo_lead,
@@ -74,7 +77,8 @@ create or replace function public.registrar_lead_interno(
   p_consentimiento_datos boolean,
   p_consentimiento_marketing boolean,
   p_asesor_id uuid,
-  p_nota text
+  p_nota text,
+  p_detalle jsonb default '{}'
 ) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare
@@ -88,6 +92,8 @@ declare
   v_resultado text;
   v_plazo int := coalesce(public.param_int('retorno_plazo_meses'), 6);
   v_retomado public.estado_lead;
+  v_otra uuid;
+  v_sugerencia bigint;
 begin
   if v_tel is null then
     raise exception 'El teléfono no es válido';
@@ -179,12 +185,44 @@ begin
   perform public.registrar_evento(
     case when v_resultado in ('nuevo', 'persona_existente') then 'lead_registrado' else 'lead_regreso' end,
     v_lead_id,
-    jsonb_build_object('resultado', v_resultado, 'canal', p_canal, 'canal_detalle', p_canal_detalle)
+    coalesce(p_detalle, '{}') || jsonb_build_object(
+      'resultado', v_resultado, 'canal', p_canal, 'canal_detalle', p_canal_detalle, 'tipo', p_tipo,
+      'telefono', v_tel, 'email', nullif(trim(p_email), '')
+    )
   );
 
   if v_resultado in ('retomado', 'ya_activo', 'baja') then
-    perform public.notificar(v_lead.asesor_id, 'lead_regreso', 'Un lead volvió a escribir',
-      v_persona.nombre || ' (' || p_tipo || ')', '/leads/' || v_lead_id);
+    if v_lead.asesor_id is not null then
+      perform public.notificar(v_lead.asesor_id, 'lead_regreso', 'Un lead volvió a escribir',
+        v_persona.nombre || ' (' || p_tipo || ')', '/leads/' || v_lead_id);
+    else
+      perform public.notificar_admins('lead_regreso', 'Un lead volvió a escribir',
+        v_persona.nombre || ' (' || p_tipo || ')', '/leads/' || v_lead_id);
+    end if;
+  end if;
+
+  -- Mismo correo en otra persona: se sugiere unirlas
+  if nullif(trim(p_email), '') is not null then
+    for v_otra in
+      select id from public.personas where lower(email) = lower(trim(p_email)) and id <> v_persona.id
+    loop
+      insert into public.sugerencias_union (persona_a, persona_b) values (v_otra, v_persona.id)
+      on conflict do nothing returning id into v_sugerencia;
+      continue when v_sugerencia is null;
+      perform public.registrar_evento('union_sugerida', null,
+        jsonb_build_object('otra_persona', v_persona.id, 'motivo', 'correo', 'sugerencia_id', v_sugerencia), null, v_otra);
+      perform public.registrar_evento('union_sugerida', null,
+        jsonb_build_object('otra_persona', v_otra, 'motivo', 'correo', 'sugerencia_id', v_sugerencia), null, v_persona.id);
+      -- El asesor solo se entera si también lleva a la otra persona; si no, los administradores
+      if v_lead.asesor_id is not null
+         and exists (select 1 from public.leads where persona_id = v_otra and asesor_id = v_lead.asesor_id) then
+        perform public.notificar(v_lead.asesor_id, 'union_sugerida', 'Posible misma persona',
+          v_persona.nombre || ' comparte correo con otro cliente', '/personas/' || v_persona.id);
+      else
+        perform public.notificar_admins('union_sugerida', 'Posible misma persona',
+          v_persona.nombre || ' comparte correo con otro cliente', '/personas/' || v_persona.id);
+      end if;
+    end loop;
   end if;
 
   return jsonb_build_object(
@@ -415,3 +453,91 @@ revoke all on function public.marcar_principal(uuid, text) from public, anon;
 grant execute on function public.agregar_telefono(uuid, text) to authenticated;
 grant execute on function public.quitar_telefono(uuid, text) to authenticated;
 grant execute on function public.marcar_principal(uuid, text) to authenticated;
+
+-- El sitio web pasa el detalle completo de cada intención
+create or replace function public.registrar_lead_web(
+  p_origen text,
+  p_nombre text,
+  p_telefono text,
+  p_email text,
+  p_inmuebles uuid[],
+  p_nota text,
+  p_consentimiento boolean,
+  p_detalle jsonb,
+  p_consentimiento_marketing boolean default false
+) returns uuid
+language plpgsql security definer set search_path = public as $$
+declare
+  v_inmuebles uuid[];
+  v_lead uuid;
+  v_id uuid;
+begin
+  if p_origen not in ('intl-form', 'owner-sell', 'cart', 'contact', 'saved-list', 'ad-buy', 'ad-sell') then
+    raise exception 'Origen del sitio no válido: %', p_origen;
+  end if;
+
+  -- Solo cuentan los inmuebles que el sitio puede mostrar
+  select coalesce(array_agg(i.id order by array_position(p_inmuebles, i.id)), '{}') into v_inmuebles
+  from public.inmuebles i
+  where i.id = any (coalesce(p_inmuebles, '{}')) and i.estado = 'en_cartera' and i.autoriza_publicar;
+
+  if nullif(trim(p_telefono), '') is not null then
+    v_lead := (public.registrar_lead_interno(
+      p_telefono, p_nombre,
+      (case when p_origen in ('owner-sell', 'ad-sell') then 'propietario' else 'interesado' end)::public.tipo_lead,
+      'web', coalesce(p_detalle ->> 'canal_detalle', 'Sitio web'), p_email,
+      coalesce(p_consentimiento, false), coalesce(p_consentimiento_marketing, false), null, p_nota,
+      coalesce(p_detalle, '{}') || jsonb_build_object('origen', p_origen, 'mensaje', p_nota, 'inmuebles', to_jsonb(v_inmuebles))
+    ) ->> 'lead_id')::uuid;
+    if cardinality(v_inmuebles) > 0 then
+      update public.leads set inmueble_interes_id = v_inmuebles[1] where id = v_lead;
+    end if;
+  end if;
+
+  foreach v_id in array v_inmuebles loop
+    perform public.registrar_evento('interes_web', v_lead, coalesce(p_detalle, '{}') || jsonb_build_object('origen', p_origen), v_id);
+  end loop;
+  return v_lead;
+end $$;
+
+revoke all on function public.registrar_lead_interno(text, text, public.tipo_lead, public.canal_origen, text, text, boolean, boolean, uuid, text, jsonb) from public, anon, authenticated;
+
+-- ---------- Sugerencias de unión ----------
+create table public.sugerencias_union (
+  id bigint generated always as identity primary key,
+  persona_a uuid not null references public.personas (id) on delete cascade,
+  persona_b uuid not null references public.personas (id) on delete cascade,
+  motivo text not null default 'correo',
+  estado text not null default 'pendiente' check (estado in ('pendiente', 'aceptada', 'descartada')),
+  resuelta_por uuid references public.perfiles (id),
+  resuelta_at timestamptz,
+  created_at timestamptz not null default now(),
+  check (persona_a <> persona_b)
+);
+create unique index sugerencias_union_par on public.sugerencias_union
+  (least(persona_a, persona_b), greatest(persona_a, persona_b));
+
+alter table public.sugerencias_union enable row level security;
+create policy sugerencias_union_leer on public.sugerencias_union for select to authenticated
+  using (public.puede_ver_persona(persona_a) or public.puede_ver_persona(persona_b));
+revoke all on public.sugerencias_union from anon, authenticated;
+grant select on public.sugerencias_union to authenticated;
+
+create function public.descartar_sugerencia(p_id bigint) returns void
+language plpgsql security definer set search_path = public as $$
+declare
+  s public.sugerencias_union%rowtype;
+begin
+  select * into s from public.sugerencias_union where id = p_id for update;
+  if not found or not (public.puede_ver_persona(s.persona_a) and public.puede_ver_persona(s.persona_b)) then
+    raise exception 'No tienes acceso a esta sugerencia' using errcode = '42501';
+  end if;
+  if s.estado <> 'pendiente' then
+    raise exception 'La sugerencia ya se resolvió';
+  end if;
+  update public.sugerencias_union set estado = 'descartada', resuelta_por = auth.uid(), resuelta_at = now() where id = p_id;
+  perform public.registrar_evento('union_descartada', null, jsonb_build_object('otra_persona', s.persona_b, 'sugerencia_id', p_id), null, s.persona_a);
+  perform public.registrar_evento('union_descartada', null, jsonb_build_object('otra_persona', s.persona_a, 'sugerencia_id', p_id), null, s.persona_b);
+end $$;
+revoke all on function public.descartar_sugerencia(bigint) from public, anon;
+grant execute on function public.descartar_sugerencia(bigint) to authenticated;

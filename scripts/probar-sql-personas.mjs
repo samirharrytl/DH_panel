@@ -52,4 +52,55 @@ export function registrar({ db, prueba, como, registrar, esperarError, uno, ADMI
     assert.ok(!e.message.includes(ajena), 'no revela el id del otro cliente')
     await esperarError(q(ADMIN, `select agregar_telefono($1, '911000003')`, [persona]), new RegExp(ajena))
   })
+
+  // ---------- Intenciones ----------
+  const web = (origen, tel, email, mensaje) =>
+    como(db, null, async () =>
+      (
+        await db.query(`select registrar_lead_web($1, 'Cliente Web', $2, $3, '{}', $4, true, $5) r`, [
+          origen, tel, email, mensaje, { canal_detalle: 'Web', utm: 'source=meta' },
+        ])
+      ).rows[0].r,
+    )
+
+  prueba('Intenciones: una intención repetida queda como evento con su detalle', async () => {
+    const lead = await web('contact', '911000010', null, 'Busco depa')
+    await web('ad-buy', '911000010', null, 'Vi la pauta')
+    const l = await uno(db, `select persona_id from leads where id = $1`, [lead])
+    const ev = (
+      await db.query(
+        `select datos from eventos where persona_id = $1 and tipo in ('lead_registrado', 'lead_regreso') order by id`,
+        [l.persona_id],
+      )
+    ).rows
+    assert.equal(ev.length, 2)
+    assert.equal(ev[1].datos.origen, 'ad-buy')
+    assert.equal(ev[1].datos.telefono, '51911000010')
+    assert.equal(ev[1].datos.utm, 'source=meta')
+    assert.match(ev[1].datos.mensaje, /Vi la pauta/)
+    const v = await uno(db, `select count(*)::int n from leads where persona_id = $1 and vigente and tipo = 'interesado'`, [l.persona_id])
+    assert.equal(v.n, 1)
+  })
+
+  prueba('Intenciones: sin asesor avisa a los administradores', async () => {
+    const lead = await web('contact', '911000013', null, null)
+    await web('saved-list', '911000013', null, null)
+    const n = await uno(db, `select count(*)::int n from notificaciones where usuario_id = $1 and tipo = 'lead_regreso' and enlace = $2`, [
+      ADMIN, `/leads/${lead}`,
+    ])
+    assert.equal(n.n, 1)
+  })
+
+  prueba('Sugerencia: el mismo correo con otro teléfono crea una sugerencia pendiente', async () => {
+    const a = await web('contact', '911000011', 'mismo@correo.pe', null)
+    const b = await web('ad-buy', '911000012', 'Mismo@Correo.pe', null)
+    const pa = (await uno(db, `select persona_id from leads where id = $1`, [a])).persona_id
+    const pb = (await uno(db, `select persona_id from leads where id = $1`, [b])).persona_id
+    const s = await uno(db, `select id, estado from sugerencias_union where (persona_a, persona_b) in (($1, $2), ($2, $1))`, [pa, pb])
+    assert.equal(s.estado, 'pendiente')
+    await q(ADMIN, `select descartar_sugerencia($1)`, [s.id])
+    assert.equal((await uno(db, `select estado from sugerencias_union where id = $1`, [s.id])).estado, 'descartada')
+    const e = await uno(db, `select count(*)::int n from eventos where tipo = 'union_descartada' and persona_id in ($1, $2)`, [pa, pb])
+    assert.equal(e.n, 2)
+  })
 }
