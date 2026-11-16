@@ -531,6 +531,7 @@ declare
   v_otra uuid;
   v_sugerencia bigint;
   v_inmuebles int;
+  v_busquedas int;
 begin
   if v_tel is null then
     raise exception 'El teléfono no es válido';
@@ -596,12 +597,15 @@ begin
     set lead_id = v_lead_id
     where lead_id = v_lead.id and estado = 'programada'
       and inmueble_id in (select id from public.inmuebles where propietario_lead_id = v_lead_id);
+    -- Las búsquedas activas también siguen en el ciclo nuevo; las cumplidas o inactivas quedan atrás
+    update public.busquedas set lead_id = v_lead_id where lead_id = v_lead.id and activa;
+    get diagnostics v_busquedas = row_count;
     -- Si sigue con negocios abiertos, el ciclo nuevo también es Cliente: ya cerró al menos un negocio
-    if v_lead.estado = 'cliente' and v_inmuebles > 0 then
+    if v_lead.estado = 'cliente' and (v_inmuebles > 0 or v_busquedas > 0) then
       perform public.fijar_estado(v_lead_id, 'cliente', 'Sigue como Cliente: sus negocios abiertos pasan al ciclo nuevo');
     end if;
     perform public.registrar_evento('ciclo_traspaso', v_lead_id,
-      jsonb_build_object('inmuebles', v_inmuebles, 'ciclo_anterior', v_lead.id));
+      jsonb_build_object('inmuebles', v_inmuebles, 'busquedas', v_busquedas, 'ciclo_anterior', v_lead.id));
     v_resultado := 'nuevo_ciclo';
 
   else
@@ -839,3 +843,343 @@ begin
   delete from public.personas where id = p_absorbida;
 end $$;
 
+
+-- ---------- Varias búsquedas por interesado ----------
+-- Cada búsqueda es una unidad del negocio: el interesado puede tener varias activas y cerrar una sin
+-- cerrar las demás.
+
+alter table public.busquedas drop constraint busquedas_pkey;
+alter table public.busquedas add column id uuid not null default gen_random_uuid();
+alter table public.busquedas add primary key (id);
+create index busquedas_lead_idx on public.busquedas (lead_id);
+alter table public.busquedas
+  add column nombre text not null default 'Principal',
+  add column activa boolean not null default true,
+  add column cumplida_at timestamptz;
+
+-- Cada alta, edición y desactivación deja su evento con la búsqueda de la que se trata
+create or replace function public.busqueda_despues_de_guardar() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if tg_op = 'INSERT' then
+    perform public.registrar_evento('busqueda_agregada', new.lead_id,
+      jsonb_build_object('busqueda_id', new.id, 'nombre', new.nombre));
+  else
+    perform public.registrar_evento('perfil_busqueda', new.lead_id,
+      (to_jsonb(new) - 'lead_id' - 'updated_by') || jsonb_build_object('busqueda_id', new.id));
+    if old.activa and not new.activa then
+      perform public.registrar_evento('busqueda_desactivada', new.lead_id,
+        jsonb_build_object('busqueda_id', new.id, 'nombre', new.nombre,
+                           'cumplida', new.cumplida_at is not null));
+    end if;
+  end if;
+  perform public.revisar_calificacion(new.lead_id);
+  return null;
+end $$;
+
+-- Puntaje de un inmueble contra una búsqueda concreta (o sin perfil, si es nula)
+create or replace function public.calcular_match_busqueda(
+  p_busqueda_id uuid, p_lead_id uuid, p_inmueble_id uuid
+) returns jsonb
+language plpgsql stable security definer set search_path = public as $$
+declare
+  b public.busquedas%rowtype;
+  c public.capacidad_financiera%rowtype;
+  i public.inmuebles%rowtype;
+  v_zona numeric;
+  v_precio numeric;
+  v_dorm numeric;
+  v_metraje numeric;
+  v_impr numeric;
+  v_feedback numeric := 0;
+  v_req int;
+  v_ok int := 0;
+  v_item text;
+  v_excluido text;
+begin
+  select * into b from public.busquedas where id = p_busqueda_id;
+  select * into c from public.capacidad_financiera where lead_id = p_lead_id;
+  select * into i from public.inmuebles where id = p_inmueble_id;
+
+  if i.estado is distinct from 'en_cartera' then
+    v_excluido := 'no_disponible';
+  elsif c.presupuesto_max is not null and i.precio > c.presupuesto_max then
+    v_excluido := 'fuera_de_capacidad';
+  elsif coalesce(cardinality(b.tipos), 0) > 0 and not (i.tipo = any (b.tipos)) then
+    v_excluido := 'otro_tipo';
+  elsif exists (
+    select 1 from public.match_opciones
+    where lead_id = p_lead_id and inmueble_id = p_inmueble_id and respuesta = 'no_me_interesa'
+  ) then
+    v_excluido := 'rechazado';
+  end if;
+
+  v_zona := case
+    when coalesce(cardinality(b.distritos), 0) = 0 then 30
+    when lower(i.distrito) in (select lower(x) from unnest(b.distritos) x) then 30
+    else 0
+  end;
+  v_precio := case
+    when i.precio is null then 0
+    when b.precio_min is null and b.precio_max is null then 25
+    when (b.precio_min is null or i.precio >= b.precio_min) and (b.precio_max is null or i.precio <= b.precio_max) then 25
+    when b.precio_min is not null and i.precio < b.precio_min then 15
+    when b.precio_max is not null and i.precio <= b.precio_max * 1.1 then 12.5
+    else 0
+  end;
+  v_dorm := case
+    when b.dormitorios_min is null then 15
+    when i.dormitorios >= b.dormitorios_min then 15
+    when i.dormitorios = b.dormitorios_min - 1 then 5
+    else 0
+  end;
+  v_metraje := case
+    when b.metraje_min is null then 10
+    when i.metraje >= b.metraje_min then 10
+    when i.metraje >= b.metraje_min * 0.9 then 5
+    else 0
+  end;
+  v_req := coalesce(cardinality(b.imprescindibles), 0);
+  if v_req = 0 then
+    v_impr := 20;
+  else
+    foreach v_item in array b.imprescindibles loop
+      if (v_item = 'cochera' and i.cocheras > 0)
+         or (v_item = 'ascensor' and i.ascensor)
+         or (v_item = 'mascotas' and i.mascotas)
+         or lower(v_item) in (select lower(x) from unnest(i.caracteristicas) x) then
+        v_ok := v_ok + 1;
+      end if;
+    end loop;
+    v_impr := round(20.0 * v_ok / v_req, 1);
+  end if;
+
+  -- Las respuestas previas ajustan el cruce (es un aprendizaje por lead, no por búsqueda)
+  if exists (
+    select 1 from public.match_opciones mo join public.inmuebles o on o.id = mo.inmueble_id
+    where mo.lead_id = p_lead_id and mo.inmueble_id <> i.id and mo.respuesta in ('me_interesa', 'ver_parecidos')
+      and lower(o.distrito) = lower(i.distrito) and o.tipo = i.tipo
+  ) then
+    v_feedback := v_feedback + 5;
+  end if;
+  if exists (
+    select 1 from public.match_opciones mo join public.inmuebles o on o.id = mo.inmueble_id
+    where mo.lead_id = p_lead_id and mo.inmueble_id <> i.id and mo.respuesta = 'no_me_interesa'
+      and lower(o.distrito) = lower(i.distrito) and o.tipo = i.tipo
+  ) then
+    v_feedback := v_feedback - 5;
+  end if;
+
+  return jsonb_build_object(
+    'puntaje', greatest(0, least(100, v_zona + v_precio + v_dorm + v_metraje + v_impr + v_feedback)),
+    'zona', v_zona, 'precio', v_precio, 'dormitorios', v_dorm, 'metraje', v_metraje,
+    'imprescindibles', v_impr, 'ajuste_respuestas', v_feedback, 'excluido', v_excluido,
+    'busqueda_id', b.id, 'busqueda_nombre', b.nombre
+  );
+end $$;
+
+-- El cruce general usa la mejor búsqueda activa del interesado (o el perfil vacío si no tiene)
+create or replace function public.calcular_match(p_lead_id uuid, p_inmueble_id uuid) returns jsonb
+language plpgsql stable security definer set search_path = public as $$
+declare
+  b record;
+  v_match jsonb;
+  v_mejor jsonb;
+begin
+  for b in select id from public.busquedas where lead_id = p_lead_id and activa loop
+    v_match := public.calcular_match_busqueda(b.id, p_lead_id, p_inmueble_id);
+    if v_mejor is null then
+      v_mejor := v_match;
+    elsif (v_match ->> 'excluido') is null
+      and ((v_mejor ->> 'excluido') is not null
+           or (v_match ->> 'puntaje')::numeric > (v_mejor ->> 'puntaje')::numeric) then
+      v_mejor := v_match;
+    end if;
+  end loop;
+  return coalesce(v_mejor, public.calcular_match_busqueda(null, p_lead_id, p_inmueble_id));
+end $$;
+
+-- HU-22: inmuebles que hacen match, con la búsqueda con la que hicieron match
+drop function public.sugerir_matches(uuid);
+create function public.sugerir_matches(p_lead_id uuid)
+returns table (
+  inmueble_id uuid, codigo text, tipo text, distrito text, precio numeric, dormitorios int,
+  metraje numeric, puntaje numeric, detalle jsonb, ultimo_envio_at timestamptz, ultima_respuesta public.respuesta_match,
+  busqueda_id uuid, busqueda_nombre text
+)
+language plpgsql stable security definer set search_path = public as $$
+begin
+  if not public.puede_ver_lead(p_lead_id) then
+    raise exception 'No tienes acceso a este lead' using errcode = '42501';
+  end if;
+  return query
+  select i.id, i.codigo, i.tipo, i.distrito, i.precio, i.dormitorios, i.metraje,
+         (m ->> 'puntaje')::numeric, m, u.enviado_at, u.respuesta,
+         (m ->> 'busqueda_id')::uuid, m ->> 'busqueda_nombre'
+  from public.inmuebles i
+  cross join lateral public.calcular_match(p_lead_id, i.id) m
+  left join lateral (
+    select e.enviado_at, mo.respuesta
+    from public.match_opciones mo join public.match_envios e on e.id = mo.envio_id
+    where mo.lead_id = p_lead_id and mo.inmueble_id = i.id
+    order by e.enviado_at desc limit 1
+  ) u on true
+  where i.estado = 'en_cartera' and m ->> 'excluido' is null
+  order by (m ->> 'puntaje')::numeric desc, i.en_cartera_at desc;
+end $$;
+revoke all on function public.sugerir_matches(uuid) from public, anon;
+grant execute on function public.sugerir_matches(uuid) to authenticated, service_role;
+
+-- El envío guarda con qué búsqueda hizo match
+alter table public.match_opciones
+  add column busqueda_id uuid references public.busquedas (id) on delete set null;
+
+create or replace function public.registrar_envio_match(
+  p_lead_id uuid, p_inmuebles uuid[], p_tipo text default 'match', p_mensaje_id uuid default null
+) returns uuid
+language plpgsql security definer set search_path = public as $$
+declare
+  v_error text := public.validar_envio_match(p_lead_id, p_tipo, coalesce(cardinality(p_inmuebles), 0));
+  v_envio uuid;
+  v_inmueble uuid;
+  v_match jsonb;
+begin
+  if v_error is not null then
+    raise exception '%', v_error;
+  end if;
+  insert into public.match_envios (lead_id, tipo, mensaje_id) values (p_lead_id, p_tipo, p_mensaje_id)
+  returning id into v_envio;
+  foreach v_inmueble in array p_inmuebles loop
+    if not exists (select 1 from public.inmuebles where id = v_inmueble and estado = 'en_cartera') then
+      raise exception 'Uno de los inmuebles ya no está en cartera';
+    end if;
+    v_match := public.calcular_match(p_lead_id, v_inmueble);
+    insert into public.match_opciones (envio_id, lead_id, inmueble_id, busqueda_id, puntaje, detalle)
+    values (v_envio, p_lead_id, v_inmueble, (v_match ->> 'busqueda_id')::uuid,
+            (v_match ->> 'puntaje')::numeric, v_match);
+    perform public.registrar_evento('match_opcion_enviada', p_lead_id,
+      jsonb_build_object('envio_id', v_envio, 'tipo', p_tipo, 'puntaje', v_match -> 'puntaje',
+                         'busqueda_id', v_match -> 'busqueda_id'), v_inmueble);
+  end loop;
+  if p_tipo = 'novedad' then
+    update public.leads set ultimas_novedades_at = now() where id = p_lead_id;
+  end if;
+  perform public.avanzar_estado(p_lead_id, 'match_enviado',
+    case when p_tipo = 'novedad' then 'Novedad enviada' else 'Matches enviados' end);
+  return v_envio;
+end $$;
+
+-- HU-24: un Cliente sigue recibiendo novedades mientras tenga búsquedas activas
+create or replace function public.interesados_para_inmueble(p_inmueble_id uuid, p_minimo numeric default 50)
+returns table (
+  lead_id uuid, nombre text, telefono text, estado public.estado_lead, puntaje numeric, detalle jsonb,
+  puede_recibir boolean, motivo text
+)
+language plpgsql stable security definer set search_path = public as $$
+begin
+  if not public.es_usuario_activo() then
+    raise exception 'Usuario no autorizado' using errcode = '42501';
+  end if;
+  return query
+  select l.id, p.nombre, p.telefono, l.estado, (m ->> 'puntaje')::numeric, m,
+         public.validar_envio_match(l.id, 'novedad', 1) is null,
+         public.validar_envio_match(l.id, 'novedad', 1)
+  from public.leads l
+  join public.personas p on p.id = l.persona_id
+  cross join lateral public.calcular_match(l.id, p_inmueble_id) m
+  where l.tipo = 'interesado' and l.vigente
+    and l.estado in ('en_conversacion', 'calificado', 'match_enviado', 'visita_agendada', 'visita_realizada', 'cliente')
+    and exists (select 1 from public.busquedas b where b.lead_id = l.id and b.activa)
+    and not p.no_contactar
+    and public.puede_ver_lead(l.id)
+    and m ->> 'excluido' is null
+    and (m ->> 'puntaje')::numeric >= p_minimo
+    and not exists (select 1 from public.match_opciones mo where mo.lead_id = l.id and mo.inmueble_id = p_inmueble_id)
+  order by (m ->> 'puntaje')::numeric desc;
+end $$;
+
+-- HU-31: al cerrar, la búsqueda que se concretó queda cumplida y las demás siguen activas
+create or replace function public.cerrar_compraventa(
+  p_compraventa_id uuid,
+  p_fecha_cierre date,
+  p_precio_venta numeric,
+  p_comision_pagada numeric,
+  p_notas text default null
+) returns void
+language plpgsql security definer set search_path = public as $$
+declare
+  cv public.compraventas%rowtype;
+  i public.inmuebles%rowtype;
+  v_dias int := coalesce(public.param_int('testimonio_dias'), 7);
+  v_busqueda uuid;
+  v_activas int;
+  v_n int;
+begin
+  select * into cv from public.compraventas where id = p_compraventa_id for update;
+  if not found or not (public.puede_ver_lead(cv.lead_id) or public.puede_editar_inmueble(cv.inmueble_id)) then
+    raise exception 'No tienes acceso a esta compraventa' using errcode = '42501';
+  end if;
+  if cv.estado <> 'en_curso' then
+    raise exception 'La compraventa no está en curso';
+  end if;
+  if p_fecha_cierre is null then
+    raise exception 'Indica la fecha de cierre';
+  end if;
+  if p_comision_pagada is null or p_comision_pagada < 0 then
+    raise exception 'Indica la comisión pagada';
+  end if;
+  select * into i from public.inmuebles where id = cv.inmueble_id for update;
+
+  update public.compraventas
+  set estado = 'cerrada', fecha_cierre = p_fecha_cierre, precio_venta = coalesce(p_precio_venta, i.precio),
+      comision_pagada = p_comision_pagada, cerrada_por = auth.uid(), notas = coalesce(p_notas, notas)
+  where id = p_compraventa_id;
+
+  -- Otras compraventas en curso del mismo inmueble se caen
+  update public.compraventas set estado = 'caida', motivo_caida = 'El inmueble se vendió a otro comprador'
+  where inmueble_id = cv.inmueble_id and estado = 'en_curso' and id <> p_compraventa_id;
+
+  update public.inmuebles set estado = 'vendido', vendido_at = now(), autoriza_publicar = false where id = i.id;
+  update public.contratos set estado = 'terminado' where inmueble_id = i.id and estado = 'vigente';
+
+  perform public.fijar_estado(cv.lead_id, 'cliente', 'Compraventa cerrada (' || i.codigo || ')');
+  update public.leads set ultima_interaccion_at = now() where id = cv.lead_id;
+
+  -- La búsqueda del último match de este inmueble es la que se cumplió; si no hubo, la única activa
+  select mo.busqueda_id into v_busqueda
+  from public.match_opciones mo join public.match_envios e on e.id = mo.envio_id
+  where mo.lead_id = cv.lead_id and mo.inmueble_id = i.id and mo.busqueda_id is not null
+  order by e.enviado_at desc, mo.id desc
+  limit 1;
+  if v_busqueda is null then
+    select count(*), (array_agg(id))[1] into v_activas, v_busqueda
+    from public.busquedas where lead_id = cv.lead_id and activa;
+    if v_activas <> 1 then
+      v_busqueda := null;
+    end if;
+  end if;
+  if v_busqueda is not null then
+    update public.busquedas set activa = false, cumplida_at = now() where id = v_busqueda and activa;
+    get diagnostics v_n = row_count;
+    if v_n > 0 then
+      perform public.registrar_evento('busqueda_cumplida', cv.lead_id,
+        jsonb_build_object('busqueda_id', v_busqueda, 'inmueble_id', i.id, 'compraventa_id', cv.id), i.id);
+    end if;
+  end if;
+
+  insert into public.testimonios (compraventa_id, lead_id, rol, programado_para)
+  values (cv.id, cv.lead_id, 'comprador', p_fecha_cierre + v_dias)
+  on conflict do nothing;
+  if i.propietario_lead_id is not null then
+    insert into public.testimonios (compraventa_id, lead_id, rol, programado_para)
+    values (cv.id, i.propietario_lead_id, 'vendedor', p_fecha_cierre + v_dias)
+    on conflict do nothing;
+  end if;
+
+  perform public.registrar_evento('compraventa_cerrada', cv.lead_id,
+    jsonb_build_object('compraventa_id', cv.id, 'fecha', p_fecha_cierre, 'precio_venta', coalesce(p_precio_venta, i.precio),
+                       'comision_pagada', p_comision_pagada),
+    i.id);
+  perform public.registrar_evento('inmueble_vendido', i.propietario_lead_id,
+    jsonb_build_object('compraventa_id', cv.id), i.id, i.persona_id);
+end $$;

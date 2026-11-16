@@ -86,15 +86,15 @@ Cada punto tiene su prueba en la tarea correspondiente.
 - `cerrar_compraventa` (M7:25): marca como cumplida (`activa = false`, `cumplida_at = now()`) la búsqueda del último `match_opciones.busqueda_id` de ese inmueble y lead; si no hay y el lead tiene una sola búsqueda activa, esa. Evento `busqueda_cumplida`.
 - `registrar_lead_interno`: completar el traspaso de búsquedas activas al ciclo nuevo (Tarea 2).
 
-- [ ] **Paso 1: pruebas (fallan):**
+- [x] **Paso 1: pruebas (fallan):**
   - `'Búsquedas: un interesado tiene dos búsquedas y el match usa la mejor'`: búsqueda A en Miraflores y búsqueda B de terrenos; un terreno en cartera → `calcular_match(...)->>'busqueda_nombre'` = B.
   - `'Búsquedas: el envío guarda con qué búsqueda hizo match'`.
   - `'Búsquedas: al cerrar, la búsqueda queda cumplida y la otra sigue recibiendo novedades'` (punto 3): después de `cerrar_compraventa`, A queda cumplida, el lead está en Cliente y `interesados_para_inmueble(nuevo terreno)` incluye al lead.
   - Actualizar `fases:115/145/161/174` si dependen de la PK `lead_id` (por ejemplo, `on conflict (lead_id)`).
-- [ ] **Paso 2:** `npm run test:sql` → fallan.
-- [ ] **Paso 3:** implementar.
-- [ ] **Paso 4:** `npm run test:sql` → pasan.
-- [ ] **Paso 5:** commit `HU-19/22/24: varias búsquedas por interesado`.
+- [x] **Paso 2:** `npm run test:sql` → fallan.
+- [x] **Paso 3:** implementar.
+- [x] **Paso 4:** `npm run test:sql` → pasan.
+- [x] **Paso 5:** commit `HU-19/22/24: varias búsquedas por interesado`.
 
 ### Tarea 4: vende para comprar, bandeja y dataset (SQL)
 

@@ -151,4 +151,121 @@ export function registrar({ db, prueba, como, registrar, esperarError, uno, ADMI
     assert.equal((await uno(db, `select estado from leads where id = $1`, [lead])).estado, 'cliente')
     assert.equal((await uno(db, `select no_contactar from personas where telefono = '51933000002'`)).no_contactar, true)
   })
+
+  // ---------- Varias búsquedas por interesado ----------
+  let interesadoBusquedas, busquedaA, busquedaB, terreno
+  prueba('Búsquedas: un interesado tiene dos búsquedas y el match usa la mejor', async () => {
+    interesadoBusquedas = (await registrar(ASESORA, '944000401', 'Inés Dos Búsquedas', 'interesado')).lead_id
+    busquedaA = await val(
+      ASESORA,
+      `insert into busquedas (lead_id, nombre, finalidad, distritos, tipos, precio_min, precio_max, dormitorios_min)
+       values ($1, 'Depa Miraflores', 'vivir', '{Miraflores}', '{departamento}', 300000, 500000, 2) returning id`,
+      [interesadoBusquedas],
+    )
+    busquedaB = await val(
+      ASESORA,
+      `insert into busquedas (lead_id, nombre, finalidad, distritos, tipos, precio_min, precio_max)
+       values ($1, 'Terreno Surco', 'invertir', '{Surco}', '{terreno}', 200000, 400000) returning id`,
+      [interesadoBusquedas],
+    )
+    const vendedor = (await registrar(ASESORA, '944000402', 'Vendedor Terreno', 'propietario')).lead_id
+    terreno = await val(ASESORA, `select agregar_inmueble($1, 'terreno', 'Calle Sur 10', 'Surco', 300000)`, [vendedor])
+    await q(ASESORA, `update inmuebles set precio = 300000 where id = $1`, [terreno])
+    await q(ASESORA, `select registrar_contrato($1, current_date, true, 6, 3, true)`, [terreno])
+    const m = await uno(db, `select calcular_match($1, $2) m`, [interesadoBusquedas, terreno])
+    assert.equal(m.m.busqueda_nombre, 'Terreno Surco')
+    assert.equal(m.m.busqueda_id, busquedaB)
+    assert.equal(
+      (await uno(db, `select count(*)::int n from eventos where lead_id = $1 and tipo = 'busqueda_agregada'`, [interesadoBusquedas])).n,
+      2,
+    )
+  })
+
+  prueba('Búsquedas: el envío guarda con qué búsqueda hizo match', async () => {
+    await q(ASESORA, `select registrar_envio_match($1, array[$2]::uuid[])`, [interesadoBusquedas, terreno])
+    const o = await uno(
+      db,
+      `select busqueda_id, detalle from match_opciones where lead_id = $1 and inmueble_id = $2`,
+      [interesadoBusquedas, terreno],
+    )
+    assert.equal(o.busqueda_id, busquedaB)
+    assert.equal(o.detalle.busqueda_nombre, 'Terreno Surco')
+  })
+
+  let compradorCierre, busquedaCumplida, busquedaSigue, terreno1, terreno2
+  prueba('Búsquedas: al cerrar, la búsqueda queda cumplida y la otra sigue recibiendo novedades', async () => {
+    compradorCierre = (await registrar(ASESORA, '944000403', 'Carla Cierra', 'interesado')).lead_id
+    busquedaCumplida = await val(
+      ASESORA,
+      `insert into busquedas (lead_id, nombre, distritos, tipos, precio_min, precio_max)
+       values ($1, 'Terreno para invertir', '{Surco}', '{terreno}', 200000, 350000) returning id`,
+      [compradorCierre],
+    )
+    busquedaSigue = await val(
+      ASESORA,
+      `insert into busquedas (lead_id, nombre, distritos, tipos, precio_max)
+       values ($1, 'Terreno para vivir', '{}', '{terreno}', 250000) returning id`,
+      [compradorCierre],
+    )
+    await q(
+      ASESORA,
+      `insert into capacidad_financiera (lead_id, presupuesto_max, forma_pago, nivel)
+       values ($1, 500000, 'contado', 'precalificada')`,
+      [compradorCierre],
+    )
+
+    const vendedor1 = (await registrar(ASESORA, '944000404', 'Vendedor Terreno Uno', 'propietario')).lead_id
+    terreno1 = await val(ASESORA, `select agregar_inmueble($1, 'terreno', 'Calle Sur 20', 'Surco', 300000)`, [vendedor1])
+    await q(ASESORA, `update inmuebles set precio = 300000 where id = $1`, [terreno1])
+    await q(ASESORA, `select registrar_contrato($1, current_date, true, 6, 3, true)`, [terreno1])
+    // El envío deja registrada la búsqueda de mayor puntaje
+    await q(ASESORA, `select registrar_envio_match($1, array[$2]::uuid[])`, [compradorCierre, terreno1])
+    assert.equal(
+      (await uno(db, `select busqueda_id from match_opciones where lead_id = $1 and inmueble_id = $2`, [compradorCierre, terreno1]))
+        .busqueda_id,
+      busquedaCumplida,
+    )
+
+    const cv = await val(ASESORA, `select iniciar_compraventa($1, $2)`, [compradorCierre, terreno1])
+    await q(ASESORA, `select cerrar_compraventa($1, hoy_lima(), 300000, 9000)`, [cv])
+    const b1 = await uno(db, `select activa, cumplida_at from busquedas where id = $1`, [busquedaCumplida])
+    assert.equal(b1.activa, false)
+    assert.ok(b1.cumplida_at)
+    assert.equal((await uno(db, `select activa from busquedas where id = $1`, [busquedaSigue])).activa, true)
+    assert.equal((await uno(db, `select estado from leads where id = $1`, [compradorCierre])).estado, 'cliente')
+    assert.equal(
+      (await uno(db, `select count(*)::int n from eventos where lead_id = $1 and tipo = 'busqueda_cumplida'`, [compradorCierre])).n,
+      1,
+    )
+
+    // Otro terreno entra en cartera: la búsqueda activa recibe la novedad aunque el lead sea Cliente
+    const vendedor2 = (await registrar(ASESORA, '944000405', 'Vendedor Terreno Dos', 'propietario')).lead_id
+    terreno2 = await val(ASESORA, `select agregar_inmueble($1, 'terreno', 'Calle Sur 30', 'Surco', 280000)`, [vendedor2])
+    await q(ASESORA, `update inmuebles set precio = 280000 where id = $1`, [terreno2])
+    await q(ASESORA, `select registrar_contrato($1, current_date, true, 6, 3, true)`, [terreno2])
+    const cand = await q(ASESORA, `select lead_id from interesados_para_inmueble($1)`, [terreno2])
+    assert.ok(cand.rows.some((r) => r.lead_id === compradorCierre), 'la búsqueda que sigue activa recibe la novedad')
+  })
+
+  prueba('Búsquedas: pasado el plazo, el ciclo nuevo se lleva las búsquedas activas', async () => {
+    const viejo = (await registrar(ASESORA, '944000406', 'Iván Vuelve', 'interesado')).lead_id
+    const activa = await val(
+      ASESORA,
+      `insert into busquedas (lead_id, nombre, tipos) values ($1, 'Casa Surco', '{casa}') returning id`,
+      [viejo],
+    )
+    const cerrada = await val(
+      ASESORA,
+      `insert into busquedas (lead_id, nombre, tipos, activa, cumplida_at)
+       values ($1, 'Depa Cumplido', '{departamento}', false, now()) returning id`,
+      [viejo],
+    )
+    await db.query(`update leads set ultima_interaccion_at = now() - interval '7 months' where id = $1`, [viejo])
+    const r = await registrar(ASESORA, '944000406', 'Iván Vuelve', 'interesado')
+    assert.equal(r.resultado, 'nuevo_ciclo')
+    assert.equal((await uno(db, `select lead_id from busquedas where id = $1`, [activa])).lead_id, r.lead_id)
+    assert.equal((await uno(db, `select lead_id from busquedas where id = $1`, [cerrada])).lead_id, viejo)
+    const ev = await uno(db, `select datos from eventos where lead_id = $1 and tipo = 'ciclo_traspaso'`, [r.lead_id])
+    assert.equal(ev.datos.busquedas, 1)
+  })
 }
