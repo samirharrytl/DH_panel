@@ -134,6 +134,7 @@ export default async function PaginaInmueble({ params }: PageProps<'/inmuebles/[
                 <Dialogo titulo="Editar inmueble" boton="Editar" ancho="sm:max-w-2xl">
                   <Formulario accion={editarInmueble}>
                     <input type="hidden" name="inmueble_id" value={i.id} />
+                    <input type="hidden" name="formulario_completo" value="1" />
                     <div className="grid gap-3 sm:grid-cols-2">
                       <Campo etiqueta="Tipo">
                         <Seleccion name="tipo" defaultValue={i.tipo ?? ''}>

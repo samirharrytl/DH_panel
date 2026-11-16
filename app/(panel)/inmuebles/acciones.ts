@@ -44,6 +44,8 @@ export async function editarInmueble(_: Resultado | null, f: FormData): Promise<
     .filter(Boolean)
   const tocaCaracteristicas = f.has('caracteristicas') || f.has('otras_caracteristicas')
   const caracteristicas = tocaCaracteristicas ? [...new Set([...lista(f, 'caracteristicas'), ...otras])] : undefined
+  // Los formularios completos mandan un marcador: así un checkbox desmarcado también se guarda
+  const completo = f.has('formulario_completo')
 
   const supabase = await crearClienteServidor()
   const { data: actual } = await supabase.from('inmuebles').select('estado').eq('id', id).maybeSingle()
@@ -66,14 +68,14 @@ export async function editarInmueble(_: Resultado | null, f: FormData): Promise<
       dormitorios: f.has('dormitorios') ? entero(f, 'dormitorios') : undefined,
       banos: f.has('banos') ? entero(f, 'banos') : undefined,
       cocheras: f.has('cocheras') ? (entero(f, 'cocheras') ?? 0) : undefined,
-      ascensor: f.has('ascensor') ? casilla(f, 'ascensor') : undefined,
-      mascotas: f.has('mascotas') ? casilla(f, 'mascotas') : undefined,
+      ascensor: completo ? casilla(f, 'ascensor') : undefined,
+      mascotas: completo ? casilla(f, 'mascotas') : undefined,
       caracteristicas,
       precio_esperado: f.has('precio_esperado') ? numero(f, 'precio_esperado') : undefined,
       precio: f.has('precio') ? precio : undefined,
       conservacion: f.has('conservacion') ? conservacion : undefined,
       descripcion: f.has('descripcion') ? texto(f, 'descripcion') : undefined,
-      destacado: f.has('destacado') ? casilla(f, 'destacado') : undefined,
+      destacado: completo ? casilla(f, 'destacado') : undefined,
       rentabilidad_min: f.has('rentabilidad_min') ? rentMin : undefined,
       rentabilidad_max: f.has('rentabilidad_max') ? rentMax : undefined,
       anios_recupero: f.has('anios_recupero') ? numero(f, 'anios_recupero') : undefined,
