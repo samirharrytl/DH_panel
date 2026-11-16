@@ -168,8 +168,8 @@ Cada punto tiene su prueba en la tarea correspondiente.
 
 ### Tarea 8: documentos fuente
 
-- [ ] Actualizar `docs/historias-de-usuario.md` (HU-13, HU-14, HU-15, HU-19, HU-22, HU-24) y `docs/especificacion.md` (1.2, 1.5, 2.2 y “Estados del lead y del inmueble”, incluido “Cliente = cerró al menos un negocio; sigue operando”), y agregar “Contacto” al glosario.
-- [ ] Commit `Docs: inmuebles y búsquedas como unidad del negocio; Contactos`.
+- [x] Actualizar `docs/historias-de-usuario.md` (HU-13, HU-14, HU-15, HU-19, HU-22, HU-24) y `docs/especificacion.md` (1.2, 1.5, 2.2 y “Estados del lead y del inmueble”, incluido “Cliente = cerró al menos un negocio; sigue operando”), y agregar “Contacto” al glosario.
+- [x] Commit `Docs: inmuebles y búsquedas como unidad del negocio; Contactos`.
 
 ### Tarea 9: despliegue
 

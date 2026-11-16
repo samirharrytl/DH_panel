@@ -28,9 +28,9 @@ Estas 35 historias describen lo que el panel debe hacer en la fase 1, agrupadas 
 
 | ID | Historia | Criterios de aceptación |
 | --- | --- | --- |
-| HU-13 | Como asesor, quiero llenar la ficha de calificación del propietario para tener los datos antes de la cita. | Campos del Módulo 1.2 de la especificación. La ficha marca qué datos faltan. |
-| HU-14 | Como asesor, quiero agendar una cita con dirección, fecha, hora y consideraciones de acceso para coordinarla con el propietario. | La cita aparece en la agenda del asesor. Recordatorios 24 horas antes y el mismo día. Se puede reprogramar o cancelar. |
-| HU-15 | Como asesor, quiero registrar el resultado de la cita con fotos, estado del inmueble y precio acordado para crear la ficha del inmueble. | Se pueden subir varias fotos. El inmueble queda en estado "En captación". |
+| HU-13 | Como asesor, quiero llenar la ficha de captación de cada inmueble del propietario para tener los datos antes de la cita. | Un propietario puede tener varios inmuebles; cada uno nace En captación con sus datos públicos y su ficha de captación con los datos sensibles. La ficha marca qué datos faltan. |
+| HU-14 | Como asesor, quiero agendar una cita para un inmueble con dirección, fecha, hora y consideraciones de acceso para coordinarla con el propietario. | La cita queda asociada a un inmueble; si el propietario tiene varios en captación, hay que elegir cuál. Aparece en la agenda del asesor, con recordatorios 24 horas antes y el mismo día, y se puede reprogramar o cancelar. |
+| HU-15 | Como asesor, quiero registrar el resultado de la cita con fotos, estado del inmueble y precio acordado para completar la ficha de ese inmueble. | Se pueden subir varias fotos. El inmueble sigue En captación y su etapa pasa a Cita realizada; no se crea otro inmueble. |
 | HU-16 | Como asesor, quiero registrar el contrato firmado para que el inmueble pase a la base de propiedades y el propietario a Cliente. | Campos: exclusividad, plazo, comisión y autorización para publicar. Copia escaneada opcional. El inmueble pasa a "En cartera". |
 | HU-17 | Como asesor, quiero que la plataforma me avise antes de que venza un contrato para renovarlo o retirar el inmueble. | La anticipación del aviso es un parámetro configurable. |
 | HU-18 | Como asesor, quiero ver la base de propiedades con filtros para gestionarla. | Filtros por estado, distrito, tipo y precio. Estados: En captación, En cartera, Vendido y Retirado. |
@@ -39,12 +39,12 @@ Estas 35 historias describen lo que el panel debe hacer en la fase 1, agrupadas 
 
 | ID | Historia | Criterios de aceptación |
 | --- | --- | --- |
-| HU-19 | Como asesor, quiero registrar el perfil de búsqueda del interesado para que el motor de match encuentre inmuebles. | Campos del Módulo 2.2: finalidad, zonas, tipo, rango de precio, dormitorios, metraje e imprescindibles. |
+| HU-19 | Como asesor, quiero registrar una o varias búsquedas del interesado para que el motor de match encuentre inmuebles. | Cada búsqueda tiene nombre, queda activa o cumplida y guarda los campos del Módulo 2.2. El match usa la búsqueda activa de mejor puntaje. |
 | HU-20 | Como asesor, quiero registrar la capacidad financiera del interesado y su nivel para saber qué pasos habilita. | Niveles: no validada, declarada, precalificada y aprobada. La plataforma no permite agendar visita ni iniciar la compraventa si el nivel no alcanza el parámetro. |
 | HU-21 | Como asesor, quiero registrar la derivación de un interesado a un banco o bróker y el estado de su evaluación. | Al confirmarse la precalificación, el nivel se actualiza. |
-| HU-22 | Como asesor, quiero ver los inmuebles que hacen match con cada interesado, ordenados por ajuste, para enviarle hasta tres opciones. | Excluye inmuebles fuera de su capacidad y los que ya rechazó. Registra qué se envió y cuándo. |
+| HU-22 | Como asesor, quiero ver los inmuebles que hacen match con cada búsqueda del interesado, ordenados por ajuste, para enviarle hasta tres opciones. | Agrupa las sugerencias por búsqueda. Excluye inmuebles fuera de su capacidad y los que ya rechazó. Registra qué se envió, cuándo y con qué búsqueda hizo match. |
 | HU-23 | Como asesor, quiero registrar la respuesta a cada opción enviada para mejorar el match. | Respuestas: Me interesa, No me interesa y Ver parecidos. Quedan guardadas para el piloto. |
-| HU-24 | Como asesor, quiero que la plataforma me avise cuando entra un inmueble que encaja con interesados activos para enviarles la novedad. | Respeta el tope de frecuencia y las bajas. |
+| HU-24 | Como asesor, quiero que la plataforma me avise cuando entra un inmueble que encaja con interesados activos para enviarles la novedad. | Considera a los interesados con búsquedas activas, incluidos los Clientes que ya cerraron un negocio. Respeta el tope de frecuencia y las bajas. |
 | HU-25 | Como asesor, quiero priorizar el mejor inmueble cuando a un interesado le interesan varios. | Orden por ajuste al perfil, precio frente a capacidad y disponibilidad de visita. |
 | HU-26 | Como asesor, quiero agendar visitas con los datos de acceso del inmueble y agruparlas por zona en un mismo día. | La visita toma llave, código y DNI de la ficha del inmueble. La agenda muestra las visitas del día agrupadas por distrito. |
 | HU-27 | Como asesor, quiero registrar la opinión del interesado tras la visita para alimentar los insights del propietario. | La opinión queda asociada al inmueble y a la visita. |

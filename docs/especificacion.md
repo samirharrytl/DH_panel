@@ -26,7 +26,8 @@ La plataforma reúne seis módulos, que se operan desde un mismo panel:
 | Encargado | Persona que gestiona el inmueble en nombre del dueño |
 | Interesado | Persona que quiere comprar un inmueble |
 | Asesor | Persona de DepaHost que lleva el seguimiento: bienvenida, chat, publicaciones, citas, visitas y cierres. Por ahora es una persona principal, y puede haber un par de usuarios adicionales |
-| Cliente | Propietario que firmó contrato con DepaHost, o interesado que cerró una compraventa |
+| Cliente | Propietario que firmó al menos un contrato con DepaHost, o interesado que cerró al menos una compraventa. Sigue operando mientras tenga inmuebles en captación o cartera, o búsquedas activas |
+| Contacto | Persona con sus datos comunes (nombre, correo, teléfonos, preferencias de contacto e intención); puede tener un lead de propietario, uno de interesado o los dos |
 | Base de propiedades | Inmuebles con contrato firmado, disponibles para match y difusión |
 | Bot | Agente automático previsto para una fase posterior: publicará en redes, dará la bienvenida y conversará por WhatsApp |
 
@@ -45,7 +46,8 @@ La persona responsable del seguimiento ingresa con su usuario y ve en un solo lu
 ### Vistas principales
 
 - **Bandeja de leads:** propietarios e interesados con estado, origen, asesor y próxima acción; filtros por estado, canal y fecha.
-- **Ficha del lead:** datos de calificación, historial completo de WhatsApp, citas, matches enviados y respuestas.
+- **Ficha del lead:** datos de captación del inmueble, historial completo de WhatsApp, citas, matches enviados y respuestas.
+- **Contactos:** lista de personas con todos sus leads, búsqueda por nombre, correo o cualquiera de sus teléfonos, y ficha centralizada para editar los datos comunes.
 - **Agenda:** citas con propietarios y visitas de interesados, por asesor y por día, con dirección y consideraciones de acceso.
 - **Base de propiedades:** ficha de cada inmueble con fotos, estado, contrato e interés acumulado.
 - **Tablero:** leads por etapa, leads sin respuesta, conversiones y métricas del piloto de match.
@@ -61,7 +63,7 @@ Queda resuelto si se ingresa a un panel web propio o a otro sistema: será un pa
 
 ## Módulo 1: Captación de propietarios
 
-El propietario pasa de lead a cliente cuando firma el contrato, y en ese momento su inmueble entra a la base de propiedades.
+Un propietario puede tener varios inmuebles a la vez. El **inmueble** es la unidad del negocio: cada uno lleva su ficha de captación, sus citas y su etapa. El propietario pasa a Cliente cuando firma el contrato de su primer inmueble, y en ese momento ese inmueble entra a la base de propiedades; el lead sigue operando para los demás inmuebles.
 
 ### 1.1 Bienvenida
 
@@ -71,7 +73,7 @@ El propietario pasa de lead a cliente cuando firma el contrato, y en ese momento
 
 ### 1.2 Conversación y calificación
 
-Antes de agendar la cita, el asesor recaba estos datos y los registra en la ficha del lead:
+El asesor agrega cada inmueble desde la ficha del lead (botón "Agregar inmueble"): nace **En captación** y con la etapa **Calificando**. Antes de agendar la cita, recaba estos datos y los registra en la ficha de captación de ese inmueble:
 
 | Dato | Para qué sirve |
 | --- | --- |
@@ -84,6 +86,8 @@ Antes de agendar la cita, el asesor recaba estos datos y los registra en la fich
 | Urgencia o plazo | Priorizar el lead |
 | Situación legal: inscripción en SUNARP y copropietarios | Detectar trabas antes del contrato |
 | Preferencia de contacto: llamada por WhatsApp o al celular, y horario | Contactarlo por el medio que prefiere |
+
+Los datos públicos del inmueble los ve todo usuario activo porque alimentan el match; los sensibles de la captación (hipoteca, banco y saldo, urgencia, situación legal, rol y poder) solo los ve el administrador y el asesor del lead. La ficha marca qué datos faltan.
 
 ### 1.3 Refuerzos si no responde
 
@@ -111,10 +115,11 @@ Si el lead no responde a la bienvenida (Día 0), recibe refuerzos, cada uno dist
 
 ### 1.5 Citas con el propietario y contrato
 
-- Hay una o dos citas: la primera para conocer el inmueble y la segunda, si hace falta, para dejar listo el contrato.
-- Tras la primera cita se registran fotos, estado del inmueble y precio acordado.
-- El contrato se firma en físico y luego se registra en la plataforma con sus datos: exclusividad, plazo, comisión y autorización para publicar.
-- Al firmar, el lead pasa a Cliente y el inmueble entra a la base de propiedades.
+- Las citas son por inmueble: si el propietario tiene varios en captación, el asesor elige con cuál es la cita.
+- Hay una o dos citas por inmueble: la primera para conocerlo y la segunda, si hace falta, para dejar listo el contrato.
+- Tras la primera cita se registran fotos, estado del inmueble y precio acordado en la ficha de **ese** inmueble; no se crea otro. La etapa pasa a **Cita realizada**.
+- El contrato se firma en físico y luego se registra en la plataforma con sus datos: exclusividad, plazo, comisión y autorización para publicar. Se registra por inmueble y exige tipo, dirección, distrito y precio.
+- Al firmar el primer contrato, el lead pasa a Cliente y ese inmueble entra a la base de propiedades. Si el propietario tiene otros inmuebles abiertos, el lead sigue operando: puede agregarlos, agendarlos y avanzar sus etapas.
 - La plataforma avisa antes de que venza el plazo del contrato, para renovarlo o retirar el inmueble (propuesta).
 
 ## Módulo 2: Interesados
@@ -131,7 +136,7 @@ El interesado recibe inmuebles que encajan con su búsqueda y su capacidad de pa
 
 ### 2.2 Perfil de búsqueda
 
-El perfil es la base del match y contiene:
+Un interesado puede tener **varias búsquedas** a la vez. Cada una tiene nombre (por ejemplo, "Depa para vivir" o "Terreno para invertir"), queda activa o cumplida, y contiene:
 
 - Finalidad: vivir o invertir
 - Zonas o distritos
@@ -139,6 +144,8 @@ El perfil es la base del match y contiene:
 - Rango de precio
 - Dormitorios y metraje
 - Imprescindibles: cochera, ascensor, mascotas u otros
+
+El match evalúa el inmueble contra cada búsqueda activa y se queda con la de mejor puntaje. Cuando se cierra una compraventa, la búsqueda que se concretó queda **cumplida** y las demás siguen recibiendo novedades. La capacidad financiera y el nivel siguen siendo por lead.
 
 ### 2.3 Capacidad financiera
 
@@ -243,6 +250,12 @@ La compraventa se hace con acompañamiento de DepaHost y, una vez cerrada, se pa
 &#91;embedded content: estados del lead · 2 embudos, 1 postventa\]
 
 El contrato del propietario mete su inmueble en la base, que alimenta los matches del interesado; ambos terminan como clientes en postventa.
+
+**El negocio vive en el inmueble o en la búsqueda, no en el lead.** Un propietario puede tener varios inmuebles y un interesado varias búsquedas; el estado del lead refleja el negocio más avanzado. Cada lead conserva sus ciclos: si la persona vuelve después del plazo de retorno sin interacción, se abre un ciclo nuevo y los negocios abiertos (inmuebles En captación o En cartera y búsquedas activas) pasan al lead nuevo; lo cerrado queda en el ciclo anterior.
+
+**Cliente = cerró al menos un negocio; sigue operando.** Un lead en Cliente puede agendar citas y visitas, agregar inmuebles y avanzar sus etapas, y recibir matches y novedades mientras tenga inmuebles abiertos o búsquedas activas. Una intención nueva de un Cliente se suma al mismo lead si no venció el plazo de retorno.
+
+El inmueble En captación recorre estas etapas, que avanzan solas con las acciones y quedan en el historial: **Calificando → Cita agendada → Cita realizada**. Al firmar el contrato pasa a En cartera y la etapa se limpia.
 
 Desde cualquier estado previo al cierre, un lead puede salir a:
 
