@@ -74,12 +74,13 @@ export async function SeccionCierre({ lead }: PropsSeccion) {
     )
   }
 
-  const [{ data: cvs }, { data: capacidad }, { data: interesaron }, { data: visitas }, { data: cartera }] = await Promise.all([
+  const [{ data: cvs }, { data: capacidad }, { data: interesaron }, { data: visitas }, { data: cartera }, { data: busquedas }] = await Promise.all([
     supabase.from('compraventas').select(SELECT_COMPRAVENTA).eq('lead_id', lead.id).order('iniciada_at', { ascending: false }),
     supabase.from('capacidad_financiera').select('nivel').eq('lead_id', lead.id).maybeSingle(),
     supabase.from('match_opciones').select('inmueble_id').eq('lead_id', lead.id).eq('respuesta', 'me_interesa'),
     supabase.from('citas').select('inmueble_id').eq('lead_id', lead.id).eq('tipo', 'visita').in('estado', ['programada', 'realizada']),
     supabase.from('inmuebles').select('id, codigo, tipo, distrito, precio, estado').eq('estado', 'en_cartera').order('numero'),
+    supabase.from('busquedas').select('id').eq('lead_id', lead.id).eq('activa', true),
   ])
   const compraventas = (cvs ?? []) as unknown as Compraventa[]
   const enCurso = compraventas.find((c) => c.estado === 'en_curso')
@@ -89,7 +90,9 @@ export async function SeccionCierre({ lead }: PropsSeccion) {
   const exigidoParam = param('nivel_compraventa')
   const nivelExigido = (typeof exigidoParam === 'string' && exigidoParam in NIVELES ? exigidoParam : 'precalificada') as Nivel
   const alcanza = ORDEN_NIVEL.indexOf(nivelActual) >= ORDEN_NIVEL.indexOf(nivelExigido)
-  const puedeIniciar = lead.vigente && !['baja', 'cliente'].includes(lead.estado) && !enCurso
+  const tieneBusquedaActiva = !!busquedas?.length
+  const puedeIniciar =
+    lead.vigente && lead.estado !== 'baja' && !enCurso && (lead.estado !== 'cliente' || tieneBusquedaActiva)
   const testimonioDias = Number(param('testimonio_dias') ?? 7)
 
   const leInteresaron = new Set((interesaron ?? []).map((x) => x.inmueble_id as string))
@@ -182,11 +185,13 @@ export async function SeccionCierre({ lead }: PropsSeccion) {
         </Tarjeta>
       )}
 
-      {!enCurso && !puedeIniciar && lead.estado !== 'cliente' && (
+      {!enCurso && !puedeIniciar && (
         <Aviso tipo="info">
           {lead.estado === 'baja'
             ? 'El lead está en Baja: no se puede iniciar una compraventa.'
-            : 'Este registro ya no está vigente: la compraventa se inicia desde el ciclo actual del lead.'}
+            : lead.estado === 'cliente'
+              ? 'Ya cerró un negocio y no tiene búsquedas activas: activa una búsqueda en Perfil y capacidad para iniciar otra compraventa.'
+              : 'Este registro ya no está vigente: la compraventa se inicia desde el ciclo actual del lead.'}
         </Aviso>
       )}
 

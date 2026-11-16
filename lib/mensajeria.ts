@@ -126,20 +126,34 @@ export async function variablesLead(leadId: string, cliente?: SupabaseClient): P
   const persona = l.personas as unknown as { nombre: string } | null
   const asesor = l.asesor as unknown as { nombre: string } | null
   const inmueble = l.inmueble as unknown as { codigo: string; tipo: string; distrito: string } | null
-  const { data: calif } =
+  const { data: inmueblePropio } =
     l.tipo === 'propietario'
-      ? await supabase.from('calificacion_propietario').select('tipo_inmueble, distrito').eq('lead_id', leadId).maybeSingle()
+      ? await supabase
+          .from('inmuebles')
+          .select('tipo, distrito')
+          .eq('propietario_lead_id', leadId)
+          .eq('estado', 'en_captacion')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
       : { data: null }
   const { data: busqueda } =
     l.tipo === 'interesado'
-      ? await supabase.from('busquedas').select('distritos, tipos').eq('lead_id', leadId).maybeSingle()
+      ? await supabase
+          .from('busquedas')
+          .select('distritos, tipos')
+          .eq('lead_id', leadId)
+          .eq('activa', true)
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
       : { data: null }
 
   // [tema]: dónde quedó el interés, para retomar la conversación (HU-06)
   let tema = 'lo que estabas buscando'
   if (inmueble) tema = `el ${describirInmueble(inmueble)}`
-  else if (calif?.tipo_inmueble || calif?.distrito)
-    tema = `la venta de tu ${etiqueta(TIPOS_INMUEBLE, calif.tipo_inmueble ?? 'otro').toLowerCase()}${calif.distrito ? ` en ${calif.distrito}` : ''}`
+  else if (inmueblePropio?.tipo || inmueblePropio?.distrito)
+    tema = `la venta de tu ${etiqueta(TIPOS_INMUEBLE, inmueblePropio.tipo ?? 'otro').toLowerCase()}${inmueblePropio.distrito ? ` en ${inmueblePropio.distrito}` : ''}`
   else if (busqueda?.tipos?.length || busqueda?.distritos?.length)
     tema = `tu búsqueda de ${
       busqueda.tipos?.length ? busqueda.tipos.map((t: string) => etiqueta(TIPOS_INMUEBLE, t).toLowerCase()).join(' o ') : 'inmueble'
@@ -152,7 +166,7 @@ export async function variablesLead(leadId: string, cliente?: SupabaseClient): P
     asesor: primerNombre(asesor?.nombre) || 'tu asesor de DepaHost',
     canal: etiqueta(CANALES, l.canal),
     inmueble: inmueble ? describirInmueble(inmueble) : null,
-    distrito: inmueble?.distrito ?? calif?.distrito ?? busqueda?.distritos?.[0] ?? null,
+    distrito: inmueble?.distrito ?? inmueblePropio?.distrito ?? busqueda?.distritos?.[0] ?? null,
     tema,
   }
 }

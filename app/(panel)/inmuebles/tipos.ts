@@ -1,4 +1,4 @@
-import type { EstadoInmueble, TipoInmueble } from '@/lib/catalogos'
+import type { EstadoInmueble, EtapaCaptacion, TipoInmueble } from '@/lib/catalogos'
 
 // Fila de la vista v_inmuebles (inmuebles + propietario, asesor, portada, contrato vigente e interés)
 export type InmuebleVista = {
@@ -9,9 +9,10 @@ export type InmuebleVista = {
   persona_id: string | null
   asesor_id: string | null
   estado: EstadoInmueble
-  tipo: TipoInmueble
-  direccion: string
-  distrito: string
+  etapa_captacion: EtapaCaptacion | null
+  tipo: TipoInmueble | null
+  direccion: string | null
+  distrito: string | null
   referencia: string | null
   metraje: number | null
   dormitorios: number | null

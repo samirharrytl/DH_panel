@@ -9,7 +9,7 @@ import { Encabezado } from './encabezado'
 import { SeccionResumen } from './secciones/resumen'
 import { SeccionHistorial } from './secciones/historial'
 import { SeccionChat } from './secciones/chat'
-import { SeccionCalificacion } from './secciones/calificacion'
+import { SeccionInmuebles } from './secciones/inmuebles'
 import { SeccionCitas } from './secciones/citas'
 import { SeccionPerfil } from './secciones/perfil'
 import { SeccionMatches } from './secciones/matches'
@@ -42,8 +42,8 @@ export default async function PaginaLead({ params, searchParams }: PageProps<'/l
       ? [
           { clave: 'resumen', texto: 'Seguimiento' },
           { clave: 'chat', texto: 'Chat' },
-          { clave: 'calificacion', texto: 'Calificación' },
-          { clave: 'citas', texto: 'Citas e inmueble' },
+          { clave: 'inmuebles', texto: 'Inmuebles' },
+          { clave: 'citas', texto: 'Citas' },
           { clave: 'historial', texto: 'Historial' },
         ]
       : [
@@ -83,7 +83,7 @@ export default async function PaginaLead({ params, searchParams }: PageProps<'/l
       {tab === 'resumen' && <SeccionResumen {...props} />}
       {tab === 'chat' && <SeccionChat {...props} />}
       {tab === 'historial' && <SeccionHistorial {...props} />}
-      {tab === 'calificacion' && <SeccionCalificacion {...props} />}
+      {tab === 'inmuebles' && <SeccionInmuebles {...props} />}
       {tab === 'citas' && <SeccionCitas {...props} />}
       {tab === 'perfil' && <SeccionPerfil {...props} />}
       {tab === 'matches' && <SeccionMatches {...props} />}

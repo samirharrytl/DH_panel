@@ -45,6 +45,7 @@ export type Lead = {
   proxima_accion_at: string | null
   inmueble_interes_id: string | null
   publicacion_id: string | null
+  lead_venta_id: string | null
   created_at: string
 }
 

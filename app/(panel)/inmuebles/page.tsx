@@ -3,7 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { exigirUsuario } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
-import { ESTADOS_INMUEBLE, TIPOS_INMUEBLE, colorEstadoInmueble, etiqueta } from '@/lib/catalogos'
+import { ESTADOS_INMUEBLE, ETAPAS_CAPTACION, TIPOS_INMUEBLE, colorEstadoInmueble, etiqueta } from '@/lib/catalogos'
 import { hoyLima, soles } from '@/lib/formato'
 import { EncabezadoPagina, Seleccion, Vacio } from '@/components/campos'
 import { Input } from '@/components/ui/input'
@@ -26,6 +26,7 @@ export default async function PaginaInmuebles({ searchParams }: PageProps<'/inmu
   const sp = await searchParams
   const f = {
     estado: param(sp.estado) || 'activos',
+    etapa: param(sp.etapa),
     distrito: param(sp.distrito),
     tipo: param(sp.tipo),
     min: Number(param(sp.min)) || 0,
@@ -35,6 +36,7 @@ export default async function PaginaInmuebles({ searchParams }: PageProps<'/inmu
   let consulta = supabase.from('v_inmuebles').select('*')
   if (f.estado === 'activos') consulta = consulta.in('estado', ['en_captacion', 'en_cartera'])
   else if (f.estado !== 'todos') consulta = consulta.eq('estado', f.estado)
+  if (f.estado === 'en_captacion' && f.etapa) consulta = consulta.eq('etapa_captacion', f.etapa)
   if (f.distrito) consulta = consulta.ilike('distrito', f.distrito.replace(/[%_]/g, ''))
   if (f.tipo) consulta = consulta.eq('tipo', f.tipo)
   if (f.min) consulta = consulta.gte('precio', f.min)
@@ -49,7 +51,7 @@ export default async function PaginaInmuebles({ searchParams }: PageProps<'/inmu
   const url = new Map((firmadas ?? []).map((s) => [s.path, s.signedUrl]))
   const hoy = hoyLima()
   const avisoDias = Number(aviso?.valor ?? 30)
-  const hayFiltros = f.estado !== 'activos' || f.distrito || f.tipo || f.min || f.max
+  const hayFiltros = f.estado !== 'activos' || f.etapa || f.distrito || f.tipo || f.min || f.max
 
   return (
     <>
@@ -71,7 +73,7 @@ export default async function PaginaInmuebles({ searchParams }: PageProps<'/inmu
 
       <form
         data-guia="inm-filtros"
-        className="mb-4 grid grid-cols-2 gap-2 rounded-2xl border border-border bg-card p-3 sm:grid-cols-3 lg:grid-cols-6"
+        className="mb-4 grid grid-cols-2 gap-2 rounded-2xl border border-border bg-card p-3 sm:grid-cols-3 lg:grid-cols-7"
       >
         <Seleccion name="estado" defaultValue={f.estado} aria-label="Estado">
           <option value="activos">En captación y en cartera</option>
@@ -82,6 +84,16 @@ export default async function PaginaInmuebles({ searchParams }: PageProps<'/inmu
             </option>
           ))}
         </Seleccion>
+        {f.estado === 'en_captacion' && (
+          <Seleccion name="etapa" defaultValue={f.etapa} aria-label="Etapa de captación">
+            <option value="">Todas las etapas</option>
+            {Object.entries(ETAPAS_CAPTACION).map(([k, v]) => (
+              <option key={k} value={k}>
+                {v}
+              </option>
+            ))}
+          </Seleccion>
+        )}
         <Input name="distrito" list={ID_DISTRITOS} defaultValue={f.distrito} placeholder="Distrito" aria-label="Distrito" />
         <Seleccion name="tipo" defaultValue={f.tipo} aria-label="Tipo">
           <option value="">Todos los tipos</option>
@@ -123,10 +135,12 @@ export default async function PaginaInmuebles({ searchParams }: PageProps<'/inmu
                 <div className="flex flex-wrap items-center gap-1">
                   <span className="font-medium text-foreground">{i.codigo}</span>
                   <Badge variant={colorEstadoInmueble(i.estado)}>{ESTADOS_INMUEBLE[i.estado]}</Badge>
+                  {i.etapa_captacion && <Badge variant="azul">{etiqueta(ETAPAS_CAPTACION, i.etapa_captacion)}</Badge>}
                   <InsigniaVencimiento venceEl={i.contrato_vence_el} hoy={hoy} avisoDias={avisoDias} />
                 </div>
                 <p className="text-sm text-foreground">
-                  {etiqueta(TIPOS_INMUEBLE, i.tipo)} en {i.distrito} · <span className="font-medium">{soles(i.precio)}</span>
+                  {i.tipo ? etiqueta(TIPOS_INMUEBLE, i.tipo) : 'Sin tipo'}
+                  {i.distrito ? ` en ${i.distrito}` : ' · sin distrito'} · <span className="font-medium">{soles(i.precio ?? i.precio_esperado)}</span>
                 </p>
                 <p className="text-xs text-muted-foreground">{caracteristicasTexto(i) || 'Sin características'}</p>
                 <p className="text-xs text-muted-foreground">

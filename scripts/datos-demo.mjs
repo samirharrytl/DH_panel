@@ -46,7 +46,7 @@ async function borrar() {
   await ok(enInm('eventos'), 'eventos')
   await ok(supabase.from('refuerzos').update({ mensaje_id: null }).in('lead_id', leads.length ? leads : ['00000000-0000-0000-0000-000000000000']), 'refuerzos')
   await ok(supabase.from('mensajes').delete().in('persona_id', ids), 'mensajes')
-  for (const t of ['notas', 'refuerzos', 'lead_historial', 'busquedas', 'capacidad_financiera', 'derivaciones', 'calificacion_propietario'])
+  for (const t of ['notas', 'refuerzos', 'lead_historial', 'busquedas', 'capacidad_financiera', 'derivaciones'])
     await ok(enLeads(t), t)
   if (leads.length) {
     for (const l of leads) await ok(supabase.from('notificaciones').delete().like('enlace', `/leads/${l}%`), 'notificaciones')
@@ -98,33 +98,43 @@ async function cargar() {
   const inmuebles = []
   for (const [i, f] of fichas.entries()) {
     const r = await lead(f.tel, f.nombre, 'propietario', i % 2 ? 'facebook' : 'instagram', yo)
-    await ok(
-      supabase.from('calificacion_propietario').insert({
-        lead_id: r.lead_id, rol_contacto: 'propietario', hipoteca: false, tipo_inmueble: f.tipo, direccion: f.dir,
-        distrito: f.distrito, metraje: f.m2, dormitorios: f.dorm, banos: f.banos, cochera: f.coch > 0,
-        precio_esperado: f.precio * 1.05, urgencia: 'menos_3_meses', inscrito_sunarp: true, copropietarios: false,
-      }),
-      'calificación',
-    )
     const inm = await ok(
+      supabase.rpc('agregar_inmueble', {
+        p_lead_id: r.lead_id,
+        p_tipo: f.tipo,
+        p_direccion: f.dir,
+        p_distrito: f.distrito,
+        p_precio_esperado: f.precio * 1.05,
+      }),
+      'inmueble',
+    )
+    await ok(
       supabase
         .from('inmuebles')
-        .insert({
-          propietario_lead_id: r.lead_id, persona_id: r.persona_id, asesor_id: yo, tipo: f.tipo, direccion: f.dir,
-          distrito: f.distrito, metraje: f.m2, dormitorios: f.dorm, banos: f.banos, cocheras: f.coch, ascensor: f.asc,
-          mascotas: i !== 1, precio_esperado: f.precio * 1.05, precio: f.precio, conservacion: 'bueno',
+        .update({
+          metraje: f.m2, dormitorios: f.dorm, banos: f.banos, cocheras: f.coch, ascensor: f.asc,
+          mascotas: i !== 1, precio: f.precio, conservacion: 'bueno',
           acceso_llave: 'Portería', acceso_codigo: i % 2 ? null : `40${i}2`, acceso_dni: true,
           estado: 'en_cartera', en_cartera_at: dias(-i * 9 - 1), autoriza_publicar: i !== 3,
           descripcion: 'Inmueble de demostración.',
         })
-        .select('id')
-        .single(),
+        .eq('id', inm),
       'inmueble',
     )
-    inmuebles.push(inm.id)
+    await ok(
+      supabase
+        .from('inmueble_captacion')
+        .update({
+          rol_contacto: 'propietario', hipoteca: false, urgencia: 'menos_3_meses', inscrito_sunarp: true,
+          copropietarios: false,
+        })
+        .eq('inmueble_id', inm),
+      'ficha de captación',
+    )
+    inmuebles.push(inm)
     await ok(
       supabase.from('contratos').insert({
-        inmueble_id: inm.id, fecha_firma: dias(-i * 60 - 10).slice(0, 10), exclusividad: i !== 2,
+        inmueble_id: inm, fecha_firma: dias(-i * 60 - 10).slice(0, 10), exclusividad: i !== 2,
         plazo_meses: i === 3 ? 3 : 6, comision_pct: 3, autoriza_publicar: i !== 3,
       }),
       'contrato',
@@ -133,7 +143,7 @@ async function cargar() {
   }
 
   // Propietarios en seguimiento
-  const nuevo = await lead('201', 'Carmen Rojas', 'propietario', 'web', yo, { nota: 'Quiere vender su departamento en San Isidro.' })
+  await lead('201', 'Carmen Rojas', 'propietario', 'web', yo, { nota: 'Quiere vender su departamento en San Isidro.' })
   const conCadencia = await lead('202', 'Pedro Vargas', 'propietario', 'tiktok', yo)
   // Bienvenida de hace dos días con el primer refuerzo vencido (registrar_bienvenida exige sesión)
   await ok(supabase.from('leads').update({ bienvenida_at: dias(-2) }).eq('id', conCadencia.lead_id), 'bienvenida')
@@ -148,36 +158,60 @@ async function cargar() {
   await ok(supabase.rpc('fijar_estado', { p_lead_id: conCadencia.lead_id, p_estado: 'contactado', p_nota: 'Bienvenida enviada' }), 'estado')
   const conCita = await lead('203', 'Ana Medina', 'propietario', 'referido', yo)
   await ok(supabase.rpc('fijar_estado', { p_lead_id: conCita.lead_id, p_estado: 'en_conversacion', p_nota: 'Respondió' }), 'estado')
-  await ok(
-    supabase.from('calificacion_propietario').insert({
-      lead_id: conCita.lead_id, rol_contacto: 'encargado', tiene_poder: true, hipoteca: true, hipoteca_banco: 'BCP',
-      tipo_inmueble: 'departamento', direccion: 'Av. Javier Prado Este 2450, dpto. 1203', distrito: 'San Borja',
-      metraje: 95, dormitorios: 3, precio_esperado: 480000, urgencia: '3_a_6_meses',
+  const inmCita = await ok(
+    supabase.rpc('agregar_inmueble', {
+      p_lead_id: conCita.lead_id,
+      p_tipo: 'departamento',
+      p_direccion: 'Av. Javier Prado Este 2450, dpto. 1203',
+      p_distrito: 'San Borja',
+      p_precio_esperado: 480000,
     }),
-    'calificación',
+    'inmueble',
+  )
+  await ok(
+    supabase
+      .from('inmuebles')
+      .update({ metraje: 95, dormitorios: 3, banos: 2, cocheras: 1, ascensor: true })
+      .eq('id', inmCita),
+    'inmueble',
+  )
+  await ok(
+    supabase
+      .from('inmueble_captacion')
+      .update({
+        rol_contacto: 'encargado', tiene_poder: true, hipoteca: true, hipoteca_banco: 'BCP',
+        urgencia: '3_a_6_meses',
+      })
+      .eq('inmueble_id', inmCita),
+    'ficha de captación',
   )
   const hoy10 = new Date(`${new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(ahora)}T16:00:00-05:00`).toISOString()
   await ok(
-    supabase.from('citas').insert({
-      tipo: 'cita_propietario', lead_id: conCita.lead_id, asesor_id: yo, inicio: hoy10, direccion: 'Av. Javier Prado Este 2450, dpto. 1203',
-      distrito: 'San Borja', acceso_llave: 'La tiene el encargado', acceso_dni: true, numero: 1, estado_lead_previo: 'en_conversacion',
+    supabase.rpc('agendar_cita', {
+      p_lead_id: conCita.lead_id,
+      p_inicio: hoy10,
+      p_direccion: 'Av. Javier Prado Este 2450, dpto. 1203',
+      p_distrito: 'San Borja',
+      p_duracion_min: 60,
+      p_acceso_llave: 'La tiene el encargado',
+      p_acceso_dni: true,
+      p_inmueble_id: inmCita,
     }),
     'cita',
   )
-  await ok(supabase.rpc('fijar_estado', { p_lead_id: conCita.lead_id, p_estado: 'cita_agendada', p_nota: 'Cita 1 agendada' }), 'estado')
 
   // Interesados
   const interesados = [
-    { tel: '301', nombre: 'Diego Paredes', distritos: ['Miraflores', 'Barranco'], tipos: ['departamento'], min: 350000, max: 480000, dorm: 2, imp: ['ascensor'], presupuesto: 480000, pago: 'credito' },
-    { tel: '302', nombre: 'Valeria Chávez', distritos: ['Santiago de Surco', 'San Borja'], tipos: ['departamento'], min: 400000, max: 550000, dorm: 3, imp: ['cochera'], presupuesto: 560000, pago: 'mixto' },
-    { tel: '303', nombre: 'Andrés Flores', distritos: ['La Molina'], tipos: ['casa'], min: 700000, max: 950000, dorm: 3, imp: ['cochera', 'jardín'], presupuesto: null, pago: null },
+    { tel: '301', nombre: 'Diego Paredes', busqueda: 'Depa en Miraflores o Barranco', distritos: ['Miraflores', 'Barranco'], tipos: ['departamento'], min: 350000, max: 480000, dorm: 2, imp: ['ascensor'], presupuesto: 480000, pago: 'credito' },
+    { tel: '302', nombre: 'Valeria Chávez', busqueda: 'Depa en Surco o San Borja', distritos: ['Santiago de Surco', 'San Borja'], tipos: ['departamento'], min: 400000, max: 550000, dorm: 3, imp: ['cochera'], presupuesto: 560000, pago: 'mixto' },
+    { tel: '303', nombre: 'Andrés Flores', busqueda: 'Casa en La Molina', distritos: ['La Molina'], tipos: ['casa'], min: 700000, max: 950000, dorm: 3, imp: ['cochera', 'jardín'], presupuesto: null, pago: null },
   ]
   for (const it of interesados) {
     const r = await lead(it.tel, it.nombre, 'interesado', 'instagram', yo)
     await ok(supabase.rpc('marcar_respuesta_lead', { p_lead_id: r.lead_id }), 'respuesta')
     await ok(
       supabase.from('busquedas').insert({
-        lead_id: r.lead_id, finalidad: 'vivir', distritos: it.distritos, tipos: it.tipos, precio_min: it.min,
+        lead_id: r.lead_id, nombre: it.busqueda, finalidad: 'vivir', distritos: it.distritos, tipos: it.tipos, precio_min: it.min,
         precio_max: it.max, dormitorios_min: it.dorm, imprescindibles: it.imp,
       }),
       'búsqueda',

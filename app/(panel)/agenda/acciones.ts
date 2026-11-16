@@ -33,6 +33,7 @@ export async function agendarCita(_: Resultado | null, f: FormData): Promise<Res
     p_acceso_dni: casilla(f, 'acceso_dni'),
     p_acceso_otros: texto(f, 'acceso_otros'),
     p_notas: texto(f, 'notas'),
+    p_inmueble_id: texto(f, 'inmueble_id'),
   })
   if (error) return deError(error)
   refrescar(leadId)
@@ -40,7 +41,7 @@ export async function agendarCita(_: Resultado | null, f: FormData): Promise<Res
   return exito('Cita agendada. Envía la confirmación por WhatsApp.')
 }
 
-// HU-15: crea o actualiza la ficha del inmueble en "En captación"; las fotos se suben en esa ficha
+// HU-15: actualiza el inmueble de la cita en "En captación"; las fotos se suben en su ficha
 export async function registrarResultadoCita(_: Resultado | null, f: FormData): Promise<Resultado> {
   await exigirUsuario()
   const citaId = texto(f, 'cita_id')
@@ -66,7 +67,7 @@ export async function registrarResultadoCita(_: Resultado | null, f: FormData): 
   if (error) return deError(error)
   refrescar(texto(f, 'lead_id'))
   revalidatePath('/inmuebles')
-  return exito('Resultado registrado: el inmueble quedó En captación', { inmuebleId })
+  return exito('Resultado registrado: el inmueble quedó con la etapa Cita realizada', { inmuebleId })
 }
 
 export async function reprogramarCita(_: Resultado | null, f: FormData): Promise<Resultado> {

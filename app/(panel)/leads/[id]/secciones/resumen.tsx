@@ -47,8 +47,22 @@ export async function SeccionResumen({ lead }: PropsSeccion) {
         .limit(1)
         .maybeSingle(),
       lead.tipo === 'interesado'
-        ? supabase.from('busquedas').select('distritos, tipos, precio_max').eq('lead_id', lead.id).maybeSingle()
-        : supabase.from('calificacion_propietario').select('tipo_inmueble, distrito, precio_esperado').eq('lead_id', lead.id).maybeSingle(),
+        ? supabase
+            .from('busquedas')
+            .select('distritos, tipos, precio_max')
+            .eq('lead_id', lead.id)
+            .eq('activa', true)
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+        : supabase
+            .from('inmuebles')
+            .select('tipo, distrito, precio_esperado')
+            .eq('propietario_lead_id', lead.id)
+            .eq('estado', 'en_captacion')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle(),
       supabase.from('parametros').select('valor').eq('clave', 'retorno_plazo_meses').maybeSingle(),
     ])
 
@@ -85,7 +99,7 @@ export async function SeccionResumen({ lead }: PropsSeccion) {
                   : busqueda
                     ? 'distritos' in busqueda
                       ? [busqueda.tipos?.join(', '), busqueda.distritos?.join(', ')].filter(Boolean).join(' en ') || '—'
-                      : [busqueda.tipo_inmueble, busqueda.distrito].filter(Boolean).join(' en ') || '—'
+                      : [busqueda.tipo, busqueda.distrito].filter(Boolean).join(' en ') || '—'
                     : '—'}
               </Dato>
               <Dato etiqueta="Horario preferido">{p.horario_preferido ?? 'Pregúntale'}</Dato>

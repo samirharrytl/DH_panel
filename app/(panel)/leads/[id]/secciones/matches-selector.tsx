@@ -20,6 +20,8 @@ export type Sugerencia = {
   detalle: DetalleMatch
   ultimo_envio_at: string | null
   ultima_respuesta: string | null
+  busqueda_id: string | null
+  busqueda_nombre: string | null
 }
 
 // HU-22: el asesor marca hasta `maximo` sugerencias y las envía en un solo mensaje
@@ -38,6 +40,11 @@ export function SelectorMatches({
 }) {
   const [elegidos, setElegidos] = useState<string[]>([])
   const lleno = elegidos.length >= maximo
+  const grupos = new Map<string, Sugerencia[]>()
+  for (const s of sugerencias) {
+    const clave = s.busqueda_nombre ?? 'Sin búsqueda'
+    grupos.set(clave, [...(grupos.get(clave) ?? []), s])
+  }
 
   const alternar = (id: string) =>
     setElegidos((e) => (e.includes(id) ? e.filter((x) => x !== id) : e.length >= maximo ? e : [...e, id]))
@@ -45,8 +52,13 @@ export function SelectorMatches({
   return (
     <Formulario accion={accion} alTerminar={() => setElegidos([])} className="space-y-3">
       <input type="hidden" name="lead_id" value={leadId} />
-      <ul className="space-y-2">
-        {sugerencias.map((s) => {
+      {[...grupos.entries()].map(([nombre, lista]) => (
+        <div key={nombre} className="space-y-2">
+          <p className="text-xs font-medium text-muted-foreground">
+            {nombre} · {lista.length} {lista.length === 1 ? 'inmueble' : 'inmuebles'}
+          </p>
+          <ul className="space-y-2">
+            {lista.map((s) => {
           const marcado = elegidos.includes(s.inmueble_id)
           const bloqueado = !habilitado || (!marcado && lleno)
           const puntaje = Number(s.puntaje)
@@ -93,9 +105,11 @@ export function SelectorMatches({
                 </div>
               </label>
             </li>
-          )
-        })}
-      </ul>
+              )
+            })}
+          </ul>
+        </div>
+      ))}
       {habilitado && (
         <div className="sticky bottom-0 -mx-4 flex flex-wrap items-center justify-between gap-2 border-t border-border bg-white px-4 py-3">
           <p className="text-sm text-muted-foreground">

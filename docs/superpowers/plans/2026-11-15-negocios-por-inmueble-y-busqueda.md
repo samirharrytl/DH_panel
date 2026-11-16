@@ -144,10 +144,10 @@ Cada punto tiene su prueba en la tarea correspondiente.
 - **`resumen.tsx` y `lib/mensajeria.ts`:** en vez de `.maybeSingle()` sobre `calificacion_propietario` o `busquedas`, toman el inmueble en captación más reciente (`inmuebles`) o la búsqueda activa más reciente (`order('updated_at', desc).limit(1)`).
 - `scripts/datos-demo.mjs`: inserta con `agregar_inmueble` + `inmueble_captacion` y búsquedas con `nombre`.
 
-- [ ] **Paso 1:** leer la guía de Next 16 sobre server actions si hace falta.
-- [ ] **Paso 2:** implementar.
-- [ ] **Paso 3:** `npm run typecheck`, `npm run lint` y `npm run build` → sin errores.
-- [ ] **Paso 4:** commit `HU-13/19: pantallas de inmuebles del propietario y de búsquedas del interesado`.
+- [x] **Paso 1:** leer la guía de Next 16 sobre server actions si hace falta.
+- [x] **Paso 2:** implementar.
+- [x] **Paso 3:** `npm run typecheck`, `npm run lint` y `npm run build` → sin errores.
+- [x] **Paso 4:** commit `HU-13/19: pantallas de inmuebles del propietario y de búsquedas del interesado`.
 
 ### Tarea 7: sección Contactos
 

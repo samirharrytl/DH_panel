@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { exigirUsuario } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
-import { CONSERVACION, ESTADOS_INMUEBLE, TIPOS_INMUEBLE, colorEstadoInmueble, etiqueta } from '@/lib/catalogos'
+import { CONSERVACION, ESTADOS_INMUEBLE, ETAPAS_CAPTACION, TIPOS_INMUEBLE, colorEstadoInmueble, etiqueta } from '@/lib/catalogos'
 import { fecha, fechaHora, hoyLima, num, soles } from '@/lib/formato'
 import { Aviso, Campo, Casilla, Dato, EncabezadoPagina, Seleccion, Tarjeta, Vacio } from '@/components/campos'
 import { Textarea } from '@/components/ui/textarea'
@@ -45,7 +45,8 @@ export default async function PaginaInmueble({ params }: PageProps<'/inmuebles/[
     supabase.from('parametros').select('valor').eq('clave', 'contrato_aviso_dias').maybeSingle(),
   ])
   const puedeEditar = usuario.esAdmin || i.asesor_id === usuario.id
-  const activo = i.estado === 'en_captacion' || i.estado === 'en_cartera'
+  const enCaptacion = i.estado === 'en_captacion'
+  const activo = enCaptacion || i.estado === 'en_cartera'
   const hoy = hoyLima()
   const avisoDias = Number(param?.valor ?? 30)
   const historial = (contratos ?? []) as Contrato[]
@@ -67,18 +68,21 @@ export default async function PaginaInmueble({ params }: PageProps<'/inmuebles/[
         volver={{ href: '/inmuebles', texto: 'Base de propiedades' }}
         titulo={
           <span className="flex flex-wrap items-center gap-2">
-            {i.codigo} · {etiqueta(TIPOS_INMUEBLE, i.tipo)} en {i.distrito}
+            {i.codigo}
+            {i.tipo && ` · ${etiqueta(TIPOS_INMUEBLE, i.tipo)}`}
+            {i.distrito && ` en ${i.distrito}`}
             <Badge variant={colorEstadoInmueble(i.estado)}>{ESTADOS_INMUEBLE[i.estado]}</Badge>
+            {i.etapa_captacion && <Badge variant="azul">Etapa: {etiqueta(ETAPAS_CAPTACION, i.etapa_captacion)}</Badge>}
             <InsigniaVencimiento venceEl={i.contrato_vence_el} hoy={hoy} avisoDias={avisoDias} />
           </span>
         }
         descripcion={
           <>
-            {soles(i.precio)} · {caracteristicasTexto(i) || 'Sin características'}
+            {soles(i.precio ?? i.precio_esperado)} · {caracteristicasTexto(i) || 'Sin características'}
             {i.propietario_lead_id && (
               <>
                 {' · '}
-                <Link href={`/leads/${i.propietario_lead_id}?tab=citas`} className="text-primary hover:underline">
+                <Link href={`/leads/${i.propietario_lead_id}?tab=inmuebles`} className="text-primary hover:underline">
                   {i.propietario_nombre ?? 'Propietario'}
                 </Link>
               </>
@@ -132,7 +136,8 @@ export default async function PaginaInmueble({ params }: PageProps<'/inmuebles/[
                     <input type="hidden" name="inmueble_id" value={i.id} />
                     <div className="grid gap-3 sm:grid-cols-2">
                       <Campo etiqueta="Tipo">
-                        <Seleccion name="tipo" defaultValue={i.tipo}>
+                        <Seleccion name="tipo" defaultValue={i.tipo ?? ''}>
+                          <option value="">Sin dato</option>
                           {Object.entries(TIPOS_INMUEBLE).map(([k, v]) => (
                             <option key={k} value={k}>
                               {v}
@@ -151,16 +156,16 @@ export default async function PaginaInmueble({ params }: PageProps<'/inmuebles/[
                         </Seleccion>
                       </Campo>
                       <Campo etiqueta="Dirección" className="sm:col-span-2">
-                        <Input name="direccion" defaultValue={i.direccion} required />
+                        <Input name="direccion" defaultValue={i.direccion ?? ''} required={!enCaptacion} />
                       </Campo>
                       <Campo etiqueta="Distrito">
-                        <Input name="distrito" list={ID_DISTRITOS} defaultValue={i.distrito} required />
+                        <Input name="distrito" list={ID_DISTRITOS} defaultValue={i.distrito ?? ''} required={!enCaptacion} />
                       </Campo>
                       <Campo etiqueta="Referencia">
                         <Input name="referencia" defaultValue={i.referencia ?? ''} />
                       </Campo>
-                      <Campo etiqueta="Precio de venta (S/)">
-                        <Input name="precio" type="number" min={1} step="0.01" defaultValue={i.precio ?? ''} required />
+                      <Campo etiqueta="Precio de venta (S/)" ayuda={enCaptacion ? 'Puede quedar para después de la cita.' : undefined}>
+                        <Input name="precio" type="number" min={1} step="0.01" defaultValue={i.precio ?? ''} required={!enCaptacion} />
                       </Campo>
                       <Campo etiqueta="Precio esperado por el propietario (S/)">
                         <Input name="precio_esperado" type="number" min={0} step="0.01" defaultValue={i.precio_esperado ?? ''} />
@@ -212,11 +217,18 @@ export default async function PaginaInmueble({ params }: PageProps<'/inmuebles/[
           >
             <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               <Dato etiqueta="Dirección" className="col-span-2">
-                <a href={enlaceMapa(i.direccion, i.distrito)} target="_blank" rel="noreferrer" className="text-primary hover:underline">
-                  {i.direccion}
-                </a>
+                {i.direccion ? (
+                  <a href={enlaceMapa(i.direccion, i.distrito)} target="_blank" rel="noreferrer" className="text-primary hover:underline">
+                    {i.direccion}
+                  </a>
+                ) : (
+                  'Sin dirección'
+                )}
                 {i.referencia && <span className="block text-xs text-muted-foreground">{i.referencia}</span>}
               </Dato>
+              {i.etapa_captacion && (
+                <Dato etiqueta="Etapa de captación">{etiqueta(ETAPAS_CAPTACION, i.etapa_captacion)}</Dato>
+              )}
               <Dato etiqueta="Conservación">{etiqueta(CONSERVACION, i.conservacion)}</Dato>
               <Dato etiqueta="Precio de venta">{soles(i.precio)}</Dato>
               <Dato etiqueta="Precio esperado">{soles(i.precio_esperado)}</Dato>

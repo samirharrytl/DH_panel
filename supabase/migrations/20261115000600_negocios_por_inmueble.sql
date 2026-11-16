@@ -1329,3 +1329,6 @@ where i.propietario_lead_id is not null;
 revoke all on public.v_dataset_propietarios from anon, authenticated;
 grant select on public.v_dataset_propietarios to authenticated;
 grant all on public.v_dataset_propietarios to service_role;
+
+-- La ficha de calificación por lead se reemplazó por la ficha de captación de cada inmueble
+drop table public.calificacion_propietario;

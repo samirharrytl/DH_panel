@@ -21,18 +21,17 @@ async function leadDelInmueble(inmuebleId: string) {
 }
 
 // Datos del inmueble. Solo las columnas con GRANT; la RLS deja editar al admin y al asesor del inmueble.
+// En captación los datos públicos pueden quedar vacíos; los campos que no vienen en el formulario no se tocan.
 export async function editarInmueble(_: Resultado | null, f: FormData): Promise<Resultado> {
   await exigirUsuario()
   const id = texto(f, 'inmueble_id')
+  if (!id) return fallo('Inmueble no indicado')
   const tipo = texto(f, 'tipo')
   const conservacion = texto(f, 'conservacion')
   const direccion = texto(f, 'direccion')
   const distrito = texto(f, 'distrito')
   const precio = numero(f, 'precio')
-  if (!id) return fallo('Inmueble no indicado')
-  if (!tipo || !(tipo in TIPOS_INMUEBLE)) return fallo('Elige el tipo de inmueble')
-  if (!direccion || !distrito) return fallo('La dirección y el distrito son obligatorios')
-  if (!precio || precio <= 0) return fallo('Indica el precio de venta')
+  if (tipo && !(tipo in TIPOS_INMUEBLE)) return fallo('Elige el tipo de inmueble')
   if (conservacion && !(conservacion in CONSERVACION)) return fallo('Estado de conservación no válido')
   const rentMin = numero(f, 'rentabilidad_min')
   const rentMax = numero(f, 'rentabilidad_max')
@@ -43,31 +42,41 @@ export async function editarInmueble(_: Resultado | null, f: FormData): Promise<
     .split(',')
     .map((c) => c.trim().toLowerCase())
     .filter(Boolean)
-  const caracteristicas = [...new Set([...lista(f, 'caracteristicas'), ...otras])]
+  const tocaCaracteristicas = f.has('caracteristicas') || f.has('otras_caracteristicas')
+  const caracteristicas = tocaCaracteristicas ? [...new Set([...lista(f, 'caracteristicas'), ...otras])] : undefined
 
   const supabase = await crearClienteServidor()
+  const { data: actual } = await supabase.from('inmuebles').select('estado').eq('id', id).maybeSingle()
+  if (!actual) return fallo('No puedes editar este inmueble')
+  const enCaptacion = actual.estado === 'en_captacion'
+  if (!enCaptacion) {
+    if (!tipo) return fallo('Elige el tipo de inmueble')
+    if (!direccion || !distrito) return fallo('La dirección y el distrito son obligatorios')
+    if (!precio || precio <= 0) return fallo('Indica el precio de venta')
+  }
+
   const { data, error } = await supabase
     .from('inmuebles')
     .update({
-      tipo,
-      direccion,
-      distrito,
-      referencia: texto(f, 'referencia'),
-      metraje: numero(f, 'metraje'),
-      dormitorios: entero(f, 'dormitorios'),
-      banos: entero(f, 'banos'),
-      cocheras: entero(f, 'cocheras') ?? 0,
-      ascensor: casilla(f, 'ascensor'),
-      mascotas: casilla(f, 'mascotas'),
+      tipo: f.has('tipo') ? tipo : undefined,
+      direccion: f.has('direccion') ? direccion : undefined,
+      distrito: f.has('distrito') ? distrito : undefined,
+      referencia: f.has('referencia') ? texto(f, 'referencia') : undefined,
+      metraje: f.has('metraje') ? numero(f, 'metraje') : undefined,
+      dormitorios: f.has('dormitorios') ? entero(f, 'dormitorios') : undefined,
+      banos: f.has('banos') ? entero(f, 'banos') : undefined,
+      cocheras: f.has('cocheras') ? (entero(f, 'cocheras') ?? 0) : undefined,
+      ascensor: f.has('ascensor') ? casilla(f, 'ascensor') : undefined,
+      mascotas: f.has('mascotas') ? casilla(f, 'mascotas') : undefined,
       caracteristicas,
-      precio_esperado: numero(f, 'precio_esperado'),
-      precio,
-      conservacion,
-      descripcion: texto(f, 'descripcion'),
-      destacado: casilla(f, 'destacado'),
-      rentabilidad_min: rentMin,
-      rentabilidad_max: rentMax,
-      anios_recupero: numero(f, 'anios_recupero'),
+      precio_esperado: f.has('precio_esperado') ? numero(f, 'precio_esperado') : undefined,
+      precio: f.has('precio') ? precio : undefined,
+      conservacion: f.has('conservacion') ? conservacion : undefined,
+      descripcion: f.has('descripcion') ? texto(f, 'descripcion') : undefined,
+      destacado: f.has('destacado') ? casilla(f, 'destacado') : undefined,
+      rentabilidad_min: f.has('rentabilidad_min') ? rentMin : undefined,
+      rentabilidad_max: f.has('rentabilidad_max') ? rentMax : undefined,
+      anios_recupero: f.has('anios_recupero') ? numero(f, 'anios_recupero') : undefined,
     })
     .eq('id', id)
     .select('id, propietario_lead_id')

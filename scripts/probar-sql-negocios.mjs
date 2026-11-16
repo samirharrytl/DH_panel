@@ -175,6 +175,8 @@ export function registrar({ db, prueba, como, registrar, esperarError, uno, ADMI
     const m = await uno(db, `select calcular_match($1, $2) m`, [interesadoBusquedas, terreno])
     assert.equal(m.m.busqueda_nombre, 'Terreno Surco')
     assert.equal(m.m.busqueda_id, busquedaB)
+    const soloA = await uno(db, `select calcular_match_busqueda($1, $2, $3) m`, [busquedaA, interesadoBusquedas, terreno])
+    assert.equal(soloA.m.excluido, 'otro_tipo')
     assert.equal(
       (await uno(db, `select count(*)::int n from eventos where lead_id = $1 and tipo = 'busqueda_agregada'`, [interesadoBusquedas])).n,
       2,

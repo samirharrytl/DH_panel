@@ -55,7 +55,7 @@ export async function SeccionMatches({ lead }: PropsSeccion) {
         .eq('lead_id', lead.id)
         .order('enviado_at', { ascending: false }),
       supabase.from('parametros').select('valor').eq('clave', 'match_max_opciones').maybeSingle(),
-      supabase.from('busquedas').select('lead_id').eq('lead_id', lead.id).maybeSingle(),
+      supabase.from('busquedas').select('id').eq('lead_id', lead.id).eq('activa', true).limit(1).maybeSingle(),
       supabase.from('capacidad_financiera').select('presupuesto_max, nivel').eq('lead_id', lead.id).maybeSingle(),
     ])
 

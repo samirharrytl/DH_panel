@@ -14,16 +14,20 @@ function refrescar(leadId: string) {
 }
 
 // HU-19: perfil de búsqueda. Al tener perfil y capacidad declarada, el lead pasa a Calificado (trigger).
+// El interesado puede tener varias búsquedas: con `busqueda_id` se edita y sin él se agrega.
 export async function guardarBusqueda(_: Resultado | null, f: FormData): Promise<Resultado> {
   await exigirUsuario()
   const leadId = texto(f, 'lead_id')
   if (!leadId) return fallo('Lead no indicado')
+  const busquedaId = texto(f, 'busqueda_id')
+  const nombre = texto(f, 'nombre')
+  if (!nombre) return fallo('Ponle un nombre a la búsqueda')
   const precioMin = numero(f, 'precio_min')
   const precioMax = numero(f, 'precio_max')
   if (precioMin !== null && precioMax !== null && precioMin > precioMax) return fallo('El precio mínimo no puede ser mayor que el máximo')
-  const supabase = await crearClienteServidor()
-  const { error } = await supabase.from('busquedas').upsert({
+  const datos = {
     lead_id: leadId,
+    nombre,
     finalidad: texto(f, 'finalidad'),
     distritos: separar(texto(f, 'distritos')),
     tipos: lista(f, 'tipos'),
@@ -33,10 +37,55 @@ export async function guardarBusqueda(_: Resultado | null, f: FormData): Promise
     metraje_min: numero(f, 'metraje_min'),
     imprescindibles: [...new Set([...lista(f, 'imprescindibles'), ...separar(texto(f, 'otros_imprescindibles')).map((x) => x.toLowerCase())])],
     notas: texto(f, 'notas'),
+  }
+  const supabase = await crearClienteServidor()
+  if (busquedaId) {
+    const { data, error } = await supabase
+      .from('busquedas')
+      .update(datos)
+      .eq('id', busquedaId)
+      .eq('lead_id', leadId)
+      .select('id')
+    if (error) return deError(error)
+    if (!data?.length) return fallo('No puedes editar esta búsqueda')
+  } else {
+    const { error } = await supabase.from('busquedas').insert(datos)
+    if (error) return deError(error)
+  }
+  refrescar(leadId)
+  return exito(busquedaId ? 'Búsqueda actualizada' : 'Búsqueda agregada')
+}
+
+// Desactivar o reactivar una búsqueda sin cerrar las demás
+export async function cambiarBusquedaActiva(busquedaId: string, leadId: string, activa: boolean): Promise<Resultado> {
+  await exigirUsuario()
+  if (!busquedaId || !leadId) return fallo('Búsqueda no indicada')
+  const supabase = await crearClienteServidor()
+  const { data, error } = await supabase
+    .from('busquedas')
+    .update(activa ? { activa: true, cumplida_at: null } : { activa: false })
+    .eq('id', busquedaId)
+    .eq('lead_id', leadId)
+    .select('id')
+  if (error) return deError(error)
+  if (!data?.length) return fallo('No puedes editar esta búsqueda')
+  refrescar(leadId)
+  return exito(activa ? 'Búsqueda reactivada' : 'Búsqueda desactivada')
+}
+
+// Vende para comprar: la compra del interesado depende de la venta del lead de propietario de la misma persona
+export async function vincularVenta(_: Resultado | null, f: FormData): Promise<Resultado> {
+  await exigirUsuario()
+  const leadId = texto(f, 'lead_id')
+  if (!leadId) return fallo('Lead no indicado')
+  const supabase = await crearClienteServidor()
+  const { error } = await supabase.rpc('vincular_venta', {
+    p_lead_interesado: leadId,
+    p_lead_propietario: texto(f, 'lead_venta_id'),
   })
   if (error) return deError(error)
   refrescar(leadId)
-  return exito('Perfil de búsqueda guardado')
+  return exito('Vínculo con la venta guardado')
 }
 
 // HU-20: capacidad financiera. Con presupuesto y forma de pago, el nivel sube solo a "Declarada" (trigger).

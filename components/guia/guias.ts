@@ -128,16 +128,16 @@ const LEADS: Paso[] = [
     abre: UN_LEAD,
   },
   {
-    capitulo: 'Propietario: de la calificación al contrato',
-    titulo: 'Llena la calificación',
+    capitulo: 'Propietario: de los inmuebles al contrato',
+    titulo: 'Agrega sus inmuebles y completa la ficha',
     texto:
-      'Rol, hipoteca, datos del inmueble, precio esperado, urgencia y situación legal. Los campos pendientes llevan la marca «Falta». Toca «Guardar calificación».',
-    donde: fichaLead('calificacion'),
-    objetivo: 'lead-calificacion',
+      'Toca «+ Agregar inmueble» por cada inmueble que quiera vender. En cada uno llena los datos del inmueble y su ficha de captación (rol, hipoteca, urgencia y situación legal). Los datos pendientes aparecen al pie.',
+    donde: fichaLead('inmuebles'),
+    objetivo: 'lead-inmuebles',
     abre: UN_PROPIETARIO,
   },
   {
-    capitulo: 'Propietario: de la calificación al contrato',
+    capitulo: 'Propietario: de los inmuebles al contrato',
     titulo: 'Agenda la cita',
     texto: 'Toca «+ Agendar cita». El lead pasa a Cita agendada y la cita aparece en la Agenda.',
     donde: fichaLead('citas'),
@@ -160,7 +160,7 @@ const LEADS: Paso[] = [
   {
     capitulo: 'Propietario: de la calificación al contrato',
     titulo: 'Registra el resultado de la cita',
-    texto: 'Después de la cita, toca «Registrar resultado». Con eso se crea la ficha del inmueble, En captación.',
+    texto: 'Después de la cita, toca «Registrar resultado». Con eso se actualiza el inmueble de la cita (precio, metraje y acceso), no se crea otro.',
     donde: fichaLead('citas'),
     objetivo: 'lead-citas',
     dialogo: {
@@ -507,8 +507,8 @@ export const NOMBRE_RUTA: Record<string, string> = {
 export const NOMBRE_TAB: Record<string, string> = {
   resumen: 'Seguimiento',
   chat: 'Chat',
-  calificacion: 'Calificación',
-  citas: 'Citas e inmueble',
+  inmuebles: 'Inmuebles',
+  citas: 'Citas',
   perfil: 'Perfil y capacidad',
   matches: 'Matches',
   visitas: 'Visitas',
