@@ -44,17 +44,17 @@ Cada punto tiene su prueba en la tarea correspondiente.
 - `registrar_contrato` (M3:433): al pasar a `en_cartera`, `etapa_captacion = null` y se exigen tipo, dirección y distrito (mensaje claro).
 - **Migración de datos:** por cada fila de `calificacion_propietario`: si el lead tiene inmuebles, copia los campos sensibles a `inmueble_captacion` del más reciente y completa los públicos que estén vacíos; si no tiene, crea un inmueble `en_captacion` con los públicos (tipo, dirección, distrito, metraje, dormitorios, baños, cochera → cocheras 1/0, precio_esperado) y su `inmueble_captacion`, con la etapa según sus citas. Asigna `citas.inmueble_id` a las citas de propietario sin inmueble, cuando el lead tiene un solo inmueble.
 
-- [ ] **Paso 1: pruebas (fallan)** en `probar-sql-negocios.mjs`:
+- [x] **Paso 1: pruebas (fallan)** en `probar-sql-negocios.mjs`:
   - `'Inmuebles: un propietario agrega dos inmuebles en captación'`: dos `agregar_inmueble` → 2 filas con etapa `calificando` y dos eventos `inmueble_agregado`.
   - `'Inmuebles: con dos inmuebles la cita exige elegir'` (punto 1): `agendar_cita` sin `p_inmueble_id` → `/Elige el inmueble/`, y la cuenta de citas no cambia; con `p_inmueble_id` → etapa `cita_agendada` solo en ese inmueble.
   - `'Inmuebles: el resultado de la cita actualiza el inmueble, no crea otro'`: la cuenta de inmuebles del lead no cambia; etapa `cita_realizada`; precio y metraje actualizados.
   - `'Inmuebles: cancelar la única cita devuelve la etapa'`.
   - `'Inmuebles: la captación sensible solo la ve el asesor del lead'` (punto 4): OTRO lee `inmueble_captacion` → 0 filas; lee `inmuebles` → 1 fila.
   - `'Inmuebles: el contrato exige tipo, dirección y distrito'`.
-- [ ] **Paso 2:** `npm run test:sql` → las nuevas fallan. Las que dejan de valer en `probar-sql-fases.mjs` (HU-13 `:11`, HU-14 `:21`, HU-15 `:37`) se reescriben con `agregar_inmueble` + `inmueble_captacion` en este mismo paso, manteniendo lo que validan (RLS, recordatorios, ficha creada).
-- [ ] **Paso 3:** implementar.
-- [ ] **Paso 4:** `npm run test:sql` → todo pasa.
-- [ ] **Paso 5:** commit `HU-13/14/15: el inmueble es la unidad de captación`.
+- [x] **Paso 2:** `npm run test:sql` → las nuevas fallan. Las que dejan de valer en `probar-sql-fases.mjs` (HU-13 `:11`, HU-14 `:21`, HU-15 `:37`) se reescriben con `agregar_inmueble` + `inmueble_captacion` en este mismo paso, manteniendo lo que validan (RLS, recordatorios, ficha creada).
+- [x] **Paso 3:** implementar.
+- [x] **Paso 4:** `npm run test:sql` → todo pasa.
+- [x] **Paso 5:** commit `HU-13/14/15: el inmueble es la unidad de captación`.
 
 ### Tarea 2: Cliente deja de ser un estado final (SQL)
 
@@ -64,15 +64,15 @@ Cada punto tiene su prueba en la tarea correspondiente.
 - `dar_baja` (M3:540) y `unir_personas` (MU:2): los leads en Cliente también cancelan sus refuerzos pendientes y citas programadas, sin cambiar de estado.
 - `registrar_inmueble` (20261113000100): no cambia; deja de abrir un ciclo nuevo como consecuencia de lo anterior.
 
-- [ ] **Paso 1: pruebas (fallan):**
+- [x] **Paso 1: pruebas (fallan):**
   - `'Cliente: un propietario Cliente que vuelve sigue en el mismo lead'` (punto 2): firma el contrato del inmueble A → Cliente; `registrar` de nuevo → `resultado = 'ya_activo'`, mismo `lead_id`; `agregar_inmueble` y `agendar_cita` funcionan.
   - `'Cliente: pasado el plazo, el ciclo nuevo se lleva los inmuebles abiertos'`.
   - `'Cliente: la Baja cancela las citas de un lead Cliente'`.
   - Invertir `fases:133` (HU-22: “un cliente no puede agendar otra cita”): ahora puede, si el inmueble está en captación.
-- [ ] **Paso 2:** `npm run test:sql` → fallan.
-- [ ] **Paso 3:** implementar.
-- [ ] **Paso 4:** `npm run test:sql` → pasan.
-- [ ] **Paso 5:** commit `Leads: Cliente sigue operando mientras tenga negocios abiertos`.
+- [x] **Paso 2:** `npm run test:sql` → fallan.
+- [x] **Paso 3:** implementar.
+- [x] **Paso 4:** `npm run test:sql` → pasan.
+- [x] **Paso 5:** commit `Leads: Cliente sigue operando mientras tenga negocios abiertos`.
 
 ### Tarea 3: varias búsquedas por interesado (SQL)
 
