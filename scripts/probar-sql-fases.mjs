@@ -299,8 +299,10 @@ export function registrar({ db, prueba, como, registrar, esperarError, uno, ADMI
     assert.equal(t.negocio.compraventas_cerradas, 1)
     const conv = t.conversiones.find((c) => c.tipo === 'interesado' && c.estado === 'cliente')
     assert.equal(conv.alcanzaron, 1)
-    const ds = await q(ADMIN, `select firmo, urgencia from v_dataset_propietarios where lead_id = $1`, [propietario])
-    assert.equal(ds.rows[0].firmo, true)
+    const ds = await q(ADMIN, `select inmueble_id, firmo, urgencia from v_dataset_propietarios where lead_id = $1`, [propietario])
+    assert.equal(ds.rows.length, 2, 'una fila por inmueble del propietario')
+    assert.equal(ds.rows.filter((r) => r.firmo).length, 1)
+    assert.ok(ds.rows.some((r) => r.inmueble_id === inmueble && r.firmo && r.urgencia === 'menos_3_meses'))
   })
 
   // ---------- Coexistencia y costos de WhatsApp ----------

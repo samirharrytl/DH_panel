@@ -1183,3 +1183,149 @@ begin
   perform public.registrar_evento('inmueble_vendido', i.propietario_lead_id,
     jsonb_build_object('compraventa_id', cv.id), i.id, i.persona_id);
 end $$;
+
+-- ---------- Vende para comprar, bandeja y dataset ----------
+-- El interés de compra puede depender de la venta del inmueble del mismo propietario (misma persona)
+
+alter table public.leads add column lead_venta_id uuid references public.leads (id) on delete set null;
+
+create function public.vincular_venta(p_lead_interesado uuid, p_lead_propietario uuid default null)
+returns void
+language plpgsql security definer set search_path = public as $$
+declare
+  i public.leads%rowtype;
+  v public.leads%rowtype;
+begin
+  if not public.puede_ver_lead(p_lead_interesado) then
+    raise exception 'No tienes acceso a este lead' using errcode = '42501';
+  end if;
+  select * into i from public.leads where id = p_lead_interesado;
+  if i.id is null or i.tipo <> 'interesado' then
+    raise exception 'El vínculo se marca en el lead del interesado';
+  end if;
+
+  if p_lead_propietario is null then
+    update public.leads set lead_venta_id = null where id = p_lead_interesado;
+    perform public.registrar_evento('vende_para_comprar', p_lead_interesado,
+      jsonb_build_object('lead_venta_id', null));
+    return;
+  end if;
+
+  if not public.puede_ver_lead(p_lead_propietario) then
+    raise exception 'No tienes acceso a este lead' using errcode = '42501';
+  end if;
+  select * into v from public.leads where id = p_lead_propietario;
+  if v.id is null or v.tipo <> 'propietario' then
+    raise exception 'El vínculo va hacia el lead de un propietario';
+  end if;
+  if v.persona_id <> i.persona_id then
+    raise exception 'Solo puedes vincular la compra con la venta de la misma persona';
+  end if;
+  if not v.vigente then
+    raise exception 'El lead del propietario es de un ciclo anterior';
+  end if;
+  if v.estado = 'baja' then
+    raise exception 'El lead del propietario está en Baja';
+  end if;
+
+  update public.leads set lead_venta_id = p_lead_propietario where id = p_lead_interesado;
+  perform public.registrar_evento('vende_para_comprar', p_lead_interesado,
+    jsonb_build_object('lead_venta_id', p_lead_propietario));
+end $$;
+revoke all on function public.vincular_venta(uuid, uuid) from public, anon;
+grant execute on function public.vincular_venta(uuid, uuid) to authenticated, service_role;
+
+-- La bandeja muestra los inmuebles del propietario, sus búsquedas activas y la venta que condiciona la compra
+create or replace view public.v_bandeja with (security_invoker = true) as
+select
+  l.id,
+  l.numero,
+  l.tipo,
+  l.estado,
+  l.canal,
+  l.asesor_id,
+  a.nombre as asesor_nombre,
+  l.persona_id,
+  p.nombre,
+  p.telefono,
+  l.vigente,
+  l.created_at,
+  l.ultima_interaccion_at,
+  pa.accion as proxima_accion,
+  pa.fecha as proxima_accion_at,
+  (select count(*)::int from public.eventos e
+   where e.lead_id = l.id and e.tipo in ('lead_registrado', 'lead_regreso')) as intenciones,
+  (select coalesce(jsonb_agg(jsonb_build_object('codigo', i.codigo, 'estado', i.estado, 'etapa', i.etapa_captacion)
+                             order by i.numero), '[]'::jsonb)
+   from public.inmuebles i
+   where i.propietario_lead_id = l.id and i.estado not in ('vendido', 'retirado')) as inmuebles,
+  (select count(*)::int from public.busquedas b where b.lead_id = l.id and b.activa) as busquedas_activas,
+  l.lead_venta_id
+from public.leads l
+join public.personas p on p.id = l.persona_id
+left join public.perfiles a on a.id = l.asesor_id
+left join lateral (
+  select x.accion, x.fecha from (
+    select 'Enviar bienvenida'::text as accion, l.created_at as fecha
+    where l.bienvenida_at is null and l.estado = 'nuevo'
+    union all
+    select 'Enviar refuerzo ' || r.numero, r.fecha::timestamp at time zone 'America/Lima'
+    from public.refuerzos r where r.lead_id = l.id and r.estado = 'pendiente'
+    union all
+    select case when c.tipo = 'visita' then 'Visita' else 'Cita' end, c.inicio
+    from public.citas c
+    where c.lead_id = l.id and c.estado = 'programada' and c.inicio > now() - interval '12 hours'
+    union all
+    select 'Enviar novedades', public.novedades_no_responde_desde(l)
+    where l.estado = 'no_responde' and l.consentimiento_marketing and not p.no_contactar
+    union all
+    select l.proxima_accion, l.proxima_accion_at
+    where l.proxima_accion_at is not null and l.estado not in ('baja')
+  ) x
+  where x.fecha is not null
+  order by x.fecha
+  limit 1
+) pa on true;
+
+-- HU-35: una fila por inmueble del propietario (el negocio y la firma son por inmueble)
+drop view public.v_dataset_propietarios;
+create view public.v_dataset_propietarios with (security_invoker = true) as
+select
+  l.id as lead_id,
+  i.id as inmueble_id,
+  l.created_at,
+  l.canal,
+  l.estado,
+  q.rol_contacto,
+  q.tiene_poder,
+  q.hipoteca,
+  q.hipoteca_saldo,
+  i.tipo as tipo_inmueble,
+  i.distrito,
+  i.metraje,
+  i.dormitorios,
+  i.precio_esperado,
+  q.urgencia,
+  q.inscrito_sunarp,
+  q.copropietarios,
+  (
+    select round(avg(o.precio / nullif(o.metraje, 0)))
+    from public.inmuebles o
+    where lower(o.distrito) = lower(i.distrito) and o.tipo = i.tipo and o.estado in ('en_cartera', 'vendido')
+  ) as precio_m2_zona,
+  case when i.metraje > 0 then round(i.precio_esperado / i.metraje) end as precio_m2_esperado,
+  l.respondio_at is not null as respondio,
+  case when l.respondio_at is not null and l.bienvenida_at is not null and l.respondio_at >= l.bienvenida_at
+    then round(extract(epoch from (l.respondio_at - l.bienvenida_at)) / 3600, 1) end as horas_hasta_respuesta,
+  (select count(*) from public.mensajes m where m.lead_id = l.id and m.direccion = 'entrante') as mensajes_entrantes,
+  (select count(*) from public.refuerzos r where r.lead_id = l.id and r.estado = 'enviado') as refuerzos_enviados,
+  (select count(*) from public.citas c where c.lead_id = l.id and c.estado = 'realizada') as citas_realizadas,
+  exists (select 1 from public.contratos k where k.inmueble_id = i.id) as firmo,
+  (select min(k.created_at) from public.contratos k where k.inmueble_id = i.id) as firmo_at
+from public.inmuebles i
+join public.leads l on l.id = i.propietario_lead_id
+left join public.inmueble_captacion q on q.inmueble_id = i.id
+where i.propietario_lead_id is not null;
+revoke all on public.v_dataset_propietarios from anon, authenticated;
+grant select on public.v_dataset_propietarios to authenticated;
+grant all on public.v_dataset_propietarios to service_role;

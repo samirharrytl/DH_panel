@@ -268,4 +268,29 @@ export function registrar({ db, prueba, como, registrar, esperarError, uno, ADMI
     const ev = await uno(db, `select datos from eventos where lead_id = $1 and tipo = 'ciclo_traspaso'`, [r.lead_id])
     assert.equal(ev.datos.busquedas, 1)
   })
+
+  // ---------- Vende para comprar, bandeja y dataset ----------
+  prueba('Vende para comprar: solo entre leads de la misma persona', async () => {
+    const interesado = (await registrar(ASESORA, '955000501', 'Vende y Compra', 'interesado')).lead_id
+    const propietario = (await registrar(ASESORA, '955000501', 'Vende y Compra', 'propietario')).lead_id
+    const ajeno = (await registrar(ASESORA, '955000502', 'Otro Propietario', 'propietario')).lead_id
+    await q(ASESORA, `select vincular_venta($1, $2)`, [interesado, propietario])
+    assert.equal((await uno(db, `select lead_venta_id from leads where id = $1`, [interesado])).lead_venta_id, propietario)
+    const enBandeja = await uno(db, `select lead_venta_id, busquedas_activas from v_bandeja where id = $1`, [interesado])
+    assert.deepEqual([enBandeja.lead_venta_id, enBandeja.busquedas_activas], [propietario, 0])
+    await esperarError(q(ASESORA, `select vincular_venta($1, $2)`, [interesado, ajeno]), /misma persona/)
+    await esperarError(q(ASESORA, `select vincular_venta($1, $2)`, [propietario, interesado]), /interesado/)
+    const ev = await uno(db, `select count(*)::int n from eventos where lead_id = $1 and tipo = 'vende_para_comprar'`, [interesado])
+    assert.equal(ev.n, 1)
+    await q(ASESORA, `select vincular_venta($1, null)`, [interesado])
+    assert.equal((await uno(db, `select lead_venta_id from leads where id = $1`, [interesado])).lead_venta_id, null)
+  })
+
+  prueba('Bandeja: el propietario muestra sus inmuebles con su etapa', async () => {
+    const r = await uno(db, `select inmuebles, busquedas_activas from v_bandeja where id = $1`, [lead])
+    assert.equal(r.inmuebles.length, 2)
+    assert.deepEqual(r.inmuebles.map((i) => [i.estado, i.etapa]), [['en_cartera', null], ['en_captacion', 'calificando']])
+    assert.ok(r.inmuebles.every((i) => /^DH-\d{4}$/.test(i.codigo)))
+    assert.equal(r.busquedas_activas, 0)
+  })
 }

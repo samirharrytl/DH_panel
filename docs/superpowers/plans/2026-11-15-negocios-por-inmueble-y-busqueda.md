@@ -104,14 +104,14 @@ Cada punto tiene su prueba en la tarea correspondiente.
 - `v_dataset_propietarios` (M7:239): pasa a tener una fila por inmueble con `propietario_lead_id`; une `inmuebles` con `inmueble_captacion`; `firmo` es la existencia de un contrato del inmueble. Se conservan los nombres de columna que usa `tablero/page.tsx:122-127` (rol_contacto, precio_esperado, urgencia y demás) y se agrega `inmueble_id`.
 - `drop table calificacion_propietario` (al final de la migración, después de mover sus datos y de reemplazar a todos los que la usaban).
 
-- [ ] **Paso 1: pruebas (fallan):**
+- [x] **Paso 1: pruebas (fallan):**
   - `'Vende para comprar: solo entre leads de la misma persona'`.
   - `'Bandeja: el propietario muestra sus inmuebles con su etapa'`.
   - Ajustar `fases:291` (HU-34/35) a una fila por inmueble.
-- [ ] **Paso 2:** `npm run test:sql` → fallan.
-- [ ] **Paso 3:** implementar.
-- [ ] **Paso 4:** `npm run test:sql` → pasan. `grep -rn calificacion_propietario app lib scripts supabase/migrations/20261115000600*` → solo quedan la migración de datos y el `drop`.
-- [ ] **Paso 5:** commit `Leads: vende para comprar, bandeja con inmuebles y dataset por inmueble`.
+- [x] **Paso 2:** `npm run test:sql` → fallan.
+- [x] **Paso 3:** implementar.
+- [x] **Paso 4:** `npm run test:sql` → pasan. `grep -rn calificacion_propietario app lib scripts supabase/migrations/20261115000600*` → solo quedan la migración de datos y el `drop`.
+- [x] **Paso 5:** commit `Leads: vende para comprar, bandeja con inmuebles y dataset por inmueble`.
 
 ### Tarea 5: distintivo visual del tipo
 
