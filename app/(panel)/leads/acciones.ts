@@ -119,28 +119,19 @@ export async function actualizarConsentimiento(_: Resultado | null, f: FormData)
   return exito('Consentimiento actualizado')
 }
 
+// T7: los datos comunes se editan en la ficha del contacto; en el lead solo se edita recibe_novedades
 export async function guardarContacto(_: Resultado | null, f: FormData): Promise<Resultado> {
   await exigirUsuario()
   const leadId = texto(f, 'lead_id')
+  if (!leadId) return fallo('Lead no indicado')
   const supabase = await crearClienteServidor()
   const { error } = await supabase
-    .from('personas')
-    .update({
-      nombre: texto(f, 'nombre') ?? undefined,
-      email: texto(f, 'email'),
-      horario_preferido: texto(f, 'horario_preferido'),
-      medio_contacto: texto(f, 'medio_contacto'),
-      genero: texto(f, 'genero'),
-    })
-    .eq('id', texto(f, 'persona_id'))
-  if (error) return deError(error)
-  const { error: e2 } = await supabase
     .from('leads')
     .update({ recibe_novedades: casilla(f, 'recibe_novedades') })
     .eq('id', leadId)
-  if (e2) return deError(e2)
+  if (error) return deError(error)
   revalidatePath(`/leads/${leadId}`)
-  return exito('Datos guardados')
+  return exito('Preferencia de novedades guardada')
 }
 
 export async function guardarProximaAccion(_: Resultado | null, f: FormData): Promise<Resultado> {

@@ -160,11 +160,11 @@ Cada punto tiene su prueba en la tarea correspondiente.
 - **`resumen.tsx` (`guardarContacto`):** los datos de la persona se muestran en solo lectura con el enlace “Editar en la ficha del contacto”; en el lead se edita solo `recibe_novedades`.
 - `historial.tsx` (`EVENTOS`): etiquetas para `inmueble_agregado`, `etapa_inmueble`, `busqueda_agregada`, `busqueda_desactivada`, `busqueda_cumplida`, `vende_para_comprar`, `ciclo_traspaso` y `persona_editada`.
 
-- [ ] **Paso 1: prueba SQL (falla):** `'Contactos: editar un dato común deja el antes y el después'`.
-- [ ] **Paso 2:** `npm run test:sql` → falla.
-- [ ] **Paso 3:** implementar el trigger y las pantallas.
-- [ ] **Paso 4:** `npm run test:sql`, `npm run typecheck`, `npm run lint` y `npm run build` → sin errores.
-- [ ] **Paso 5:** commit `Contactos: lista y ficha centralizada de cada persona`.
+- [x] **Paso 1: prueba SQL (falla):** `'Contactos: editar un dato común deja el antes y el después'`.
+- [x] **Paso 2:** `npm run test:sql` → falla.
+- [x] **Paso 3:** implementar el trigger y las pantallas.
+- [x] **Paso 4:** `npm run test:sql`, `npm run typecheck`, `npm run lint` y `npm run build` → sin errores.
+- [x] **Paso 5:** commit `Contactos: lista y ficha centralizada de cada persona`.
 
 ### Tarea 8: documentos fuente
 

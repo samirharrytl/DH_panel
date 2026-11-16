@@ -3,15 +3,28 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { exigirUsuario } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
-import { ESTADOS_LEAD, TIPOS_LEAD, colorEstado, type EstadoLead, type TipoLead as Tipo } from '@/lib/catalogos'
-import { fechaHora, telefono } from '@/lib/formato'
-import { Aviso, Campo, Tarjeta, Vacio } from '@/components/campos'
+import {
+  ESTADOS_INMUEBLE,
+  ESTADOS_LEAD,
+  ETAPAS_CAPTACION,
+  INTENCIONES,
+  MEDIOS_CONTACTO,
+  TIPOS_INMUEBLE,
+  TIPOS_LEAD,
+  colorEstado,
+  etiqueta,
+  type EstadoInmueble,
+  type EstadoLead,
+  type TipoLead as Tipo,
+} from '@/lib/catalogos'
+import { fechaHora, soles, telefono } from '@/lib/formato'
+import { Aviso, Campo, Dato, Seleccion, Tarjeta, Vacio } from '@/components/campos'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { TipoLead } from '@/components/tipo-lead'
 import { BotonAccion, BotonEnviar, Dialogo, Formulario } from '@/components/formulario'
 import { EVENTOS } from '../../leads/[id]/secciones/historial'
-import { agregarTelefono, descartarSugerencia, marcarPrincipal, quitarTelefono } from './acciones'
+import { agregarTelefono, descartarSugerencia, editarContacto, marcarPrincipal, quitarTelefono } from './acciones'
 
 export async function generateMetadata({ params }: PageProps<'/personas/[id]'>): Promise<Metadata> {
   const supabase = await crearClienteServidor()
@@ -19,7 +32,7 @@ export async function generateMetadata({ params }: PageProps<'/personas/[id]'>):
   return { title: data?.nombre ?? 'Cliente' }
 }
 
-const INTENCIONES = ['lead_registrado', 'lead_regreso']
+const TIPOS_INTENCION = ['lead_registrado', 'lead_regreso']
 
 type Item = {
   fecha: string
@@ -43,7 +56,7 @@ export default async function PaginaPersona({ params }: PageProps<'/personas/[id
     supabase.from('persona_telefonos').select('telefono, principal, created_at').eq('persona_id', id).order('principal', { ascending: false }),
     supabase
       .from('leads')
-      .select('id, tipo, estado, ciclo, vigente, created_at, asesor:perfiles!leads_asesor_id_fkey(nombre)')
+      .select('id, tipo, estado, ciclo, vigente, created_at, asesor_id, consentimiento_datos, consentimiento_marketing, recibe_novedades, asesor:perfiles!leads_asesor_id_fkey(nombre)')
       .eq('persona_id', id)
       .order('created_at', { ascending: false }),
     supabase.from('sugerencias_union').select('id, persona_a, persona_b').eq('estado', 'pendiente').or(`persona_a.eq.${id},persona_b.eq.${id}`),
@@ -51,12 +64,22 @@ export default async function PaginaPersona({ params }: PageProps<'/personas/[id
     supabase.from('perfiles').select('id, nombre'),
   ])
   const idsLeads = (leads ?? []).map((l) => l.id)
-  const [{ data: notas }, { data: estados }] = idsLeads.length
+  const [{ data: notas }, { data: estados }, { data: busquedas }, { data: inmueblesPersona }] = idsLeads.length
     ? await Promise.all([
         supabase.from('notas').select('texto, autor_id, lead_id, created_at').in('lead_id', idsLeads),
         supabase.from('lead_historial').select('estado_anterior, estado_nuevo, nota, autor_id, lead_id, created_at').in('lead_id', idsLeads),
+        supabase
+          .from('busquedas')
+          .select('id, lead_id, nombre, activa, cumplida_at, tipos, distritos, precio_max')
+          .in('lead_id', idsLeads)
+          .order('updated_at', { ascending: false }),
+        supabase
+          .from('v_inmuebles')
+          .select('id, codigo, tipo, distrito, estado, etapa_captacion, propietario_lead_id')
+          .in('propietario_lead_id', idsLeads)
+          .order('numero'),
       ])
-    : [{ data: [] }, { data: [] }]
+    : [{ data: [] }, { data: [] }, { data: [] }, { data: [] }]
   // Solo se ven los nombres de las personas que el usuario puede ver (RLS)
   const otras = (sugerencias ?? []).map((s) => (s.persona_a === id ? s.persona_b : s.persona_a))
   const { data: nombresOtras } = otras.length ? await supabase.from('personas').select('id, nombre').in('id', otras) : { data: [] }
@@ -73,7 +96,7 @@ export default async function PaginaPersona({ params }: PageProps<'/personas/[id
       texto: EVENTOS[e.tipo]?.(e.datos ?? {}) ?? e.tipo.replace(/_/g, ' '),
       autor: autor(e.autor_id),
       lead: nombreLead(e.lead_id),
-      intencion: INTENCIONES.includes(e.tipo) ? (e.datos as Record<string, unknown>) : undefined,
+      intencion: TIPOS_INTENCION.includes(e.tipo) ? (e.datos as Record<string, unknown>) : undefined,
     })),
     ...(estados ?? []).map((h) => ({
       fecha: h.created_at,
@@ -92,13 +115,15 @@ export default async function PaginaPersona({ params }: PageProps<'/personas/[id
   return (
     <div className="space-y-4">
       <div>
-        <Link href="/leads" className="mb-1 inline-block text-sm text-primary hover:underline">
-          ← Leads
+        <Link href="/contactos" className="mb-1 inline-block text-sm text-primary hover:underline">
+          ← Contactos
         </Link>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="text-2xl font-semibold text-foreground">{persona.nombre}</h1>
+            <h1 className="text-2xl font-semibold text-foreground">Ficha del contacto</h1>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">{persona.nombre}</span>
+              <span>·</span>
               <span>{persona.email ?? 'Sin correo'}</span>
               <span>·</span>
               <span>Cliente desde el {fechaHora(persona.created_at)}</span>
@@ -137,6 +162,67 @@ export default async function PaginaPersona({ params }: PageProps<'/personas/[id
       })}
 
       <div className="grid gap-4 lg:grid-cols-2">
+        <Tarjeta
+          titulo="Datos"
+          acciones={
+            <Dialogo titulo="Editar datos del contacto" boton="Editar">
+              <Formulario accion={editarContacto}>
+                <input type="hidden" name="persona_id" value={id} />
+                <Campo etiqueta="Nombre">
+                  <Input name="nombre" defaultValue={persona.nombre} required />
+                </Campo>
+                <Campo etiqueta="Correo">
+                  <Input name="email" type="email" defaultValue={persona.email ?? ''} />
+                </Campo>
+                <Campo etiqueta="Género" ayuda="Solo si está confirmado. Si no, los mensajes son neutros.">
+                  <Seleccion name="genero" defaultValue={persona.genero ?? ''}>
+                    <option value="">No confirmado</option>
+                    <option value="femenino">Femenino</option>
+                    <option value="masculino">Masculino</option>
+                  </Seleccion>
+                </Campo>
+                <Campo etiqueta="Horario preferido" ayuda="Se respeta al escribirle.">
+                  <Input name="horario_preferido" defaultValue={persona.horario_preferido ?? ''} placeholder="Tardes, después de las 6 p. m." />
+                </Campo>
+                <Campo etiqueta="Prefiere que lo contacten por">
+                  <Seleccion name="medio_contacto" defaultValue={persona.medio_contacto ?? ''}>
+                    <option value="">Sin dato</option>
+                    {Object.entries(MEDIOS_CONTACTO).map(([k, v]) => (
+                      <option key={k} value={k}>
+                        {v}
+                      </option>
+                    ))}
+                  </Seleccion>
+                </Campo>
+                <Campo etiqueta="Intención de marketing">
+                  <Seleccion name="intencion" defaultValue={persona.intencion ?? ''}>
+                    <option value="">Sin intención</option>
+                    {Object.entries(INTENCIONES).map(([k, v]) => (
+                      <option key={k} value={k}>
+                        {v}
+                      </option>
+                    ))}
+                  </Seleccion>
+                </Campo>
+                <BotonEnviar>Guardar datos</BotonEnviar>
+              </Formulario>
+            </Dialogo>
+          }
+        >
+          <dl className="grid grid-cols-2 gap-3">
+            <Dato etiqueta="Nombre" className="col-span-2">
+              {persona.nombre}
+            </Dato>
+            <Dato etiqueta="Correo">{persona.email ?? '—'}</Dato>
+            <Dato etiqueta="Género">
+              {persona.genero === 'femenino' ? 'Femenino' : persona.genero === 'masculino' ? 'Masculino' : 'No confirmado'}
+            </Dato>
+            <Dato etiqueta="Horario preferido">{persona.horario_preferido ?? '—'}</Dato>
+            <Dato etiqueta="Medio preferido">{etiqueta(MEDIOS_CONTACTO, persona.medio_contacto)}</Dato>
+            <Dato etiqueta="Intención">{etiqueta(INTENCIONES, persona.intencion)}</Dato>
+          </dl>
+        </Tarjeta>
+
         <Tarjeta
           titulo="Teléfonos"
           acciones={
@@ -196,8 +282,70 @@ export default async function PaginaPersona({ params }: PageProps<'/personas/[id
                   <span className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                     <Badge variant={colorEstado(l.estado as EstadoLead)}>{ESTADOS_LEAD[l.estado as EstadoLead]}</Badge>
                     {!l.vigente && <Badge variant="gris">Anterior</Badge>}
+                    <Badge variant={l.consentimiento_datos ? 'verde' : 'gris'}>Datos</Badge>
+                    <Badge variant={l.consentimiento_marketing ? 'verde' : 'gris'}>Marketing</Badge>
                     {(l.asesor as unknown as { nombre: string } | null)?.nombre ?? 'Sin asesor'}
                   </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Tarjeta>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Tarjeta titulo={`Inmuebles (${inmueblesPersona?.length ?? 0})`}>
+          {(inmueblesPersona ?? []).length === 0 ? (
+            <Vacio>Sin inmuebles registrados a su nombre.</Vacio>
+          ) : (
+            <ul className="space-y-2">
+              {(inmueblesPersona ?? []).map((i) => (
+                <li key={i.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-border py-2 last:border-0">
+                  <Link href={`/inmuebles/${i.id}`} className="text-sm font-medium text-primary hover:underline">
+                    {i.codigo}
+                    {i.tipo ? ` · ${etiqueta(TIPOS_INMUEBLE, i.tipo)}` : ''}
+                    {i.distrito ? ` en ${i.distrito}` : ''}
+                  </Link>
+                  <span className="flex flex-wrap items-center gap-1.5">
+                    <Badge variant={i.estado === 'en_cartera' ? 'verde' : i.estado === 'en_captacion' ? 'azul' : 'gris'}>
+                      {ESTADOS_INMUEBLE[i.estado as EstadoInmueble]}
+                    </Badge>
+                    {i.etapa_captacion && <Badge variant="azul">{etiqueta(ETAPAS_CAPTACION, i.etapa_captacion)}</Badge>}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Tarjeta>
+
+        <Tarjeta titulo={`Búsquedas (${busquedas?.length ?? 0})`}>
+          {(busquedas ?? []).length === 0 ? (
+            <Vacio>Sin búsquedas registradas.</Vacio>
+          ) : (
+            <ul className="space-y-2">
+              {(busquedas ?? []).map((b) => (
+                <li key={b.id} className="space-y-1 border-b border-border py-2 last:border-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Link href={`/leads/${b.lead_id}?tab=perfil`} className="text-sm font-medium text-primary hover:underline">
+                      {b.nombre}
+                    </Link>
+                    {b.activa ? (
+                      <Badge variant="verde">Activa</Badge>
+                    ) : b.cumplida_at ? (
+                      <Badge variant="marino">Cumplida</Badge>
+                    ) : (
+                      <Badge variant="gris">Inactiva</Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {[
+                      b.tipos.length ? b.tipos.map((t: string) => etiqueta(TIPOS_INMUEBLE, t)).join(' o ') : null,
+                      b.distritos.length ? b.distritos.join(', ') : null,
+                      b.precio_max ? `hasta ${soles(b.precio_max)}` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ') || 'Cualquier inmueble'}
+                  </p>
                 </li>
               ))}
             </ul>

@@ -1332,3 +1332,38 @@ grant all on public.v_dataset_propietarios to service_role;
 
 -- La ficha de calificación por lead se reemplazó por la ficha de captación de cada inmueble
 drop table public.calificacion_propietario;
+
+-- ---------- Contactos: datos comunes con trazabilidad ----------
+-- Cada cambio de un dato común de la persona deja el antes y el después en su historial
+create or replace function public.personas_editada() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if new.nombre is distinct from old.nombre then
+    perform public.registrar_evento('persona_editada', null,
+      jsonb_build_object('campo', 'nombre', 'antes', old.nombre, 'despues', new.nombre), null, new.id);
+  end if;
+  if new.email is distinct from old.email then
+    perform public.registrar_evento('persona_editada', null,
+      jsonb_build_object('campo', 'email', 'antes', old.email, 'despues', new.email), null, new.id);
+  end if;
+  if new.genero is distinct from old.genero then
+    perform public.registrar_evento('persona_editada', null,
+      jsonb_build_object('campo', 'genero', 'antes', old.genero, 'despues', new.genero), null, new.id);
+  end if;
+  if new.horario_preferido is distinct from old.horario_preferido then
+    perform public.registrar_evento('persona_editada', null,
+      jsonb_build_object('campo', 'horario_preferido', 'antes', old.horario_preferido, 'despues', new.horario_preferido), null, new.id);
+  end if;
+  if new.medio_contacto is distinct from old.medio_contacto then
+    perform public.registrar_evento('persona_editada', null,
+      jsonb_build_object('campo', 'medio_contacto', 'antes', old.medio_contacto, 'despues', new.medio_contacto), null, new.id);
+  end if;
+  if new.intencion is distinct from old.intencion then
+    perform public.registrar_evento('persona_editada', null,
+      jsonb_build_object('campo', 'intencion', 'antes', old.intencion, 'despues', new.intencion), null, new.id);
+  end if;
+  return null;
+end $$;
+create trigger personas_editada after update on public.personas
+  for each row execute function public.personas_editada();
+revoke all on function public.personas_editada() from public, anon, authenticated;

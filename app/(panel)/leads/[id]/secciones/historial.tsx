@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { crearClienteServidor } from '@/lib/supabase/server'
-import { CANALES, ESTADOS_LEAD, RESPUESTAS_MATCH, NIVELES, etiqueta, type EstadoLead } from '@/lib/catalogos'
+import { CANALES, ESTADOS_LEAD, ETAPAS_CAPTACION, RESPUESTAS_MATCH, NIVELES, etiqueta, type EstadoLead } from '@/lib/catalogos'
 import { fechaHora, telefono } from '@/lib/formato'
 import { Tarjeta, Vacio } from '@/components/campos'
 import { Badge } from '@/components/ui/badge'
@@ -61,6 +61,19 @@ export const EVENTOS: Record<string, (d: Record<string, unknown>) => string> = {
   union_descartada: () => 'Sugerencia de unión descartada',
   personas_unidas: (d) => `Se unió con ${(d.absorbida as { nombre?: string } | undefined)?.nombre ?? 'otro registro'}`,
   lead_cerrado_por_union: () => 'Cerrado al unir dos registros de la misma persona',
+  inmueble_agregado: () => 'Inmueble agregado en captación',
+  etapa_inmueble: (d) =>
+    `Etapa del inmueble: ${etiqueta(ETAPAS_CAPTACION, d.de as string)} → ${etiqueta(ETAPAS_CAPTACION, d.a as string)}`,
+  busqueda_agregada: (d) => `Búsqueda agregada: ${d.nombre ?? 'sin nombre'}`,
+  busqueda_desactivada: (d) => `Búsqueda ${d.cumplida ? 'cumplida' : 'desactivada'}: ${d.nombre ?? 'sin nombre'}`,
+  busqueda_cumplida: () => 'Búsqueda cumplida con la compraventa',
+  vende_para_comprar: (d) => (d.lead_venta_id ? 'Compra sujeta a la venta del propietario' : 'Vínculo con la venta quitado'),
+  ciclo_traspaso: (d) => `Ciclo nuevo: pasan ${d.inmuebles ?? 0} inmueble(s) y ${d.busquedas ?? 0} búsqueda(s)`,
+  persona_editada: (d) => {
+    const antes = d.antes === null || d.antes === undefined || d.antes === '' ? 'vacío' : String(d.antes)
+    const despues = d.despues === null || d.despues === undefined || d.despues === '' ? 'vacío' : String(d.despues)
+    return `Dato del contacto: ${String(d.campo ?? 'dato')} de ${antes} a ${despues}`
+  },
 }
 
 type Item = { fecha: string; tipo: 'estado' | 'nota' | 'evento'; texto: string; detalle?: string | null; autor?: string | null }

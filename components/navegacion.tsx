@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useState, type ReactNode } from 'react'
 import {
   BookOpen,
+  BookUser,
   CalendarDays,
   ChartColumn,
   House,
@@ -26,6 +27,7 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/s
 const ICONOS = {
   hoy: Sun,
   leads: Users,
+  contactos: BookUser,
   chats: MessageCircle,
   agenda: CalendarDays,
   inmuebles: House,

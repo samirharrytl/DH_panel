@@ -295,4 +295,15 @@ export function registrar({ db, prueba, como, registrar, esperarError, uno, ADMI
     assert.ok(r.inmuebles.every((i) => /^DH-\d{4}$/.test(i.codigo)))
     assert.equal(r.busquedas_activas, 0)
   })
+
+  // ---------- Contactos ----------
+  prueba('Contactos: editar un dato común deja el antes y el después', async () => {
+    const lead = (await registrar(ASESORA, '966000001', 'Contacto Editado', 'interesado')).lead_id
+    const persona = (await uno(db, `select persona_id from leads where id = $1`, [lead])).persona_id
+    await q(ASESORA, `update personas set email = 'contacto@depahost.test', horario_preferido = 'Tardes' where id = $1`, [persona])
+    const ev = await db.query(`select datos from eventos where persona_id = $1 and tipo = 'persona_editada' order by id`, [persona])
+    assert.equal(ev.rows.length, 2)
+    assert.deepEqual(ev.rows[0].datos, { campo: 'email', antes: null, despues: 'contacto@depahost.test' })
+    assert.deepEqual(ev.rows[1].datos, { campo: 'horario_preferido', antes: null, despues: 'Tardes' })
+  })
 }

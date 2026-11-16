@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { crearClienteServidor } from '@/lib/supabase/server'
 import { ESTADOS_LEAD, MEDIOS_CONTACTO, etiqueta } from '@/lib/catalogos'
 import { ahoraMs, fecha, fechaCorta, fechaHora, hoyLima, isoALocal, relativo } from '@/lib/formato'
-import { Aviso, Campo, Casilla, Dato, Seleccion, Tarjeta, Vacio } from '@/components/campos'
+import { Aviso, Campo, Casilla, Dato, Tarjeta, Vacio } from '@/components/campos'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -244,41 +244,17 @@ export async function SeccionResumen({ lead }: PropsSeccion) {
         <Tarjeta guia="lead-contacto"
           titulo="Contacto"
           acciones={
-            lead.vigente && (
-              <Dialogo titulo="Datos de contacto" boton="Editar">
+            lead.vigente && lead.tipo === 'interesado' && (
+              <Dialogo titulo="Novedades del lead" boton="Editar">
                 <Formulario accion={guardarContacto}>
                   <input type="hidden" name="lead_id" value={lead.id} />
-                  <input type="hidden" name="persona_id" value={p.id} />
-                  <Campo etiqueta="Nombre">
-                    <Input name="nombre" defaultValue={p.nombre} required />
-                  </Campo>
-                  <Campo etiqueta="Correo">
-                    <Input name="email" type="email" defaultValue={p.email ?? ''} />
-                  </Campo>
-                  <Campo etiqueta="Horario preferido" ayuda="Se respeta al escribirle.">
-                    <Input name="horario_preferido" defaultValue={p.horario_preferido ?? ''} placeholder="Tardes, después de las 6 p. m." />
-                  </Campo>
-                  <Campo etiqueta="Prefiere que lo contacten por">
-                    <Seleccion name="medio_contacto" defaultValue={p.medio_contacto ?? ''}>
-                      <option value="">Sin dato</option>
-                      {Object.entries(MEDIOS_CONTACTO).map(([k, v]) => (
-                        <option key={k} value={k}>
-                          {v}
-                        </option>
-                      ))}
-                    </Seleccion>
-                  </Campo>
-                  <Campo etiqueta="Género" ayuda="Solo si está confirmado. Si no, los mensajes son neutros.">
-                    <Seleccion name="genero" defaultValue={p.genero ?? ''}>
-                      <option value="">No confirmado</option>
-                      <option value="femenino">Femenino</option>
-                      <option value="masculino">Masculino</option>
-                    </Seleccion>
-                  </Campo>
-                  {lead.tipo === 'interesado' && (
-                    <Casilla name="recibe_novedades" defaultChecked={lead.recibe_novedades} etiqueta="Recibe novedades de inmuebles" />
-                  )}
-                  {lead.tipo === 'propietario' && <input type="hidden" name="recibe_novedades" value={lead.recibe_novedades ? 'on' : ''} />}
+                  <p className="text-sm text-muted-foreground">
+                    El nombre, el correo, el género, el horario y el medio preferido se editan en la ficha del contacto.
+                  </p>
+                  <Link href={`/personas/${p.id}`} className="text-sm font-medium text-primary hover:underline">
+                    Editar en la ficha del contacto
+                  </Link>
+                  <Casilla name="recibe_novedades" defaultChecked={lead.recibe_novedades} etiqueta="Recibe novedades de inmuebles" />
                   <BotonEnviar>Guardar</BotonEnviar>
                 </Formulario>
               </Dialogo>
@@ -298,6 +274,9 @@ export async function SeccionResumen({ lead }: PropsSeccion) {
               )}
             </Dato>
           </dl>
+          <Link href={`/personas/${p.id}`} className="mt-3 inline-block text-sm text-primary hover:underline">
+            Editar en la ficha del contacto
+          </Link>
         </Tarjeta>
 
         <Tarjeta

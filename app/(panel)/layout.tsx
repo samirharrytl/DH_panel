@@ -26,6 +26,7 @@ export default async function LayoutPanel({ children }: LayoutProps<'/'>) {
   const items: ItemNav[] = [
     { href: '/', texto: 'Hoy', icono: 'hoy' },
     { href: '/leads', texto: 'Leads', icono: 'leads' },
+    { href: '/contactos', texto: 'Contactos', icono: 'contactos' },
     { href: '/chats', texto: 'Chats', icono: 'chats', contador: chatsSinLeer ?? 0 },
     { href: '/agenda', texto: 'Agenda', icono: 'agenda' },
     { href: '/inmuebles', texto: 'Inmuebles', icono: 'inmuebles' },
