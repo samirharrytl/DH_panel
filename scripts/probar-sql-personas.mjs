@@ -150,6 +150,7 @@ export function registrar({ db, prueba, como, registrar, esperarError, uno, ADMI
 
   prueba('Unir: bloquea si el lead que se cierra tiene una cita pendiente', async () => {
     const { queda, leadA, absorbida, leadB } = await par('911000026', '911000027', 'propietario')
+    await q(ASESORA, `select agregar_inmueble($1, 'departamento', 'Av. Arequipa 100', 'Lince')`, [leadA])
     await q(ASESORA, `select agendar_cita($1, now() + interval '2 days', 'Av. Arequipa 100', 'Lince', 60, null, null, false)`, [leadA])
     await esperarError(unir(ASESORA, queda, absorbida, [leadB]), /cita o visita pendiente/)
   })
@@ -176,6 +177,7 @@ export function registrar({ db, prueba, como, registrar, esperarError, uno, ADMI
     const enBaja = await registrar(ASESORA, '911000050', 'En Baja', 'interesado')
     await q(ASESORA, `select dar_baja($1, 'No quiere mensajes')`, [enBaja.lead_id])
     const conCita = await registrar(ASESORA, '911000051', 'Con Cita', 'propietario')
+    await q(ASESORA, `select agregar_inmueble($1, 'departamento', 'Av. Brasil 200', 'Jesús María')`, [conCita.lead_id])
     const cita = (
       await q(ASESORA, `select agendar_cita($1, now() + interval '2 days', 'Av. Brasil 200', 'Jesús María', 60, null, null, false) c`, [conCita.lead_id])
     ).rows[0].c

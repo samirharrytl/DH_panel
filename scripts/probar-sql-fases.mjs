@@ -10,10 +10,12 @@ export function registrar({ db, prueba, como, registrar, esperarError, uno, ADMI
   // ---------- Fase 3 ----------
   prueba('HU-13: la ficha de calificación se guarda con RLS', async () => {
     propietario = (await registrar(ASESORA, '944000111', 'Diego Propietario', 'propietario', { marketing: true })).lead_id
-    await q(ASESORA, `insert into calificacion_propietario (lead_id, rol_contacto, hipoteca, tipo_inmueble, direccion, distrito, metraje, dormitorios, banos, cochera, precio_esperado, urgencia)
-      values ($1, 'propietario', false, 'departamento', 'Av. Larco 123', 'Miraflores', 80, 2, 2, true, 450000, 'menos_3_meses')`, [propietario])
+    // La ficha de captación es por inmueble: lo público en el inmueble y lo sensible en inmueble_captacion
+    inmueble = await val(ASESORA, `select agregar_inmueble($1, 'departamento', 'Av. Larco 123', 'Miraflores', 450000)`, [propietario])
+    await q(ASESORA, `update inmuebles set metraje = 80, dormitorios = 2, banos = 2, cocheras = 1 where id = $1`, [inmueble])
+    await q(ASESORA, `update inmueble_captacion set rol_contacto = 'propietario', hipoteca = false, urgencia = 'menos_3_meses' where inmueble_id = $1`, [inmueble])
     await esperarError(
-      q(OTRO, `insert into calificacion_propietario (lead_id) values ($1)`, [propietario]),
+      q(OTRO, `insert into inmueble_captacion (inmueble_id) values ($1)`, [inmueble]),
       /row-level security/,
     )
   })
@@ -34,7 +36,7 @@ export function registrar({ db, prueba, como, registrar, esperarError, uno, ADMI
     assert.equal(agenda.rows[0].n, 0, 'otro asesor no ve la cita')
   })
 
-  prueba('HU-15: el resultado de la cita crea el inmueble En captación con el acceso', async () => {
+  prueba('HU-15: el resultado de la cita completa el inmueble En captación con el acceso', async () => {
     const cita = await val(ASESORA, `select agendar_cita($1, now() + interval '1 day', 'Av. Larco 123', 'Miraflores', 60, 'Portería', '1234', true)`, [propietario])
     inmueble = await val(ASESORA, `select registrar_resultado_cita($1, 'Buen estado', 'departamento', 'Av. Larco 123', 'Miraflores', 430000, 'bueno', 80, 2, 2, 1, true)`, [cita])
     const i = await uno(db, `select estado, codigo, acceso_codigo, precio_esperado from inmuebles where id = $1`, [inmueble])

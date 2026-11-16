@@ -301,6 +301,8 @@ async function main() {
   if (extra) extra.registrar({ db, prueba, como, registrar, esperarError, uno, ADMIN, ASESORA, OTRO })
   const personas = await import('./probar-sql-personas.mjs')
   personas.registrar({ db, prueba, como, registrar, esperarError, uno, ADMIN, ASESORA, OTRO })
+  const negocios = await import('./probar-sql-negocios.mjs')
+  negocios.registrar({ db, prueba, como, registrar, esperarError, uno, ADMIN, ASESORA, OTRO })
 
   let fallas = 0
   for (const { nombre, fn } of pruebas) {
