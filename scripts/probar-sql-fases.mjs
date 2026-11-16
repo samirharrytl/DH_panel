@@ -133,10 +133,11 @@ export function registrar({ db, prueba, como, registrar, esperarError, uno, ADMI
   })
 
   prueba('HU-22: matches ordenados por ajuste, excluye fuera de capacidad y rechazados', async () => {
-    // Un segundo inmueble caro (fuera de capacidad)
-    const caro = await val(ADMIN, `select registrar_resultado_cita(agendar_cita($1, now(), 'Calle 1', 'Miraflores'), 'ok', 'departamento', 'Calle 1', 'Miraflores', 900000, 'bueno', 120, 3, 2, 1)`, [propietario])
-      .catch(() => null)
-    assert.equal(caro, null, 'un cliente no agenda nuevas citas en el mismo lead (inmueble ya en cartera)')
+    // Un propietario Cliente sigue operando: agrega otro inmueble caro (aún en captación) y agenda su cita
+    const caro = await val(ASESORA, `select agregar_inmueble($1, 'departamento', 'Calle 1', 'Miraflores', 900000)`, [propietario])
+    const citaCaro = await val(ASESORA, `select agendar_cita($1, now() + interval '1 day', 'Calle 1', 'Miraflores', 60, null, null, false, null, null, $2)`, [propietario, caro])
+    await q(ASESORA, `select cancelar_cita($1, 'Prueba')`, [citaCaro])
+    // En captación no entra al match: solo cuentan los inmuebles en cartera
     const r = await q(OTRO, `select * from sugerir_matches($1)`, [interesado])
     assert.equal(r.rows.length, 1)
     assert.equal(Number(r.rows[0].puntaje), 100)

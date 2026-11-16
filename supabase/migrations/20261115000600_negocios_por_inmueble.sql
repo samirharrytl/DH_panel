@@ -41,6 +41,14 @@ create trigger inmuebles_etapa_evento after update on public.inmuebles
   execute function public.inmuebles_etapa_evento();
 revoke all on function public.inmuebles_etapa(), public.inmuebles_etapa_evento() from public, anon, authenticated;
 
+-- Todo inmueble con propietario nace con su ficha de captación (la crea la base, no cada función)
+create function public.inmuebles_captacion_inicial() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.inmueble_captacion (inmueble_id) values (new.id) on conflict do nothing;
+  return null;
+end $$;
+
 -- v_inmuebles usa i.*: se vuelve a crear para que incluya la etapa
 drop view public.v_inmuebles;
 create view public.v_inmuebles with (security_invoker = true) as
@@ -81,6 +89,11 @@ create table public.inmueble_captacion (
 );
 create trigger inmueble_captacion_autor before update on public.inmueble_captacion
   for each row execute function public.tocar_autor();
+
+create trigger inmuebles_captacion_inicial after insert on public.inmuebles
+  for each row when (new.propietario_lead_id is not null)
+  execute function public.inmuebles_captacion_inicial();
+revoke all on function public.inmuebles_captacion_inicial() from public, anon, authenticated;
 
 create function public.puede_ver_captacion(p_inmueble_id uuid) returns boolean
 language sql stable security definer set search_path = public as $$
@@ -133,7 +146,6 @@ begin
   values (p_lead_id, l.persona_id, coalesce(l.asesor_id, auth.uid()), nullif(trim(p_tipo), ''),
           nullif(trim(p_direccion), ''), nullif(trim(p_distrito), ''), p_precio_esperado)
   returning id into v_id;
-  insert into public.inmueble_captacion (inmueble_id) values (v_id);
   update public.leads set ultima_interaccion_at = now() where id = p_lead_id;
   perform public.registrar_evento('inmueble_agregado', p_lead_id, '{}', v_id);
   return v_id;
@@ -383,8 +395,27 @@ insert into public.inmueble_captacion (inmueble_id)
 select id from public.inmuebles where propietario_lead_id is not null
 on conflict do nothing;
 
--- 2) La calificación del lead va al inmueble más reciente del lead (lo sensible a la ficha de captación,
---    y lo público al inmueble solo si el inmueble no lo tenía)
+-- 2) Lead con calificación y sin inmueble: se crea un inmueble en captación con esos datos
+--    (el trigger le crea su ficha de captación)
+with nuevos as (
+  insert into public.inmuebles (
+    propietario_lead_id, persona_id, asesor_id, tipo, direccion, distrito, metraje, dormitorios, banos,
+    cocheras, precio_esperado, created_at
+  )
+  select q.lead_id, l.persona_id, l.asesor_id, q.tipo_inmueble, nullif(trim(q.direccion), ''),
+         nullif(trim(q.distrito), ''), q.metraje, q.dormitorios, q.banos,
+         case when q.cochera then 1 else 0 end, q.precio_esperado, l.created_at
+  from public.calificacion_propietario q
+  join public.leads l on l.id = q.lead_id
+  where not exists (select 1 from public.inmuebles i where i.propietario_lead_id = q.lead_id)
+  returning id, propietario_lead_id, persona_id
+)
+insert into public.eventos (tipo, lead_id, persona_id, inmueble_id, datos)
+select 'inmueble_agregado', n.propietario_lead_id, n.persona_id, n.id, '{"origen": "migracion"}'::jsonb
+from nuevos n;
+
+-- 3) La calificación del lead va a su inmueble más reciente: lo sensible a la ficha de captación y lo
+--    público al inmueble solo si el inmueble no lo tenía
 with ultimo as (
   select distinct on (propietario_lead_id) id, propietario_lead_id
   from public.inmuebles
@@ -411,34 +442,6 @@ from public.calificacion_propietario q
 join ultimo u on u.propietario_lead_id = q.lead_id
 where i.id = u.id;
 
--- 3) Lead con calificación y sin inmueble: se crea un inmueble en captación con esos datos
-with nuevos as (
-  insert into public.inmuebles (
-    propietario_lead_id, persona_id, asesor_id, tipo, direccion, distrito, metraje, dormitorios, banos,
-    cocheras, precio_esperado, created_at
-  )
-  select q.lead_id, l.persona_id, l.asesor_id, q.tipo_inmueble, nullif(trim(q.direccion), ''),
-         nullif(trim(q.distrito), ''), q.metraje, q.dormitorios, q.banos,
-         case when q.cochera then 1 else 0 end, q.precio_esperado, l.created_at
-  from public.calificacion_propietario q
-  join public.leads l on l.id = q.lead_id
-  where not exists (select 1 from public.inmuebles i where i.propietario_lead_id = q.lead_id)
-  returning id, propietario_lead_id, persona_id
-), captacion as (
-  insert into public.inmueble_captacion (
-    inmueble_id, rol_contacto, tiene_poder, hipoteca, hipoteca_banco, hipoteca_saldo, urgencia,
-    inscrito_sunarp, copropietarios, copropietarios_detalle, notas
-  )
-  select n.id, q.rol_contacto, q.tiene_poder, q.hipoteca, q.hipoteca_banco, q.hipoteca_saldo, q.urgencia,
-         q.inscrito_sunarp, q.copropietarios, q.copropietarios_detalle, q.notas
-  from nuevos n
-  join public.calificacion_propietario q on q.lead_id = n.propietario_lead_id
-  returning inmueble_id
-)
-insert into public.eventos (tipo, lead_id, persona_id, inmueble_id, datos)
-select 'inmueble_agregado', n.propietario_lead_id, n.persona_id, n.id, '{"origen": "migracion"}'::jsonb
-from nuevos n;
-
 -- 4) Las citas de propietario sin inmueble pasan al único inmueble de su lead
 update public.citas c
 set inmueble_id = x.inmueble_id
@@ -460,3 +463,379 @@ set etapa_captacion = case
                where c.inmueble_id = i.id and c.tipo = 'cita_propietario' and c.estado = 'realizada') then 'cita_realizada'
   else 'calificando' end
 where i.estado = 'en_captacion';
+
+-- ---------- Cliente deja de ser un estado final ----------
+-- Cliente significa 'ya cerró al menos un negocio': el lead sigue operando mientras tenga negocios abiertos.
+-- Cliente es el estado más alto del embudo: las acciones no lo mueven, pero sí registran la interacción.
+
+create or replace function public.avanzar_estado(
+  p_lead_id uuid, p_estado public.estado_lead, p_nota text default null
+) returns boolean
+language plpgsql security definer set search_path = public as $$
+declare
+  v_actual public.estado_lead;
+begin
+  select estado into v_actual from public.leads where id = p_lead_id for update;
+  if v_actual is null or v_actual = 'baja' then
+    return false;
+  end if;
+  if v_actual in ('no_responde', 'descartado') or public.orden_estado(v_actual) < public.orden_estado(p_estado) then
+    perform public.fijar_estado(p_lead_id, p_estado, p_nota);
+    update public.leads set ultima_interaccion_at = now() where id = p_lead_id;
+    return true;
+  end if;
+  return false;
+end $$;
+
+create or replace function public.marcar_respuesta_lead(p_lead_id uuid) returns void
+language plpgsql security definer set search_path = public as $$
+declare
+  v_estado public.estado_lead;
+begin
+  select estado into v_estado from public.leads where id = p_lead_id;
+  if v_estado is null or v_estado = 'baja' then
+    return;
+  end if;
+  update public.leads set respondio_at = now(), ultima_interaccion_at = now() where id = p_lead_id;
+  update public.refuerzos set estado = 'cancelado' where lead_id = p_lead_id and estado = 'pendiente';
+  if v_estado in ('nuevo', 'contactado', 'no_responde') then
+    perform public.fijar_estado(p_lead_id, 'en_conversacion', 'Respondió');
+  end if;
+end $$;
+
+create or replace function public.registrar_lead_interno(
+  p_telefono text,
+  p_nombre text,
+  p_tipo public.tipo_lead,
+  p_canal public.canal_origen,
+  p_canal_detalle text,
+  p_email text,
+  p_consentimiento_datos boolean,
+  p_consentimiento_marketing boolean,
+  p_asesor_id uuid,
+  p_nota text,
+  p_detalle jsonb default '{}'
+) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare
+  v_tel text := public.normalizar_telefono(p_telefono);
+  v_persona public.personas%rowtype;
+  v_persona_nueva boolean := false;
+  v_lead public.leads%rowtype;
+  v_anterior public.leads%rowtype;
+  v_lead_id uuid;
+  v_asesor uuid;
+  v_resultado text;
+  v_plazo int := coalesce(public.param_int('retorno_plazo_meses'), 6);
+  v_retomado public.estado_lead;
+  v_otra uuid;
+  v_sugerencia bigint;
+  v_inmuebles int;
+begin
+  if v_tel is null then
+    raise exception 'El teléfono no es válido';
+  end if;
+  if coalesce(trim(p_nombre), '') = '' then
+    raise exception 'El nombre es obligatorio';
+  end if;
+
+  select * into v_persona from public.personas where id = public.persona_por_telefono(v_tel) for update;
+  if not found then
+    insert into public.personas (telefono, nombre, email)
+    values (v_tel, trim(p_nombre), nullif(trim(p_email), ''))
+    returning * into v_persona;
+    v_persona_nueva := true;
+  elsif v_persona.email is null and nullif(trim(p_email), '') is not null then
+    update public.personas set email = trim(p_email) where id = v_persona.id;
+  end if;
+
+  select * into v_lead from public.leads
+  where persona_id = v_persona.id and tipo = p_tipo and vigente
+  for update;
+
+  if not found then
+    select * into v_anterior from public.leads
+    where persona_id = v_persona.id and tipo = p_tipo
+    order by ciclo desc limit 1;
+    insert into public.leads (
+      persona_id, tipo, canal, canal_detalle, asesor_id, ciclo, lead_anterior_id,
+      consentimiento_datos, consentimiento_marketing, consentimiento_at
+    ) values (
+      v_persona.id, p_tipo, p_canal, p_canal_detalle, coalesce(v_anterior.asesor_id, p_asesor_id),
+      coalesce(v_anterior.ciclo + 1, 1), v_anterior.id,
+      coalesce(p_consentimiento_datos, false), coalesce(p_consentimiento_marketing, false),
+      case when p_consentimiento_datos or p_consentimiento_marketing then now() end
+    ) returning id into v_lead_id;
+    v_resultado := case when v_persona_nueva then 'nuevo' else 'persona_existente' end;
+
+  elsif v_lead.estado = 'baja' or v_persona.no_contactar then
+    v_lead_id := v_lead.id;
+    v_resultado := 'baja';
+
+  elsif v_lead.ultima_interaccion_at < now() - make_interval(months => v_plazo) then
+    -- Pasado el plazo: ciclo nuevo, mismo asesor, historial visible. Cliente no se corta aquí: dentro del
+    -- plazo se suma al mismo lead; vencido el plazo, el ciclo nuevo se lleva los negocios abiertos.
+    update public.leads set vigente = false where id = v_lead.id;
+    insert into public.leads (
+      persona_id, tipo, canal, canal_detalle, asesor_id, ciclo, lead_anterior_id,
+      consentimiento_datos, consentimiento_marketing, consentimiento_at
+    ) values (
+      v_persona.id, p_tipo, p_canal, p_canal_detalle, coalesce(v_lead.asesor_id, p_asesor_id),
+      v_lead.ciclo + 1, v_lead.id,
+      coalesce(p_consentimiento_datos, false), coalesce(p_consentimiento_marketing, false),
+      case when p_consentimiento_datos or p_consentimiento_marketing then now() end
+    ) returning id into v_lead_id;
+
+    -- Los inmuebles abiertos siguen el negocio en el ciclo nuevo; lo vendido o retirado queda en el anterior
+    update public.inmuebles
+    set propietario_lead_id = v_lead_id
+    where propietario_lead_id = v_lead.id and estado in ('en_captacion', 'en_cartera');
+    get diagnostics v_inmuebles = row_count;
+    -- Las citas pendientes acompañan a su inmueble
+    update public.citas
+    set lead_id = v_lead_id
+    where lead_id = v_lead.id and estado = 'programada'
+      and inmueble_id in (select id from public.inmuebles where propietario_lead_id = v_lead_id);
+    -- Si sigue con negocios abiertos, el ciclo nuevo también es Cliente: ya cerró al menos un negocio
+    if v_lead.estado = 'cliente' and v_inmuebles > 0 then
+      perform public.fijar_estado(v_lead_id, 'cliente', 'Sigue como Cliente: sus negocios abiertos pasan al ciclo nuevo');
+    end if;
+    perform public.registrar_evento('ciclo_traspaso', v_lead_id,
+      jsonb_build_object('inmuebles', v_inmuebles, 'ciclo_anterior', v_lead.id));
+    v_resultado := 'nuevo_ciclo';
+
+  else
+    -- Dentro del plazo: se retoma donde quedó
+    v_lead_id := v_lead.id;
+    if v_lead.estado in ('no_responde', 'descartado') then
+      v_retomado := case
+        when v_lead.estado_antes_salida in ('en_conversacion', 'cita_realizada', 'calificado', 'match_enviado', 'visita_realizada')
+          then v_lead.estado_antes_salida
+        else 'en_conversacion'
+      end;
+      perform public.fijar_estado(v_lead.id, v_retomado, 'Volvió a dejar sus datos (' || p_canal || ')');
+      v_resultado := 'retomado';
+    else
+      v_resultado := 'ya_activo';
+    end if;
+    update public.leads
+    set ultima_interaccion_at = now(),
+        asesor_id = coalesce(asesor_id, p_asesor_id),
+        consentimiento_datos = consentimiento_datos or coalesce(p_consentimiento_datos, false),
+        consentimiento_marketing = consentimiento_marketing or coalesce(p_consentimiento_marketing, false),
+        consentimiento_at = case
+          when (p_consentimiento_datos and not consentimiento_datos)
+            or (p_consentimiento_marketing and not consentimiento_marketing) then now()
+          else consentimiento_at
+        end
+    where id = v_lead.id;
+  end if;
+
+  select * into v_lead from public.leads where id = v_lead_id;
+
+  if nullif(trim(p_nota), '') is not null then
+    insert into public.notas (lead_id, texto) values (v_lead_id, trim(p_nota));
+  end if;
+
+  perform public.registrar_evento(
+    case when v_resultado in ('nuevo', 'persona_existente') then 'lead_registrado' else 'lead_regreso' end,
+    v_lead_id,
+    coalesce(p_detalle, '{}') || jsonb_build_object(
+      'resultado', v_resultado, 'canal', p_canal, 'canal_detalle', p_canal_detalle, 'tipo', p_tipo,
+      'telefono', v_tel, 'email', nullif(trim(p_email), '')
+    )
+  );
+
+  if v_resultado in ('retomado', 'ya_activo', 'baja') then
+    if v_lead.asesor_id is not null then
+      perform public.notificar(v_lead.asesor_id, 'lead_regreso', 'Un lead volvió a escribir',
+        v_persona.nombre || ' (' || p_tipo || ')', '/leads/' || v_lead_id);
+    else
+      perform public.notificar_admins('lead_regreso', 'Un lead volvió a escribir',
+        v_persona.nombre || ' (' || p_tipo || ')', '/leads/' || v_lead_id);
+    end if;
+  end if;
+
+  -- Mismo correo en otra persona: se sugiere unirlas
+  if nullif(trim(p_email), '') is not null then
+    for v_otra in
+      select id from public.personas where lower(email) = lower(trim(p_email)) and id <> v_persona.id
+    loop
+      insert into public.sugerencias_union (persona_a, persona_b) values (v_otra, v_persona.id)
+      on conflict do nothing returning id into v_sugerencia;
+      continue when v_sugerencia is null;
+      perform public.registrar_evento('union_sugerida', null,
+        jsonb_build_object('otra_persona', v_persona.id, 'motivo', 'correo', 'sugerencia_id', v_sugerencia), null, v_otra);
+      perform public.registrar_evento('union_sugerida', null,
+        jsonb_build_object('otra_persona', v_otra, 'motivo', 'correo', 'sugerencia_id', v_sugerencia), null, v_persona.id);
+      -- El asesor solo se entera si también lleva a la otra persona; si no, los administradores
+      if v_lead.asesor_id is not null
+         and exists (select 1 from public.leads where persona_id = v_otra and asesor_id = v_lead.asesor_id) then
+        perform public.notificar(v_lead.asesor_id, 'union_sugerida', 'Posible misma persona',
+          v_persona.nombre || ' comparte correo con otro cliente', '/personas/' || v_persona.id);
+      else
+        perform public.notificar_admins('union_sugerida', 'Posible misma persona',
+          v_persona.nombre || ' comparte correo con otro cliente', '/personas/' || v_persona.id);
+      end if;
+    end loop;
+  end if;
+
+  return jsonb_build_object(
+    'lead_id', v_lead_id,
+    'persona_id', v_persona.id,
+    'resultado', v_resultado,
+    'asesor_id', v_lead.asesor_id,
+    'asesor_nombre', (select nombre from public.perfiles where id = v_lead.asesor_id)
+  );
+end $$;
+revoke all on function public.registrar_lead_interno(text, text, public.tipo_lead, public.canal_origen, text, text, boolean, boolean, uuid, text, jsonb) from public, anon, authenticated;
+
+create or replace function public.dar_baja(p_lead_id uuid, p_motivo text default null) returns void
+language plpgsql security definer set search_path = public as $$
+declare
+  v_persona uuid;
+  v_lead public.leads%rowtype;
+begin
+  if not public.puede_ver_lead(p_lead_id) then
+    raise exception 'No tienes acceso a este lead' using errcode = '42501';
+  end if;
+  select persona_id into v_persona from public.leads where id = p_lead_id;
+  update public.personas set no_contactar = true, no_contactar_at = now() where id = v_persona;
+  for v_lead in
+    select * from public.leads where persona_id = v_persona and vigente and estado <> 'baja'
+  loop
+    -- Cliente no cambia de estado, pero tampoco recibe refuerzos ni recordatorios
+    if v_lead.estado <> 'cliente' then
+      perform public.fijar_estado(v_lead.id, 'baja', coalesce(nullif(trim(p_motivo), ''), 'Pidió no ser contactado'));
+      update public.leads set motivo_salida = p_motivo where id = v_lead.id;
+    end if;
+    update public.refuerzos set estado = 'cancelado' where lead_id = v_lead.id and estado = 'pendiente';
+    update public.citas set estado = 'cancelada', motivo_cancelacion = 'Baja'
+    where lead_id = v_lead.id and estado = 'programada';
+  end loop;
+  perform public.registrar_evento('baja', p_lead_id, jsonb_build_object('motivo', p_motivo));
+end $$;
+
+create or replace function public.unir_personas(p_queda uuid, p_absorbida uuid, p_leads_que_siguen uuid[] default '{}')
+returns void
+language plpgsql security definer set search_path = public as $$
+declare
+  q public.personas%rowtype;
+  a public.personas%rowtype;
+  v_tipo public.tipo_lead;
+  v_la public.leads%rowtype;
+  v_lb public.leads%rowtype;
+  v_cerrar uuid;
+  v_sigue uuid;
+  v_cerrados jsonb := '[]';
+  v_telefonos jsonb;
+  v_sugerencias jsonb;
+  v_movidos jsonb := '{}';
+  v_n int;
+  v_lead public.leads%rowtype;
+begin
+  if p_queda = p_absorbida then
+    raise exception 'Elige dos personas distintas';
+  end if;
+  if not (public.puede_ver_persona(p_queda) and public.puede_ver_persona(p_absorbida)) then
+    raise exception 'No tienes acceso a esta persona' using errcode = '42501';
+  end if;
+  select * into q from public.personas where id = p_queda for update;
+  select * into a from public.personas where id = p_absorbida for update;
+  if q.id is null or a.id is null then
+    raise exception 'La persona no existe';
+  end if;
+
+  -- Un lead vigente por tipo: el que no sigue se cierra
+  foreach v_tipo in array enum_range(null::public.tipo_lead) loop
+    v_la := null;
+    v_lb := null;
+    select * into v_la from public.leads where persona_id = p_queda and tipo = v_tipo and vigente;
+    select * into v_lb from public.leads where persona_id = p_absorbida and tipo = v_tipo and vigente;
+    continue when v_la.id is null or v_lb.id is null;
+    if v_la.id = any (coalesce(p_leads_que_siguen, '{}')) then
+      v_sigue := v_la.id; v_cerrar := v_lb.id;
+    elsif v_lb.id = any (coalesce(p_leads_que_siguen, '{}')) then
+      v_sigue := v_lb.id; v_cerrar := v_la.id;
+    else
+      raise exception 'Elige qué lead de % sigue', v_tipo;
+    end if;
+    if exists (select 1 from public.leads where id = v_cerrar and estado = 'cliente') then
+      raise exception 'El lead de % que se cerraría ya es Cliente: elige que siga ese', v_tipo;
+    end if;
+    if exists (select 1 from public.citas where lead_id = v_cerrar and estado = 'programada') then
+      raise exception 'El lead de % que se cerraría tiene una cita o visita pendiente: regístrala, reprográmala o cancélala primero', v_tipo;
+    end if;
+    if exists (select 1 from public.compraventas where lead_id = v_cerrar and estado = 'en_curso') then
+      raise exception 'El lead de % que se cerraría tiene una compraventa en curso: elige que siga ese', v_tipo;
+    end if;
+    update public.leads set vigente = false where id = v_cerrar;
+    update public.refuerzos set estado = 'cancelado' where lead_id = v_cerrar and estado = 'pendiente';
+    perform public.registrar_evento('lead_cerrado_por_union', v_cerrar, jsonb_build_object('lead_que_sigue', v_sigue));
+    v_cerrados := v_cerrados || jsonb_build_object('tipo', v_tipo, 'cerrado', v_cerrar, 'sigue', v_sigue);
+  end loop;
+
+  -- Copia de lo que se absorbe, antes de moverlo
+  select coalesce(jsonb_agg(jsonb_build_object('telefono', telefono, 'principal', principal)), '[]') into v_telefonos
+  from public.persona_telefonos where persona_id = p_absorbida;
+  select coalesce(jsonb_agg(to_jsonb(s)), '[]') into v_sugerencias
+  from public.sugerencias_union s where p_absorbida in (s.persona_a, s.persona_b);
+
+  update public.leads set persona_id = p_queda where persona_id = p_absorbida;
+  get diagnostics v_n = row_count; v_movidos := v_movidos || jsonb_build_object('leads', v_n);
+  update public.mensajes set persona_id = p_queda where persona_id = p_absorbida;
+  get diagnostics v_n = row_count; v_movidos := v_movidos || jsonb_build_object('mensajes', v_n);
+  update public.eventos set persona_id = p_queda where persona_id = p_absorbida;
+  get diagnostics v_n = row_count; v_movidos := v_movidos || jsonb_build_object('eventos', v_n);
+  update public.inmuebles set persona_id = p_queda where persona_id = p_absorbida;
+  get diagnostics v_n = row_count; v_movidos := v_movidos || jsonb_build_object('inmuebles', v_n);
+  update public.persona_telefonos set persona_id = p_queda, principal = false where persona_id = p_absorbida;
+
+  -- Sugerencias con terceros pasan a p_queda (salvo que ya exista el mismo par); la del par unido se borra
+  -- en cascada con la absorbida
+  delete from public.sugerencias_union s
+  where p_absorbida in (s.persona_a, s.persona_b) and p_queda not in (s.persona_a, s.persona_b)
+    and exists (
+      select 1 from public.sugerencias_union o
+      where p_queda in (o.persona_a, o.persona_b)
+        and (case when s.persona_a = p_absorbida then s.persona_b else s.persona_a end) in (o.persona_a, o.persona_b)
+    );
+  update public.sugerencias_union
+  set persona_a = case when persona_a = p_absorbida then p_queda else persona_a end,
+      persona_b = case when persona_b = p_absorbida then p_queda else persona_b end
+  where p_absorbida in (persona_a, persona_b) and p_queda not in (persona_a, persona_b);
+
+  -- Datos: se conservan los de p_queda y se completan los vacíos; la Baja gana
+  update public.personas set
+    email = coalesce(q.email, a.email),
+    genero = coalesce(q.genero, a.genero),
+    horario_preferido = coalesce(q.horario_preferido, a.horario_preferido),
+    medio_contacto = coalesce(q.medio_contacto, a.medio_contacto),
+    intencion = coalesce(q.intencion, a.intencion),
+    ultimo_entrante_at = greatest(q.ultimo_entrante_at, a.ultimo_entrante_at),
+    no_contactar = q.no_contactar or a.no_contactar,
+    no_contactar_at = coalesce(q.no_contactar_at, a.no_contactar_at)
+  where id = p_queda;
+  if q.no_contactar or a.no_contactar then
+    for v_lead in
+      select * from public.leads where persona_id = p_queda and vigente and estado <> 'baja'
+    loop
+      -- Cliente no cambia de estado, pero tampoco recibe refuerzos ni recordatorios
+      if v_lead.estado <> 'cliente' then
+        perform public.fijar_estado(v_lead.id, 'baja', 'Se unió con un registro que pidió no ser contactado');
+        update public.leads set motivo_salida = 'Se unió con un registro en Baja' where id = v_lead.id;
+      end if;
+      update public.refuerzos set estado = 'cancelado' where lead_id = v_lead.id and estado = 'pendiente';
+      update public.citas set estado = 'cancelada', motivo_cancelacion = 'Baja'
+      where lead_id = v_lead.id and estado = 'programada';
+    end loop;
+  end if;
+
+  perform public.registrar_evento('personas_unidas', null, jsonb_build_object(
+    'absorbida', to_jsonb(a), 'telefonos', v_telefonos, 'sugerencias', v_sugerencias,
+    'leads_cerrados', v_cerrados, 'movidos', v_movidos
+  ), null, p_queda);
+
+  delete from public.personas where id = p_absorbida;
+end $$;
+
