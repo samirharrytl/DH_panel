@@ -3,10 +3,11 @@ import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { exigirUsuario } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
-import { INTENCIONES, TIPOS_LEAD, etiqueta, type TipoLead } from '@/lib/catalogos'
+import { INTENCIONES, etiqueta, type TipoLead as Tipo } from '@/lib/catalogos'
 import { ahoraMs, fecha, fechaCorta, telefono } from '@/lib/formato'
 import { EncabezadoPagina, Tarjeta, Vacio } from '@/components/campos'
 import { Badge } from '@/components/ui/badge'
+import { TipoLead } from '@/components/tipo-lead'
 import { cn } from '@/lib/utils'
 import { BotonAccion } from '@/components/formulario'
 import { enviarNovedadesGenerales } from '../leads/acciones'
@@ -23,7 +24,7 @@ type Cliente = {
   intencion: Intencion | null
   no_contactar: boolean
   lead_id: string
-  tipo: TipoLead
+  tipo: Tipo
   consentimiento_marketing: boolean
   asesor_nombre: string | null
   ultimas_novedades_at: string | null
@@ -34,14 +35,14 @@ type LeadNoResponde = {
   id: string
   nombre: string
   telefono: string
-  tipo: TipoLead
+  tipo: Tipo
   asesor_nombre: string | null
   proxima_accion_at: string
 }
 
 type Filtros = { intencion: string; marketing: string; bajas: string }
 
-const ROL_CLIENTE: Record<TipoLead, string> = { interesado: 'Comprador', propietario: 'Propietario' }
+
 
 const valor = (v: string | string[] | undefined) => (typeof v === 'string' ? v : '')
 
@@ -167,9 +168,10 @@ export default async function PaginaMarketing({ searchParams }: PageProps<'/mark
                 <Link href={`/leads/${c.lead_id}?tab=cierre`} className="block truncate font-medium text-foreground hover:underline">
                   {c.nombre}
                 </Link>
-                <p className="text-xs text-muted-foreground">
-                  {telefono(c.telefono)} · {ROL_CLIENTE[c.tipo] ?? TIPOS_LEAD[c.tipo]}
-                  {c.cliente_desde && ` desde el ${fecha(c.cliente_desde)}`}
+                <p className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                  {telefono(c.telefono)}
+                  <TipoLead tipo={c.tipo} />
+                  {c.cliente_desde && <span>desde el {fecha(c.cliente_desde)}</span>}
                 </p>
                 {usuario.esAdmin && <p className="text-xs text-muted-foreground">{c.asesor_nombre ?? 'Sin asesor'}</p>}
               </div>
@@ -220,8 +222,8 @@ export default async function PaginaMarketing({ searchParams }: PageProps<'/mark
                     <Link href={`/leads/${l.id}`} className="font-medium text-foreground hover:underline">
                       {l.nombre}
                     </Link>
-                    <p className="text-xs text-muted-foreground">
-                      {TIPOS_LEAD[l.tipo]} · {telefono(l.telefono)} · Tocan desde el {fechaCorta(l.proxima_accion_at)} ·{' '}
+                    <p className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                      <TipoLead tipo={l.tipo} /> · {telefono(l.telefono)} · Tocan desde el {fechaCorta(l.proxima_accion_at)} ·{' '}
                       {ultimas ? `últimas el ${fecha(ultimas)}` : 'nunca recibió novedades'}
                       {usuario.esAdmin && ` · ${l.asesor_nombre ?? 'Sin asesor'}`}
                     </p>

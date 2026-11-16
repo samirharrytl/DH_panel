@@ -123,9 +123,9 @@ Cada punto tiene su prueba en la tarea correspondiente.
 - Se usa en: `leads/page.tsx` (bandeja `:245` e intenciones `:214`, más el borde de la fila), `leads/[id]/encabezado.tsx:49`, `leads/[id]/secciones/resumen.tsx:328`, `chats/page.tsx:103`, `page.tsx:117` (Hoy), `marketing/page.tsx:171,224`, `personas/[id]/page.tsx:192,220`, `personas/[id]/unir/page.tsx:122,133` y `tablero/page.tsx:58-59`. Los textos de filtros y formularios (`leads/page.tsx:142`, `leads/nuevo`) siguen como texto.
 - En la bandeja, las filas de propietario muestran `inmuebles` como chips `DH-0012 · Cita agendada`, y las de interesado `N búsquedas` y “Vende para comprar” cuando `lead_venta_id` no es nulo.
 
-- [ ] **Paso 1:** implementar.
-- [ ] **Paso 2:** `npm run typecheck` y `npx eslint` sobre los archivos tocados → sin errores.
-- [ ] **Paso 3:** commit `Panel: propietario e interesado se distinguen a simple vista`.
+- [x] **Paso 1:** implementar.
+- [x] **Paso 2:** `npm run typecheck` y `npx eslint` sobre los archivos tocados → sin errores.
+- [x] **Paso 3:** commit `Panel: propietario e interesado se distinguen a simple vista`.
 
 ### Tarea 6: pantallas del propietario y del interesado
 

@@ -95,6 +95,13 @@ export const ESTADOS_INMUEBLE = {
 } as const
 export type EstadoInmueble = keyof typeof ESTADOS_INMUEBLE
 
+export const ETAPAS_CAPTACION = {
+  calificando: 'Calificando',
+  cita_agendada: 'Cita agendada',
+  cita_realizada: 'Cita realizada',
+} as const
+export type EtapaCaptacion = keyof typeof ETAPAS_CAPTACION
+
 export function colorEstadoInmueble(e: EstadoInmueble) {
   return e === 'en_cartera' ? 'verde' : e === 'en_captacion' ? 'azul' : e === 'vendido' ? 'marino' : 'gris'
 }

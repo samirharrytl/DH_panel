@@ -6,12 +6,12 @@ import {
   ESTADOS_CON_ACCION,
   ESTADOS_LEAD,
   SALIDAS,
-  TIPOS_LEAD,
   colorEstado,
   etiqueta,
 } from '@/lib/catalogos'
 import { fecha, telefono } from '@/lib/formato'
 import { Campo, Seleccion } from '@/components/campos'
+import { TipoLead } from '@/components/tipo-lead'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { BotonEnviar, Dialogo, Formulario } from '@/components/formulario'
@@ -46,7 +46,7 @@ export async function Encabezado({ lead, usuario }: PropsSeccion) {
               {telefono(p.telefono)}
             </a>
             <span>·</span>
-            <span>{TIPOS_LEAD[lead.tipo]}</span>
+            <TipoLead tipo={lead.tipo} />
             <Badge variant={colorEstado(lead.estado)}>{ESTADOS_LEAD[lead.estado]}</Badge>
             {lead.ciclo > 1 && <Badge variant="gris">Ciclo {lead.ciclo}</Badge>}
             {p.no_contactar && <Badge variant="rojo">No contactar</Badge>}

@@ -1,11 +1,12 @@
 import Link from 'next/link'
 import { crearClienteServidor } from '@/lib/supabase/server'
-import { ESTADOS_LEAD, MEDIOS_CONTACTO, TIPOS_LEAD, etiqueta } from '@/lib/catalogos'
+import { ESTADOS_LEAD, MEDIOS_CONTACTO, etiqueta } from '@/lib/catalogos'
 import { ahoraMs, fecha, fechaCorta, fechaHora, hoyLima, isoALocal, relativo } from '@/lib/formato'
 import { Aviso, Campo, Casilla, Dato, Seleccion, Tarjeta, Vacio } from '@/components/campos'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { TipoLead } from '@/components/tipo-lead'
 import { cn } from '@/lib/utils'
 import { BotonAccion, BotonEnviar, Dialogo, Formulario } from '@/components/formulario'
 import {
@@ -324,8 +325,8 @@ export async function SeccionResumen({ lead }: PropsSeccion) {
               {lead.otros.map((o) => (
                 <li key={o.id}>
                   <Link href={`/leads/${o.id}`} className="flex items-center justify-between gap-2 text-sm hover:underline">
-                    <span>
-                      {TIPOS_LEAD[o.tipo]} · ciclo {o.ciclo} {!o.vigente && '(anterior)'}
+                    <span className="flex flex-wrap items-center gap-1.5">
+                      <TipoLead tipo={o.tipo} /> · ciclo {o.ciclo} {!o.vigente && '(anterior)'}
                     </span>
                     <span className="text-xs text-muted-foreground">
                       {ESTADOS_LEAD[o.estado]} · {fechaCorta(o.created_at)}

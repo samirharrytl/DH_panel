@@ -3,9 +3,10 @@ import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { exigirAdmin } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
-import { EMBUDO, ESTADOS_LEAD, SALIDAS, type EstadoLead, type TipoLead } from '@/lib/catalogos'
+import { EMBUDO, ESTADOS_LEAD, SALIDAS, type EstadoLead, type TipoLead as Tipo } from '@/lib/catalogos'
 import { dolares, fecha, hoyLima, num, soles } from '@/lib/formato'
 import { Aviso, EncabezadoPagina, Tarjeta } from '@/components/campos'
+import { TipoLead } from '@/components/tipo-lead'
 import { Input } from '@/components/ui/input'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -13,9 +14,9 @@ import { cn } from '@/lib/utils'
 export const metadata: Metadata = { title: 'Tablero' }
 
 type Tablero = {
-  leads_por_etapa: { tipo: TipoLead; estado: EstadoLead; total: number }[]
+  leads_por_etapa: { tipo: Tipo; estado: EstadoLead; total: number }[]
   sin_respuesta: { esperando_respuesta: number; refuerzos_vencidos: number; sin_bienvenida: number; no_responde: number }
-  conversiones: { tipo: TipoLead; estado: EstadoLead; orden: number; alcanzaron: number; total: number }[]
+  conversiones: { tipo: Tipo; estado: EstadoLead; orden: number; alcanzaron: number; total: number }[]
   piloto_match: {
     envios: number
     opciones: number
@@ -55,8 +56,7 @@ const CATEGORIAS_COSTO: Record<CategoriaCosto, { titulo: string; detalle: string
 const nombreMes = (mes: string) => fecha(`${mes}-01`).slice(3)
 
 const PERIODOS = { '30': 'Últimos 30 días', '90': 'Últimos 90 días', anio: 'Este año' } as const
-const TITULO_TIPO: Record<TipoLead, string> = { propietario: 'Propietarios', interesado: 'Interesados' }
-const TIPOS: TipoLead[] = ['propietario', 'interesado']
+const TIPOS: Tipo[] = ['propietario', 'interesado']
 
 const esFecha = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s)
 const valor = (v: string | string[] | undefined) => (typeof v === 'string' ? v : '')
@@ -202,7 +202,7 @@ export default async function PaginaTablero({ searchParams }: PageProps<'/tabler
               const total = filas.reduce((s, x) => s + Number(x.total), 0)
               const maximo = Math.max(1, ...filas.map((x) => Number(x.total)))
               return (
-                <Tarjeta key={tipo} titulo={`Leads por etapa (${TITULO_TIPO[tipo].toLowerCase()})`} acciones={<span className="text-sm text-muted-foreground">{num(total)} vigentes</span>}>
+                <Tarjeta key={tipo} titulo={<span className="flex items-center gap-2">Leads por etapa <TipoLead tipo={tipo} /></span>} acciones={<span className="text-sm text-muted-foreground">{num(total)} vigentes</span>}>
                   <ul className="space-y-2">
                     {estados.map((estado) => {
                       const n = Number(filas.find((x) => x.estado === estado)?.total ?? 0)
@@ -231,7 +231,7 @@ export default async function PaginaTablero({ searchParams }: PageProps<'/tabler
               return (
                 <Tarjeta
                   key={tipo}
-                  titulo={`Conversiones (${TITULO_TIPO[tipo].toLowerCase()})`}
+                  titulo={<span className="flex items-center gap-2">Conversiones <TipoLead tipo={tipo} /></span>}
                   acciones={<span className="text-sm text-muted-foreground">{num(total)} registrados en el periodo</span>}
                 >
                   {total === 0 ? (

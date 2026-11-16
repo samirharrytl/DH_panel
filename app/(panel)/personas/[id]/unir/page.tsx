@@ -3,9 +3,10 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { exigirUsuario } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
-import { ESTADOS_LEAD, TIPOS_LEAD, type EstadoLead, type TipoLead } from '@/lib/catalogos'
+import { ESTADOS_LEAD, type EstadoLead, type TipoLead as Tipo } from '@/lib/catalogos'
 import { telefono } from '@/lib/formato'
 import { Aviso, Tarjeta, Vacio } from '@/components/campos'
+import { TipoLead } from '@/components/tipo-lead'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { BotonEnviar, Formulario } from '@/components/formulario'
@@ -13,7 +14,7 @@ import { unirPersonas } from '../acciones'
 
 export const metadata: Metadata = { title: 'Unir personas' }
 
-type LeadResumen = { id: string; tipo: TipoLead; estado: EstadoLead; asesor: { nombre: string } | null }
+type LeadResumen = { id: string; tipo: Tipo; estado: EstadoLead; asesor: { nombre: string } | null }
 
 async function cargar(id: string) {
   const supabase = await crearClienteServidor()
@@ -96,7 +97,7 @@ export default async function PaginaUnir({ params, searchParams }: PageProps<'/p
 
   const otra = await cargar(con)
   if (!otra || otra.id === id) notFound()
-  const conflictos = (['propietario', 'interesado'] as TipoLead[]).flatMap((tipo) => {
+  const conflictos = (['propietario', 'interesado'] as Tipo[]).flatMap((tipo) => {
     const a = persona.vigentes.find((l) => l.tipo === tipo)
     const b = otra.vigentes.find((l) => l.tipo === tipo)
     return a && b ? [{ tipo, opciones: [a, b] }] : []
@@ -117,10 +118,16 @@ export default async function PaginaUnir({ params, searchParams }: PageProps<'/p
             <p className="text-sm text-muted-foreground">
               {telefono(p.telefono)} · {p.email ?? 'sin correo'}
             </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {p.vigentes.length
-                ? p.vigentes.map((l) => `${TIPOS_LEAD[l.tipo]} (${ESTADOS_LEAD[l.estado]})`).join(', ')
-                : 'Sin leads vigentes'}
+            <p className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
+              {p.vigentes.length ? (
+                p.vigentes.map((l) => (
+                  <span key={l.id} className="inline-flex items-center gap-1">
+                    <TipoLead tipo={l.tipo} /> ({ESTADOS_LEAD[l.estado]})
+                  </span>
+                ))
+              ) : (
+                <span>Sin leads vigentes</span>
+              )}
             </p>
           </Tarjeta>
         ))}
@@ -129,8 +136,8 @@ export default async function PaginaUnir({ params, searchParams }: PageProps<'/p
         <Formulario accion={unirPersonas.bind(null, id, otra.id)}>
           {conflictos.map(({ tipo, opciones }) => (
             <fieldset key={tipo} className="space-y-2">
-              <legend className="text-sm font-medium text-foreground">
-                Las dos tienen un lead de {TIPOS_LEAD[tipo].toLowerCase()} activo. ¿Cuál sigue?
+              <legend className="flex flex-wrap items-center gap-1.5 text-sm font-medium text-foreground">
+                Las dos tienen un lead de <TipoLead tipo={tipo} /> activo. ¿Cuál sigue?
               </legend>
               {opciones.map((l, i) => (
                 <label key={l.id} className="flex items-center gap-2 text-sm">

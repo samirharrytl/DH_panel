@@ -2,10 +2,11 @@ import Link from 'next/link'
 import { CalendarDays, ChevronRight, MapPin } from 'lucide-react'
 import { exigirUsuario } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
-import { TIPOS_INMUEBLE, TIPOS_LEAD, etiqueta } from '@/lib/catalogos'
+import { TIPOS_INMUEBLE, etiqueta } from '@/lib/catalogos'
 import { ZONA, ahoraMs, diaLargo, fecha, fechaCorta, hora, hoyLima } from '@/lib/formato'
 import { Tarjeta, Vacio } from '@/components/campos'
 import { Badge } from '@/components/ui/badge'
+import { TipoLead } from '@/components/tipo-lead'
 import { Button } from '@/components/ui/button'
 import { InsigniaVencimiento } from './inmuebles/compartido'
 
@@ -114,7 +115,7 @@ export default async function PaginaHoy() {
                     <div className="min-w-0 flex-1">
                       <p className="flex flex-wrap items-center gap-2">
                         <span className="truncate font-medium text-foreground">{l.nombre}</span>
-                        <Badge variant="gris">{TIPOS_LEAD[l.tipo as keyof typeof TIPOS_LEAD]}</Badge>
+                        <TipoLead tipo={l.tipo as 'propietario' | 'interesado'} />
                       </p>
                       <p className="mt-0.5 text-sm text-muted-foreground">
                         {l.proxima_accion}

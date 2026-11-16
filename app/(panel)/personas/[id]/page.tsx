@@ -3,11 +3,12 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { exigirUsuario } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
-import { ESTADOS_LEAD, TIPOS_LEAD, colorEstado, type EstadoLead, type TipoLead } from '@/lib/catalogos'
+import { ESTADOS_LEAD, TIPOS_LEAD, colorEstado, type EstadoLead, type TipoLead as Tipo } from '@/lib/catalogos'
 import { fechaHora, telefono } from '@/lib/formato'
 import { Aviso, Campo, Tarjeta, Vacio } from '@/components/campos'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import { TipoLead } from '@/components/tipo-lead'
 import { BotonAccion, BotonEnviar, Dialogo, Formulario } from '@/components/formulario'
 import { EVENTOS } from '../../leads/[id]/secciones/historial'
 import { agregarTelefono, descartarSugerencia, marcarPrincipal, quitarTelefono } from './acciones'
@@ -64,7 +65,7 @@ export default async function PaginaPersona({ params }: PageProps<'/personas/[id
   // Etiqueta del lead al que pertenece cada movimiento: "Interesado", "Propietario · ciclo 2"
   const nombreLead = (leadId: string | null) => {
     const l = leads?.find((x) => x.id === leadId)
-    return l ? `${TIPOS_LEAD[l.tipo as TipoLead]}${l.ciclo > 1 ? ` · ciclo ${l.ciclo}` : ''}` : null
+    return l ? `${TIPOS_LEAD[l.tipo as Tipo]}${l.ciclo > 1 ? ` · ciclo ${l.ciclo}` : ''}` : null
   }
   const items: Item[] = [
     ...(eventos ?? []).map((e) => ({
@@ -188,9 +189,9 @@ export default async function PaginaPersona({ params }: PageProps<'/personas/[id
             <ul className="divide-y divide-border">
               {(leads ?? []).map((l) => (
                 <li key={l.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
-                  <Link href={`/leads/${l.id}`} className="font-medium text-primary hover:underline">
-                    {TIPOS_LEAD[l.tipo as TipoLead]}
-                    {l.ciclo > 1 && ` · ciclo ${l.ciclo}`}
+                  <Link href={`/leads/${l.id}`} className="flex items-center gap-1.5 font-medium text-primary hover:underline">
+                    <TipoLead tipo={l.tipo as Tipo} />
+                    {l.ciclo > 1 && <span className="text-xs text-muted-foreground">· ciclo {l.ciclo}</span>}
                   </Link>
                   <span className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                     <Badge variant={colorEstado(l.estado as EstadoLead)}>{ESTADOS_LEAD[l.estado as EstadoLead]}</Badge>
@@ -217,7 +218,10 @@ export default async function PaginaPersona({ params }: PageProps<'/personas/[id
                   }`}
                 />
                 <div className="flex flex-wrap items-center gap-2">
-                  {it.intencion && <Badge>Intención · {TIPOS_LEAD[it.intencion.tipo as TipoLead] ?? 'Lead'}</Badge>}
+                  {it.intencion && <Badge>Intención</Badge>}
+                  {it.intencion && (it.intencion.tipo === 'propietario' || it.intencion.tipo === 'interesado') && (
+                    <TipoLead tipo={it.intencion.tipo} />
+                  )}
                   {it.estado && <Badge variant="gris">Estado</Badge>}
                   {it.nota && <Badge variant="ambar">Nota</Badge>}
                   {it.lead && !it.intencion && <span className="text-xs text-muted-foreground">{it.lead}</span>}

@@ -2,19 +2,22 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { exigirUsuario } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
-import { CANALES, ESTADOS_LEAD, TIPOS_LEAD, colorEstado, etiqueta, type EstadoLead } from '@/lib/catalogos'
+import { CANALES, ESTADOS_INMUEBLE, ESTADOS_LEAD, ETAPAS_CAPTACION, colorEstado, etiqueta, type EstadoLead, type TipoLead as Tipo } from '@/lib/catalogos'
 import { ahoraMs, fechaCorta, hora, hoyLima, telefono } from '@/lib/formato'
 import { EncabezadoPagina, Seleccion, Vacio } from '@/components/campos'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { buttonVariants } from '@/components/ui/button'
+import { TipoLead, bordeTipo } from '@/components/tipo-lead'
 import { cn } from '@/lib/utils'
 import { Plus } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Leads' }
 
 const CERRADOS = '(cliente,descartado,baja)'
+
+type InmuebleBandeja = { codigo: string; estado: string; etapa: string | null }
 
 function textoParam(v: string | string[] | undefined) {
   return typeof v === 'string' && v.trim() ? v.trim() : ''
@@ -200,7 +203,10 @@ export default async function PaginaLeads({ searchParams }: PageProps<'/leads'>)
               <li key={i.id}>
                 <Link
                   href={`/personas/${persona.id}`}
-                  className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 rounded-2xl border border-border bg-card px-4 py-3 transition-colors hover:border-primary md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1.6fr)_auto]"
+                  className={cn(
+                    'grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 rounded-2xl border border-border bg-card px-4 py-3 transition-colors hover:border-primary md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1.6fr)_auto]',
+                    bordeTipo(lead.tipo as Tipo),
+                  )}
                 >
                   <p className="text-sm text-muted-foreground">
                     {fechaCorta(i.created_at)} {hora(i.created_at)}
@@ -210,8 +216,9 @@ export default async function PaginaLeads({ searchParams }: PageProps<'/leads'>)
                   </div>
                   <div className="min-w-0">
                     <p className="truncate font-medium text-foreground">{persona.nombre}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {telefono(d.telefono)} · {TIPOS_LEAD[lead.tipo as keyof typeof TIPOS_LEAD]}
+                    <p className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      {telefono(d.telefono)}
+                      <TipoLead tipo={lead.tipo as Tipo} />
                     </p>
                   </div>
                   <div className="text-xs text-muted-foreground md:text-sm">
@@ -237,14 +244,36 @@ export default async function PaginaLeads({ searchParams }: PageProps<'/leads'>)
             <li key={l.id}>
               <Link
                 href={`/leads/${l.id}`}
-                className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 rounded-2xl border border-border bg-card px-4 py-3 transition-colors hover:border-primary md:grid-cols-[minmax(0,2fr)_minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1.6fr)]"
+                className={cn(
+                  'grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 rounded-2xl border border-border bg-card px-4 py-3 transition-colors hover:border-primary md:grid-cols-[minmax(0,2fr)_minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1.6fr)]',
+                  bordeTipo(l.tipo as Tipo),
+                )}
               >
                 <div className="min-w-0">
                   <p className="truncate font-medium text-foreground">{l.nombre}</p>
                   <p className="text-xs text-muted-foreground">
-                    {telefono(l.telefono)} · {TIPOS_LEAD[l.tipo as keyof typeof TIPOS_LEAD]}
+                    {telefono(l.telefono)}
                     {l.intenciones > 1 && ` · ${l.intenciones} intenciones`}
                   </p>
+                  <div className="mt-1 flex flex-wrap items-center gap-1">
+                    <TipoLead tipo={l.tipo as Tipo} />
+                    {l.tipo === 'propietario' ? (
+                      ((l.inmuebles as InmuebleBandeja[] | null) ?? []).map((i) => (
+                        <span key={i.codigo} className="rounded-md bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                          {i.codigo} · {i.etapa ? etiqueta(ETAPAS_CAPTACION, i.etapa) : etiqueta(ESTADOS_INMUEBLE, i.estado)}
+                        </span>
+                      ))
+                    ) : (
+                      <>
+                        <span className="rounded-md bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                          {l.busquedas_activas} {l.busquedas_activas === 1 ? 'búsqueda' : 'búsquedas'}
+                        </span>
+                        {l.lead_venta_id && (
+                          <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-xs text-amber-800">Vende para comprar</span>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
                 <div className="justify-self-end md:justify-self-start">
                   <Badge variant={colorEstado(l.estado as EstadoLead)}>{ESTADOS_LEAD[l.estado as EstadoLead]}</Badge>

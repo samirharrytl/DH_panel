@@ -2,11 +2,12 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { exigirUsuario } from '@/lib/auth'
 import { crearClienteServidor } from '@/lib/supabase/server'
-import { ESTADOS_LEAD, TIPOS_LEAD, type EstadoLead, type TipoLead } from '@/lib/catalogos'
+import { ESTADOS_LEAD, type EstadoLead } from '@/lib/catalogos'
 import { relativo, telefono } from '@/lib/formato'
 import { Aviso, EncabezadoPagina, Vacio } from '@/components/campos'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { TipoLead } from '@/components/tipo-lead'
 import { cn } from '@/lib/utils'
 import { Chat } from '@/components/chat/chat'
 
@@ -99,8 +100,8 @@ export default async function PaginaChats({ searchParams }: PageProps<'/chats'>)
               </div>
               <div className="flex flex-wrap gap-2">
                 {leads?.map((l) => (
-                  <Link key={l.id} href={`/leads/${l.id}`} className="text-sm text-primary hover:underline">
-                    {TIPOS_LEAD[l.tipo as TipoLead]}{' '}
+                  <Link key={l.id} href={`/leads/${l.id}`} className="flex items-center gap-1.5 text-sm text-primary hover:underline">
+                    <TipoLead tipo={l.tipo as 'propietario' | 'interesado'} />{' '}
                     <Badge variant="gris">{ESTADOS_LEAD[l.estado as EstadoLead]}</Badge>
                   </Link>
                 ))}
