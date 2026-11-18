@@ -173,8 +173,8 @@ Cada punto tiene su prueba en la tarea correspondiente.
 
 ### Tarea 9: despliegue
 
-- [ ] `npm run test:sql` y `npm run build` → todo pasa.
-- [ ] Antes de migrar, contar en producción `calificacion_propietario`, `busquedas` y los inmuebles por lead (solo lectura).
-- [ ] `npm run db:migrar`.
-- [ ] Después (punto 5): `inmueble_captacion` tiene tantas filas como tenía `calificacion_propietario`, cada búsqueda tiene `id`, y ningún lead de propietario que tenía calificación quedó sin inmueble.
-- [ ] Revisión final de toda la rama (agente nuevo), corregir lo crítico e importante, fusionar a `main` y `git push`.
+- [x] `npm run test:sql` y `npm run build` → todo pasa.
+- [x] Antes de migrar, contar en producción `calificacion_propietario`, `busquedas` y los inmuebles por lead (solo lectura).
+- [x] `npm run db:migrar`.
+- [x] Después (punto 5): `inmueble_captacion` tiene tantas filas como tenía `calificacion_propietario`, cada búsqueda tiene `id`, y ningún lead de propietario que tenía calificación quedó sin inmueble.
+- [x] Revisión final de toda la rama (agente nuevo), corregir lo crítico e importante, fusionar a `main` y `git push`.
